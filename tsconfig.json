@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "out": "dist/topaz.js",
+    "sourceMap": true,
+    "target": "es5",
+    "experimentalDecorators": true
+  },
+  "exclude": [
+    "test",
+    "node_modules"
+  ]
+}
