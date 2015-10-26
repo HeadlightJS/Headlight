@@ -5,7 +5,7 @@
 let assert = chai.assert;
 
 describe('Signal', () => {
-    let signal: Headlight.ISignal<Function>;
+    let signal:Headlight.ISignal<Function>;
 
     beforeEach(() => {
         signal = new Headlight.Signal();
@@ -14,7 +14,7 @@ describe('Signal', () => {
     describe('Receiving signal', () => {
         it('Adds new receiver function and dispach signal', () => {
             let count = 0,
-                receiver = function (): void {
+                receiver = function ():void {
                     count++;
                 };
 
@@ -27,7 +27,7 @@ describe('Signal', () => {
 
         it('Adds new receiver function for single use and dispach signal', () => {
             let count = 0,
-                receiver = function (): void {
+                receiver = function ():void {
                     count++;
                 };
 
@@ -41,10 +41,10 @@ describe('Signal', () => {
         it('Adds two new receiver functions and dispach signal', () => {
             let count = 0,
                 count2 = 0,
-                receiver = function (): void {
+                receiver = function ():void {
                     count++;
                 },
-                receiver2 = function (): void {
+                receiver2 = function ():void {
                     count2++;
                 };
 
@@ -60,7 +60,7 @@ describe('Signal', () => {
 
         it('Remove receiver function', () => {
             let count = 0,
-                receiver = function (): void {
+                receiver = function ():void {
                     count++;
                 };
 
@@ -75,10 +75,10 @@ describe('Signal', () => {
         it('Remove all receiver functions', () => {
             let count = 0,
                 count2 = 0,
-                receiver = function (): void {
+                receiver = function ():void {
                     count++;
                 },
-                receiver2 = function (): void {
+                receiver2 = function ():void {
                     count2++;
                 };
 
@@ -95,7 +95,7 @@ describe('Signal', () => {
 
         it('Disables signal and enabling after some time', () => {
             let count = 0,
-                receiver = function (): void {
+                receiver = function ():void {
                     count++;
                 };
 
