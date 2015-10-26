@@ -2,8 +2,6 @@
 /dist
 /node_modules
 /coverage
-/src/**/*.js
-/src/**/*.js.map
-/test/**/*.js
-!/test/**/chai.js
-/test/**/*.js.map
+/**/*.js
+/**/*.js.map
+/typings

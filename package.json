@@ -19,7 +19,7 @@
     "typescript": "^1.6.2"
   },
   "scripts": {
-    "pretest": "node_modules/typescript/bin/tsc -p ./ && node_modules/typescript/bin/tsc -p test/",
+    "pretest": "node_modules/typescript/bin/tsc karma.conf.ts && node_modules/typescript/bin/tsc -p ./ && node_modules/typescript/bin/tsc -p test/",
     "test": "karma start"
   },
   "repository": {
