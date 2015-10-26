@@ -3,12 +3,13 @@
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "out": "dist/topaz.js",
+    "out": "dist/headlight.js",
     "sourceMap": true,
     "target": "es5",
     "experimentalDecorators": true
   },
   "exclude": [
+    "karma.conf.ts",
     "test",
     "node_modules"
   ]
