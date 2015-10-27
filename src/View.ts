@@ -5,28 +5,35 @@ module Headlight {
 
     export interface IView {
 
-        $(selector:string):NodeListOf<Element>;
-        onDom(eventName:string, selector:string, handler:IHandler, context?:any):IView;
-        offDom(eventName?:string, handler?:IHandler):IView;
+        $(selector: string): NodeListOf<Element>;
+        onDom(eventName: string, selector: string, handler: IHandler, context?: any): IView;
+        offDom(eventName?: string, handler?: IHandler): IView;
 
     }
 
+    enum EventData {event, selector}
+
     export class View implements IView {
-        protected el:HTMLElement = document.createElement('div');
-        private domEvents:IDomEvents = {};
+
+        protected el: HTMLElement = document.createElement('div');
+        private domEvents: IDomEvents = {};
 
 
-        public $(selector:string):NodeListOf<Element> {
+        constructor() {
+            this.initEvents();
+        }
+
+        public $(selector: string): NodeListOf<Element> {
             return this.el.querySelectorAll(selector);
         }
 
-        public onDom(eventName:string, selector:string, handler:IHandler, context?:any):IView {
+        public onDom(eventName: string, selector: string, handler: IHandler, context?: any): IView {
 
             if (!this.domEvents[eventName]) {
                 this.domEvents[eventName] = [];
             }
 
-            let originHandler = function (event:IUIEvent):any {
+            let originHandler = function (event: IUIEvent): any {
                 if (View.checkTargetElement(selector, event.target)) {
                     return handler.call(context || event.target, event);
                 }
@@ -41,10 +48,10 @@ module Headlight {
             return this;
         }
 
-        public offDom(eventName?:string, handler?:IHandler):IView {
+        public offDom(eventName?: string, handler?: IHandler): IView {
 
             if (!eventName) {
-                Object.keys(this.domEvents).forEach((myEventName:string):void => {
+                Object.keys(this.domEvents).forEach((myEventName: string): void => {
                     this.offDom(myEventName);
                 });
                 return this;
@@ -53,7 +60,7 @@ module Headlight {
             if (eventName in this.domEvents) {
 
                 if (handler) {
-                    this.domEvents[eventName].slice().forEach((handlerObj:IHandelrData) => {
+                    this.domEvents[eventName].slice().forEach((handlerObj: IHandelrData) => {
                         this.offDom(eventName, handlerObj.handler);
                     });
                     return this;
@@ -65,7 +72,15 @@ module Headlight {
             return this;
         }
 
-        private offDomHandler(eventName:string, handelr:IHandler):void {
+        public remove(): void {
+            this.offDom();
+        }
+
+        protected events(): IDomEventData {
+            return {};
+        }
+
+        private offDomHandler(eventName: string, handelr: IHandler): void {
 
             let handlerData = this.getHandlerData(eventName, handelr);
 
@@ -73,16 +88,16 @@ module Headlight {
                 return null;
             }
 
-            this.domEvents[eventName] = this.domEvents[eventName].filter((localHandlerData:IHandelrData) => {
+            this.domEvents[eventName] = this.domEvents[eventName].filter((localHandlerData: IHandelrData) => {
                 return localHandlerData.handler === handlerData.handler;
             });
             this.el.removeEventListener(eventName, handlerData.originHandler, false);
 
         }
 
-        private getHandlerData(eventName:string, handler:IHandler):IHandelrData {
-            let resultHandlerData:IHandelrData = null;
-            this.domEvents[eventName].some((handlerData:IHandelrData) => {
+        private getHandlerData(eventName: string, handler: IHandler): IHandelrData {
+            let resultHandlerData: IHandelrData = null;
+            this.domEvents[eventName].some((handlerData: IHandelrData) => {
                 if (handlerData.handler === handler) {
                     resultHandlerData = handlerData;
                     return true;
@@ -91,31 +106,50 @@ module Headlight {
             return resultHandlerData;
         }
 
-        private static checkTargetElement(selector:string, element:IElement):boolean {
+        private initEvents(): void {
+            let events = this.events();
+
+            Object.keys(events).forEach((eventAndSelector: string): void => {
+                let eventAndSelectorArr = eventAndSelector.trim().split(' ');
+                let event = eventAndSelectorArr[EventData.event].trim();
+                let selector = eventAndSelectorArr[EventData.selector].trim();
+                if (!event || !selector) {
+                    throw new TypeError('Неверный формат подписки на события!');
+                }
+                this.onDom(event, selector, events[eventAndSelector], this);
+            });
+
+        }
+
+        private static checkTargetElement(selector: string, element: IElement): boolean {
             return element.matches(selector);
         }
     }
 
+    interface IDomEventData {
+        [eventAndSelector: string]: IHandler;
+    }
+
     interface IUIEvent extends Event {
-        target:IElement;
+        target: IElement;
     }
 
     interface IElement extends Element {
-        matches(selector:string):boolean;
+        matches(selector: string): boolean;
     }
 
     interface IDomEvents {
-        [event:string]: Array<IHandelrData>;
+        [event: string]: Array<IHandelrData>;
     }
 
     interface IHandelrData {
-        handler:IHandler;
-        context?:any;
+        handler: IHandler;
+        context?: any;
         originHandler: IHandler;
     }
 
     interface IHandler {
-        (...args:Array<any>):any;
+        (...args: Array<any>): any;
     }
 
 }
