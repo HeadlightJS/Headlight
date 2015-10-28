@@ -2,9 +2,9 @@ module Headlight {
     'use strict';
 
     export interface ISignal<T> {
-        add(receiver: T): void;
-        addOnce(receiver: T): void;
-        remove(receiver: T): void;
+        add(callback: T): void;
+        addOnce(callback: T): void;
+        remove(callback: T): void;
         removeAll(): void;
         dispatch(): void;
         enable(): void;
@@ -16,42 +16,42 @@ module Headlight {
     }
 
     export class Signal<T extends IReceiver> implements ISignal<T> {
-        private receivers: Array<T> = [];
+        private callbacks: Array<T> = [];
         private isEnabled: boolean = true;
 
 
-        public add(receiver: T): void {
-            if (!this.hasReceiver(receiver)) {
-                this.receivers.push(receiver);
+        public add(callback: T): void {
+            if (!this.hasReceiver(callback)) {
+                this.callbacks.push(callback);
             }
         }
 
-        public addOnce(receiver: T): void {
-            if (!this.hasReceiver(receiver)) {
-                receiver.once = true;
-                this.receivers.push(receiver);
+        public addOnce(callback: T): void {
+            if (!this.hasReceiver(callback)) {
+                callback.once = true;
+                this.callbacks.push(callback);
             }
         }
 
-        public remove(receiver: T): void {
-            if (this.hasReceiver(receiver)) {
-                this.receivers.splice(this.receivers.indexOf(receiver), 1);
+        public remove(callback: T): void {
+            if (this.hasReceiver(callback)) {
+                this.callbacks.splice(this.callbacks.indexOf(callback), 1);
             }
         }
 
         public removeAll(): void {
-            this.receivers = [];
+            this.callbacks = [];
         }
 
         public dispatch(): void {
             if (this.isEnabled) {
-                for (let receiver of this.receivers) {
-                    receiver();
+                this.callbacks.forEach((callback: T) => {
+                    callback();
 
-                    if (receiver.once) {
-                        this.remove(receiver);
+                    if (callback.once) {
+                        this.remove(callback);
                     }
-                }
+                });
             } // TODO: Throw an error?
         }
 
@@ -63,8 +63,8 @@ module Headlight {
             this.isEnabled = false;
         }
 
-        private hasReceiver(receiver: any): boolean {
-            return this.receivers.indexOf(receiver) !== -1;
+        private hasReceiver(callback: any): boolean {
+            return this.callbacks.indexOf(callback) !== -1;
         }
     }
 }

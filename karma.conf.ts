@@ -1,7 +1,8 @@
 // Karma configuration
 // Generated on Sat Oct 24 2015 20:19:49 GMT+0300 (MSK)
+///<reference path="typings/tsd.d.ts"/>
 
-module.exports = function(config) {
+module.exports = function(config: any): void {
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -16,8 +17,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       './node_modules/phantomjs-polyfill/bind-polyfill.js',
-      'dist/topaz.js',
-      'test/chai.js',
+      'dist/headlight.js',
       'test/**/*.test.js'
     ],
 
@@ -83,5 +83,5 @@ module.exports = function(config) {
         }
       }
     }
-  })
+  });
 }
