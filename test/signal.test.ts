@@ -2,7 +2,7 @@
 ///<reference path="../typings/chai/chai.d.ts"/>
 ///<reference path="../src/Signal"/>
 
-let assert = chai.assert;
+assert = chai.assert;
 
 describe('Signal', () => {
     let signal: Headlight.ISignal<Function>;

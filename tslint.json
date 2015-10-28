@@ -20,9 +20,9 @@
     "max-line-length": [true, 120],
     "member-access": false,
     "member-ordering": [true,
+      "variables-before-functions",
       "public-before-private",
-      "static-before-instance",
-      "variables-before-functions"
+      "static-after-instance"
     ],
     "no-any": false,
     "no-arg": true,

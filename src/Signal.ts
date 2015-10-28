@@ -19,9 +19,6 @@ module Headlight {
         private callbacks: Array<T> = [];
         private isEnabled: boolean = true;
 
-        constructor() {
-
-        }
 
         public add(callback: T): void {
             if (!this.hasReceiver(callback)) {
