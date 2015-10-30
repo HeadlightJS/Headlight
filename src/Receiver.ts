@@ -16,10 +16,13 @@ module Headlight {
         stopReceiving(signal: ISignal, callback: ISignalCallback): IReceiver;
         stopReceiving(signal: ISignal): IReceiver;
         stopReceiving(callback: ISignalCallback): IReceiver;
+
+        addSignal(signal: ISignal): IReceiver;
+        removeSignal(signal: ISignal): IReceiver;
     }
 
     export class Receiver extends Base implements IReceiver {
-        private signals: ISignalCache;
+        private signals: ISignalCache = {};
 
         public receive(signal: ISignal, callback: ISignalCallback): IReceiver {
             signal.add(callback, this);
@@ -28,23 +31,37 @@ module Headlight {
         }
 
         public receiveOnce(signal: ISignal, callback: ISignalCallback): IReceiver {
-            this.signals[signal.cid] = signal;
+            signal.addOnce(callback, this);
 
-            return this;
+            return this.addSignal(signal);
         }
 
         public stopReceiving(): IReceiver {
             return this;
         }
 
-        protected cidPrefix(): string {
-            return 'r';
-        }
-
-        private addSignal(signal: ISignal): IReceiver {
+        public addSignal(signal: ISignal): IReceiver {
             this.signals[signal.cid] = signal;
 
             return this;
+        }
+
+        public removeSignal(signal: ISignal): IReceiver {
+            if (this.hasSignal(signal)) {
+                delete this.signals[signal.cid];
+
+                signal.remove(this);
+            }
+
+            return this;
+        }
+
+        public hasSignal(signal: ISignal): boolean {
+            return signal.cid in this.signals;
+        }
+
+        protected cidPrefix(): string {
+            return 'r';
         }
 
         private remove(signal: ISignal): IReceiver {
