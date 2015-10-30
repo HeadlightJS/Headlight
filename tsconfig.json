@@ -6,7 +6,8 @@
     "out": "dist/headlight.js",
     "sourceMap": true,
     "target": "es5",
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "exclude": [
     "karma.conf.ts",
