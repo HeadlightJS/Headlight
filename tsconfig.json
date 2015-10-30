@@ -11,7 +11,7 @@
   },
   "exclude": [
     "karma.conf.ts",
-    "test",
+    "tests",
     "node_modules"
   ]
 }

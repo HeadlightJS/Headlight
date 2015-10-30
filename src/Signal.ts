@@ -10,7 +10,7 @@ module Headlight {
 
     export interface ISignal extends IBase {
         add(callback: ISignalCallback, receiver?: IReceiver): void;
-        addOnce(callback: ISignalCallback): void;
+        addOnce(callback: ISignalCallback, receiver?: IReceiver): void;
         remove(): void;
         remove(receiver: IReceiver): void;
         remove(callback: ISignalCallback): void;
@@ -41,13 +41,17 @@ module Headlight {
         constructor() {
             super();
 
-            this.resetEventGrops();
+            this.resetEventStorage();
         }
 
         public add(callback: ISignalCallback, receiver?: IReceiver, once?: boolean): string {
             let eventGroup = Signal.createEventGroup(callback, receiver, once);
 
             this.getEventGroups(receiver).push(eventGroup);
+
+            if (receiver) {
+                receiver.addSignal(this);
+            }
 
             return eventGroup.cid;
         }
@@ -58,24 +62,37 @@ module Headlight {
 
         public remove(callbackOrReceiver?: ISignalCallback | IReceiver, receiver?: IReceiver): void {
             if (callbackOrReceiver === undefined && receiver === undefined) {
-                this.resetEventGrops();
+                this.resetEventStorage();
             } else if (callbackOrReceiver && receiver === undefined) {
                 if (typeof callbackOrReceiver === 'function') {
                     let cids = Object.keys(this.eventStorage);
 
                     for (let i = cids.length; i--; ) {
-                        Signal.removeCallbackFromEventGroups(this.getEventGroups(cids[i]),
-                            <ISignalCallback>callbackOrReceiver);
+                        let groups = this.getEventGroups(cids[i]),
+                            r: IReceiver;
+
+                        if (groups.length) {
+                            r = groups[0].receiver;
+                        }
+
+                        if (Signal.removeCallbackFromEventGroups(groups, <ISignalCallback>callbackOrReceiver) && r) {
+                            r.removeSignal(this);
+                        }
                     }
                 } else {
                     let r = <IReceiver>callbackOrReceiver;
 
                     delete this.eventStorage[r.cid];
+
+                    r.removeSignal(this);
                 }
             } else {
-                Signal.removeCallbackFromEventGroups(
-                    this.getEventGroups(receiver.cid),
-                    <ISignalCallback>callbackOrReceiver);
+                if (Signal.removeCallbackFromEventGroups(
+                        this.getEventGroups(receiver.cid),
+                        <ISignalCallback>callbackOrReceiver)) {
+
+                    receiver.removeSignal(this);
+                }
             }
         }
 
@@ -105,16 +122,28 @@ module Headlight {
             this.isEnabled = false;
         }
 
-        private resetEventGrops(): ISignal {
+        protected cidPrefix(): string {
+            return 's';
+        }
+
+        private resetEventStorage(): ISignal {
+            if (this.eventStorage) {
+                let cids = Object.keys(this.eventStorage);
+
+                for (let i = cids.length; i--; ) {
+                    let eventGroups = this.getEventGroups(cids[i]);
+
+                    if (eventGroups[0] && eventGroups[0].receiver) {
+                        eventGroups[0].receiver.removeSignal(this);
+                    }
+                }
+            }
+
             this.eventStorage = {
                 common: []
             };
 
             return this;
-        }
-
-        protected cidPrefix(): string {
-            return 's';
         }
 
         private getEventGroups(receiverOrCid?: IReceiver | string): Array<IEventGroup> {
@@ -151,12 +180,20 @@ module Headlight {
             return res;
         }
 
-        private static removeCallbackFromEventGroups(eventGroups: Array<IEventGroup>, callback: ISignalCallback): void {
-            for (let i = eventGroups.length; i--; ) {
+        private static removeCallbackFromEventGroups(eventGroups: Array<IEventGroup>,
+                                                     callback: ISignalCallback): boolean {
+            let removedCount = 0;
+            let length = eventGroups.length;
+
+            for (let i = length; i--; ) {
                 if (eventGroups[i].callback === callback) {
                     eventGroups.splice(i);
+
+                    removedCount++;
                 }
             }
+
+            return removedCount === length;
         }
     }
 }

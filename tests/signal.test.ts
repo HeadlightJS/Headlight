@@ -92,28 +92,35 @@ describe('Signal.', () => {
             let h = new Handler(),
                 h2 = new Handler(),
                 h3 = new Handler(),
+                h4 = new Handler(),
                 callback = Handler.gc(h.callback, h),
                 callback2 = Handler.gc(h2.callback, h2),
                 callback3 = Handler.gc(h3.callback, h3),
-                r = new Headlight.Receiver();
+                callback4 = Handler.gc(h4.callback, h4),
+                r = new Headlight.Receiver(),
+                r2 = new Headlight.Receiver();
 
             signal.add(callback, r);
             signal.add(callback2, r);
             signal.add(callback3);
+            signal.add(callback4, r2);
             signal.dispatch();
             signal.remove(callback2, r);
+            signal.remove(callback4);
             signal.dispatch();
 
             assert.equal(h.count, 2, 'Callback function should be called 2 time.');
-            assert.equal(h3.count, 2, 'Callback3 function should be called 2 time.');
             assert.equal(h2.count, 1, 'Callback2 function should be called 1 time.');
+            assert.equal(h3.count, 2, 'Callback3 function should be called 2 time.');
+            assert.equal(h4.count, 1, 'Callback4 function should be called 1 time.');
         });
 
         it('Remove all callback functions.', () => {
             let h = new Handler(),
-                h2 = new Handler();
+                h2 = new Handler(),
+                r = new Headlight.Receiver();
 
-            signal.add(Handler.gc(h.callback, h));
+            signal.add(Handler.gc(h.callback, h), r);
             signal.dispatch();
             signal.add(Handler.gc(h2.callback, h2));
             signal.dispatch();

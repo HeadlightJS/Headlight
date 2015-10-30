@@ -18,7 +18,7 @@ module.exports = function(config: any): void {
     files: [
       './node_modules/phantomjs-polyfill/bind-polyfill.js',
       'dist/headlight.js',
-      'tests/**/*.tests.js'
+      'tests/**/*.test.js'
     ],
 
 
@@ -76,10 +76,10 @@ module.exports = function(config: any): void {
       dir : 'coverage/',
       check: {
         global: {
-          statements: 50,
-          lines: 50,
-          functions: 50,
-          branches: 50
+          statements: 95,
+          lines: 95,
+          functions: 95,
+          branches: 95
         }
       }
     }
