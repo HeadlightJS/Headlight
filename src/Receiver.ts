@@ -13,12 +13,14 @@ module Headlight {
         receiveOnce(signal: ISignal, callback: ISignalCallback): IReceiver;
 
         stopReceiving(): IReceiver;
-        stopReceiving(signal: ISignal, callback: ISignalCallback): IReceiver;
         stopReceiving(signal: ISignal): IReceiver;
         stopReceiving(callback: ISignalCallback): IReceiver;
+        stopReceiving(signal: ISignal, callback: ISignalCallback): IReceiver;
 
         addSignal(signal: ISignal): IReceiver;
         removeSignal(signal: ISignal): IReceiver;
+
+        getSignals(): Array<ISignal>;
     }
 
     export class Receiver extends Base implements IReceiver {
@@ -36,7 +38,28 @@ module Headlight {
             return this.addSignal(signal);
         }
 
-        public stopReceiving(): IReceiver {
+        public stopReceiving(signalOrCallback?: ISignal | ISignalCallback, callback?: ISignalCallback): IReceiver {
+            if (signalOrCallback === undefined && callback === undefined) {
+                this.resetSignals();
+            } else if (callback === undefined) {
+                if (typeof signalOrCallback === 'function') {
+                    let cids = Object.keys(this.signals),
+                        c = <ISignalCallback>signalOrCallback;
+
+                    for (let i = cids.length; i--; ) {
+                        this.signals[cids[i]].remove(c, this);
+                    }
+                } else {
+                    let s = <ISignal>signalOrCallback;
+
+                    s.remove(this);
+                }
+            } else {
+                let s = <ISignal>signalOrCallback;
+
+                s.remove(callback, this);
+            }
+
             return this;
         }
 
@@ -60,12 +83,29 @@ module Headlight {
             return signal.cid in this.signals;
         }
 
+        public getSignals(): Array<ISignal> {
+            let cids = Object.keys(this.signals),
+                res: Array<ISignal> = [];
+
+            for (let i = cids.length; i--; ) {
+                res.push(this.signals[cids[i]]);
+            }
+
+            return res;
+        }
+
         protected cidPrefix(): string {
             return 'r';
         }
 
-        private remove(signal: ISignal): IReceiver {
-            this.signals[signal.cid] = undefined;
+        private resetSignals(): IReceiver {
+            let cids = Object.keys(this.signals);
+
+            for (let i = cids.length; i--; ) {
+                this.signals[cids[i]].remove(this);
+            }
+
+            this.signals = {};
 
             return this;
         }

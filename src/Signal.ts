@@ -18,6 +18,7 @@ module Headlight {
         dispatch(): void;
         enable(): void;
         disable(): void;
+        getReceivers(): Array<IReceiver>;
     }
 
     interface IEventGroup extends IBase {
@@ -107,7 +108,7 @@ module Headlight {
                         eventGroups[j].callback.call(eventGroups[j].receiver || this);
 
                         if (eventGroups[j].once) {
-                            eventGroups.splice(j);
+                            this.remove(eventGroups[j].callback, eventGroups[j].receiver);
                         }
                     }
                 }
@@ -120,6 +121,21 @@ module Headlight {
 
         public disable(): void {
             this.isEnabled = false;
+        }
+
+        public getReceivers(): Array<IReceiver> {
+            let receivers: Array<IReceiver> = [];
+            let cids = Object.keys(this.eventStorage);
+
+            for (let i = cids.length; i--; ) {
+                let eventGroups = this.getEventGroups(cids[i]);
+
+                if (eventGroups[0] && eventGroups[0].receiver) {
+                    receivers.push(eventGroups[0].receiver);
+                }
+            }
+
+            return receivers;
         }
 
         protected cidPrefix(): string {
