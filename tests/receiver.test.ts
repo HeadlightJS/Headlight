@@ -6,7 +6,7 @@
 describe('Receiver.', () => {
     interface ISimpleReceiver extends Headlight.IReceiver {
         count: number;
-        callback(): ISimpleReceiver;
+        callback(): void;
     }
 
     let assert = chai.assert;
@@ -15,10 +15,8 @@ describe('Receiver.', () => {
     class SimpleReceiver extends Headlight.Receiver implements ISimpleReceiver {
         public count: number = 0;
 
-        public callback(): ISimpleReceiver {
+        public callback(): void {
             this.count++;
-
-            return this;
         }
     }
 
@@ -27,8 +25,8 @@ describe('Receiver.', () => {
     });
 
     it('Receive signal.', () => {
-        let signal = new Headlight.Signal();
-        let signal2 = new Headlight.Signal();
+        let signal = new Headlight.Signal<void>();
+        let signal2 = new Headlight.Signal<void>();
 
         receiver.receive(signal, receiver.callback);
         receiver.receive(signal2, receiver.callback);
@@ -42,8 +40,8 @@ describe('Receiver.', () => {
     });
 
     it('Receive signal once.', () => {
-        let signal = new Headlight.Signal();
-        let signal2 = new Headlight.Signal();
+        let signal = new Headlight.Signal<void>();
+        let signal2 = new Headlight.Signal<void>();
 
         receiver.receiveOnce(signal, receiver.callback);
         receiver.receive(signal2, receiver.callback);
@@ -57,8 +55,8 @@ describe('Receiver.', () => {
     });
 
     it('Stop receiving.', () => {
-        let signal = new Headlight.Signal();
-        let signal2 = new Headlight.Signal();
+        let signal = new Headlight.Signal<void>();
+        let signal2 = new Headlight.Signal<void>();
 
         receiver.receive(signal, receiver.callback);
         receiver.receive(signal2, receiver.callback);
@@ -80,8 +78,8 @@ describe('Receiver.', () => {
     });
 
     it('Stop receiving very signal.', () => {
-        let signal = new Headlight.Signal();
-        let signal2 = new Headlight.Signal();
+        let signal = new Headlight.Signal<void>();
+        let signal2 = new Headlight.Signal<void>();
 
         receiver.receive(signal, receiver.callback);
         receiver.receive(signal2, receiver.callback);
@@ -100,8 +98,8 @@ describe('Receiver.', () => {
     });
 
     it('Stop receiving very callback.', () => {
-        let signal = new Headlight.Signal();
-        let signal2 = new Headlight.Signal();
+        let signal = new Headlight.Signal<void>();
+        let signal2 = new Headlight.Signal<void>();
 
         receiver.receive(signal, receiver.callback);
         receiver.receive(signal2, receiver.callback);
@@ -118,8 +116,8 @@ describe('Receiver.', () => {
     });
 
     it('Stop receiving very callback and very signal.', () => {
-        let signal = new Headlight.Signal();
-        let signal2 = new Headlight.Signal();
+        let signal = new Headlight.Signal<void>();
+        let signal2 = new Headlight.Signal<void>();
 
         receiver.receive(signal, receiver.callback);
         receiver.receive(signal2, receiver.callback);
@@ -135,5 +133,15 @@ describe('Receiver.', () => {
         assert.equal(receiver.count, 3);
         assert.equal(receiver.getSignals().length, 1);
         assert.equal(receiver.getSignals()[0], signal2);
+    });
+
+    it('Removing anything which hasn`t been added doesn`t throw Error.', () => {
+        let signal = new Headlight.Signal<void>();
+
+        assert.doesNotThrow(() => {
+            receiver.stopReceiving(signal, receiver.callback);
+            receiver.stopReceiving(receiver.callback);
+            receiver.stopReceiving(signal);
+        }, Error, 'Removing is OK.');
     });
 });

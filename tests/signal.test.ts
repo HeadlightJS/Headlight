@@ -5,33 +5,37 @@
 
 describe('Signal.', () => {
     let assert = chai.assert;
-    let signal: Headlight.ISignal;
+    let signal: Headlight.ISignal<string>;
 
     class Handler {
         public count: number = 0;
+        public name: string;
 
-        public callback(): void {
+        public callback(name?: string): void {
             this.count++;
+            this.name = name;
         }
 
-        public static gc(callback: Function, ctx: any): Function {
-            return function (): void {
-                callback.call(ctx);
+        public static gc(callback: Headlight.ISignalCallback<any>, ctx: any): Headlight.ISignalCallback<any> {
+            return function (param?: string): void {
+                callback.call(ctx, param);
             };
         }
     }
 
     beforeEach(() => {
-        signal = new Headlight.Signal();
+        signal = new Headlight.Signal<any>();
     });
 
     it('Adds new callback function and dispach signal', () => {
         let h = new Handler();
+        const NAME = 'Joe';
 
         signal.add(Handler.gc(h.callback, h));
         signal.dispatch();
-        signal.dispatch();
+        signal.dispatch(NAME);
 
+        assert.equal(h.name, NAME);
         assert.equal(h.count, 2, 'Callback function should be called 2 times.');
     });
 
@@ -156,7 +160,7 @@ describe('Signal.', () => {
         assert.equal(h.count, 2, 'Callback function should be called 2 times.');
     });
 
-    it('Removing callback which hasn`t been added.', () => {
+    it('Removing anything which hasn`t been added doesn`t throw Error.', () => {
         let h = new Handler();
         let callback = Handler.gc(h.callback, h);
         let r = new Headlight.Receiver();

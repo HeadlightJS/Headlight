@@ -5,57 +5,61 @@ module Headlight {
     'use strict';
 
     interface ISignalCache {
-        [signalCid: string]: ISignal;
+        [signalCid: string]: ISignal<any>;
     }
 
     export interface IReceiver extends IBase {
-        receive(signal: ISignal, callback: ISignalCallback): IReceiver;
-        receiveOnce(signal: ISignal, callback: ISignalCallback): IReceiver;
+        receive<CallbackParam>(signal: ISignal<CallbackParam>, callback: ISignalCallback<CallbackParam>): IReceiver;
+        receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>, callback: ISignalCallback<CallbackParam>): IReceiver;
 
         stopReceiving(): IReceiver;
-        stopReceiving(signal: ISignal): IReceiver;
-        stopReceiving(callback: ISignalCallback): IReceiver;
-        stopReceiving(signal: ISignal, callback: ISignalCallback): IReceiver;
+        stopReceiving(signal: ISignal<any>): IReceiver;
+        stopReceiving(callback: ISignalCallback<any>): IReceiver;
+        stopReceiving<CallbackParam>(signal: ISignal<CallbackParam>,
+                                     callback: ISignalCallback<CallbackParam>): IReceiver;
 
-        addSignal(signal: ISignal): IReceiver;
-        removeSignal(signal: ISignal): IReceiver;
+        addSignal(signal: ISignal<any>): IReceiver;
+        removeSignal(signal: ISignal<any>): IReceiver;
 
-        getSignals(): Array<ISignal>;
+        getSignals(): Array<ISignal<any>>;
     }
 
     export class Receiver extends Base implements IReceiver {
         private signals: ISignalCache = {};
 
-        public receive(signal: ISignal, callback: ISignalCallback): IReceiver {
+        public receive<CallbackParam>(signal: ISignal<CallbackParam>,
+                                      callback: ISignalCallback<CallbackParam>): IReceiver {
             signal.add(callback, this);
 
             return this.addSignal(signal);
         }
 
-        public receiveOnce(signal: ISignal, callback: ISignalCallback): IReceiver {
+        public receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
+                                          callback: ISignalCallback<CallbackParam>): IReceiver {
             signal.addOnce(callback, this);
 
             return this.addSignal(signal);
         }
 
-        public stopReceiving(signalOrCallback?: ISignal | ISignalCallback, callback?: ISignalCallback): IReceiver {
+        public stopReceiving<CallbackParam>(signalOrCallback?: ISignal<CallbackParam> | ISignalCallback<CallbackParam>,
+                             callback?: ISignalCallback<CallbackParam>): IReceiver {
             if (signalOrCallback === undefined && callback === undefined) {
                 this.resetSignals();
             } else if (callback === undefined) {
                 if (typeof signalOrCallback === 'function') {
                     let cids = Object.keys(this.signals),
-                        c = <ISignalCallback>signalOrCallback;
+                        c = <ISignalCallback<CallbackParam>>signalOrCallback;
 
                     for (let i = cids.length; i--; ) {
                         this.signals[cids[i]].remove(c, this);
                     }
                 } else {
-                    let s = <ISignal>signalOrCallback;
+                    let s = <ISignal<CallbackParam>>signalOrCallback;
 
                     s.remove(this);
                 }
             } else {
-                let s = <ISignal>signalOrCallback;
+                let s = <ISignal<CallbackParam>>signalOrCallback;
 
                 s.remove(callback, this);
             }
@@ -63,13 +67,13 @@ module Headlight {
             return this;
         }
 
-        public addSignal(signal: ISignal): IReceiver {
+        public addSignal(signal: ISignal<any>): IReceiver {
             this.signals[signal.cid] = signal;
 
             return this;
         }
 
-        public removeSignal(signal: ISignal): IReceiver {
+        public removeSignal(signal: ISignal<any>): IReceiver {
             if (this.hasSignal(signal)) {
                 delete this.signals[signal.cid];
 
@@ -79,13 +83,13 @@ module Headlight {
             return this;
         }
 
-        public hasSignal(signal: ISignal): boolean {
+        public hasSignal(signal: ISignal<any>): boolean {
             return signal.cid in this.signals;
         }
 
-        public getSignals(): Array<ISignal> {
+        public getSignals(): Array<ISignal<any>> {
             let cids = Object.keys(this.signals),
-                res: Array<ISignal> = [];
+                res: Array<ISignal<any>> = [];
 
             for (let i = cids.length; i--; ) {
                 res.push(this.signals[cids[i]]);
