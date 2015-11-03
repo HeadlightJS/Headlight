@@ -5,16 +5,13 @@ module Headlight {
         [cidPrefix: string]: number;
     }
 
-    let cidMap: ICidMap = {
-
-    };
-
     export interface IBase {
         cid: string;
     }
 
     export abstract class Base implements IBase {
         public cid: string;
+        private static cidMap: ICidMap = {};
 
         protected cidPrefix(): string {
             return 'b';
@@ -25,11 +22,20 @@ module Headlight {
         }
 
         public static generateCid(prefix: string): string {
-            let lastCid = cidMap[prefix] || 0;
+            let lastCid = Base.cidMap[prefix] || 0;
 
-            cidMap[prefix] = lastCid + 1;
+            Base.cidMap[prefix] = lastCid + 1;
 
-            return prefix + cidMap[prefix];
+            return prefix + Base.cidMap[prefix];
         }
     }
+
+    export const BASE_TYPES = {
+        UNDEFINED: 'undefined',
+        NUMBER: 'number',
+        STRING: 'string',
+        BOOLEAN: 'boolean',
+        OBJECT: 'object',
+        FUNCTION: 'function'
+    };
 }

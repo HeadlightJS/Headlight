@@ -1,36 +1,14 @@
-/////<reference path="Base.ts"/>
-/////<reference path="Receiver.ts"/>
+///<reference path="Base.ts"/>
+///<reference path="interface.d.ts"/>
+///<reference path="EventGroup.ts"/>
+
 
 module Headlight {
     'use strict';
 
-    export interface ISignalCallback<CallbackParam> extends Function {
-        (param?: CallbackParam): void;
-        once?: boolean;
-    }
-
-    export interface ISignal<CallbackParam> extends IBase {
-        add(callback: ISignalCallback<CallbackParam>, receiver?: IReceiver): void;
-        addOnce(callback: ISignalCallback<CallbackParam>, receiver?: IReceiver): void;
-        remove(): void;
-        remove(receiver: IReceiver): void;
-        remove(callback: ISignalCallback<CallbackParam>): void;
-        remove(callback: ISignalCallback<CallbackParam>, receiver: IReceiver): void;
-        dispatch(param?: CallbackParam): void;
-        enable(): void;
-        disable(): void;
-        getReceivers(): Array<IReceiver>;
-    }
-
-    interface IEventGroup<CallbackParam> extends IBase {
-        callback: ISignalCallback<CallbackParam>;
-        receiver?: IReceiver;
-        once?: boolean;
-    }
-
-    interface IEventStorage<CallbackParam> {
-        common: Array<IEventGroup<CallbackParam>>;
-        [key: string]: Array<IEventGroup<CallbackParam>>;
+    const enum STATE {
+        DISABLED = 0,
+        ENABLED
     }
 
     /**
@@ -38,7 +16,7 @@ module Headlight {
      */
     export class Signal<CallbackParam> extends Base implements ISignal<CallbackParam> {
         private eventStorage: IEventStorage<CallbackParam>;
-        private isEnabled: boolean = true;
+        private state: STATE = STATE.ENABLED;
 
         constructor() {
             super();
@@ -66,7 +44,7 @@ module Headlight {
             if (callbackOrReceiver === undefined && receiver === undefined) {
                 this.resetEventStorage();
             } else if (callbackOrReceiver && receiver === undefined) {
-                if (typeof callbackOrReceiver === 'function') {
+                if (typeof callbackOrReceiver === BASE_TYPES.FUNCTION) {
                     let cids = Object.keys(this.eventStorage);
 
                     for (let i = cids.length; i--; ) {
@@ -100,7 +78,7 @@ module Headlight {
         }
 
         public dispatch(param?: CallbackParam): void {
-            if (this.isEnabled) {
+            if (this.state === STATE.ENABLED) {
                 let cids = Object.keys(this.eventStorage);
 
                 for (let i = cids.length; i--; ) {
@@ -118,11 +96,11 @@ module Headlight {
         }
 
         public enable(): void {
-            this.isEnabled = true;
+            this.state = STATE.ENABLED;
         }
 
         public disable(): void {
-            this.isEnabled = false;
+            this.state = STATE.DISABLED;
         }
 
         public getReceivers(): Array<IReceiver> {
@@ -168,10 +146,10 @@ module Headlight {
             let cid = 'common';
 
             if (receiverOrCid !== undefined) {
-                if (typeof receiverOrCid === 'string') {
-                    cid = receiverOrCid;
+                if (typeof receiverOrCid === BASE_TYPES.STRING) {
+                    cid = <string>receiverOrCid;
                 } else {
-                    cid = receiverOrCid.cid;
+                    cid = (<IReceiver>receiverOrCid).cid;
                 }
             }
 
@@ -185,11 +163,7 @@ module Headlight {
         private static createEventGroup<CallbackParam>(callback: ISignalCallback<CallbackParam>,
                                         receiver?: IReceiver,
                                         once?: boolean): IEventGroup<CallbackParam> {
-            let res: IEventGroup<CallbackParam> = {
-                cid: Base.generateCid('e'),
-                callback: callback,
-                once: once
-            };
+            let res: IEventGroup<CallbackParam> = new EventGroup(callback, once);
 
             if (receiver) {
                 res.receiver = receiver;

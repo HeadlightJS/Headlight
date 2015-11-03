@@ -1,28 +1,8 @@
-/////<reference path="Base.ts"/>
-/////<reference path="Signal.ts"/>
+///<reference path="Base.ts"/>
+///<reference path="interface.d.ts"/>
 
 module Headlight {
     'use strict';
-
-    interface ISignalCache {
-        [signalCid: string]: ISignal<any>;
-    }
-
-    export interface IReceiver extends IBase {
-        receive<CallbackParam>(signal: ISignal<CallbackParam>, callback: ISignalCallback<CallbackParam>): IReceiver;
-        receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>, callback: ISignalCallback<CallbackParam>): IReceiver;
-
-        stopReceiving(): IReceiver;
-        stopReceiving(signal: ISignal<any>): IReceiver;
-        stopReceiving(callback: ISignalCallback<any>): IReceiver;
-        stopReceiving<CallbackParam>(signal: ISignal<CallbackParam>,
-                                     callback: ISignalCallback<CallbackParam>): IReceiver;
-
-        addSignal(signal: ISignal<any>): IReceiver;
-        removeSignal(signal: ISignal<any>): IReceiver;
-
-        getSignals(): Array<ISignal<any>>;
-    }
 
     export class Receiver extends Base implements IReceiver {
         private signals: ISignalCache = {};
@@ -46,7 +26,7 @@ module Headlight {
             if (signalOrCallback === undefined && callback === undefined) {
                 this.resetSignals();
             } else if (callback === undefined) {
-                if (typeof signalOrCallback === 'function') {
+                if (typeof signalOrCallback === BASE_TYPES.FUNCTION) {
                     let cids = Object.keys(this.signals),
                         c = <ISignalCallback<CallbackParam>>signalOrCallback;
 
