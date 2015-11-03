@@ -5,3 +5,7 @@ install:
   - npm install
   - npm i -g tsd
   - tsd install
+cache:
+  directories:
+    - node_modules
+    - $(npm config get prefix)/bin/tsd
