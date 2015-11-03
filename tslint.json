@@ -20,13 +20,13 @@
     "max-line-length": [true, 120],
     "member-access": false,
     "member-ordering": [true,
-      "public-before-private",
-      "static-before-instance",
-      "variables-before-functions"
+      "variables-before-functions",
+      "static-after-instance",
+      "public-before-private"
     ],
     "no-any": false,
     "no-arg": true,
-    "no-bitwise": true,
+    "no-bitwise": false,
     "no-conditional-assignment": true,
     "no-console": [true,
       "debug",

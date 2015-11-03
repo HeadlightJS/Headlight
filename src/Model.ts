@@ -1,3 +1,4 @@
+///<reference path="Base.ts"/>
 ///<reference path="Signal.ts"/>
 
 module Headlight {
@@ -19,7 +20,7 @@ module Headlight {
     export type TComputed<T> = T | Computed<T>; //TReturningFunc<T>;
 
 
-    abstract class Model<Schema> {
+    abstract class Model<Schema> extends Base {
         public fields: Schema;
 
         public static computed<T>(getFn: TReturningFunc<T>, setFn?: TSetFunc): Computed<T> {
@@ -31,6 +32,8 @@ module Headlight {
         }
 
         constructor() {
+            super();
+
             this.initFields();
         }
 
