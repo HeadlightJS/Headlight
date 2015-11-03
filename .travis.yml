@@ -8,3 +8,4 @@ install:
 cache:
   directories:
     - node_modules
+    - $(npm config get prefix)/bin/tsd
