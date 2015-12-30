@@ -1,91 +1,95 @@
 ///<reference path="Base.ts"/>
-///<reference path="Signal.ts"/>
 
 module Headlight {
     'use strict';
 
-    type TReturningFunc<T> = (...args: Array<any>) => T;
-    type TSetFunc = (...args: Array<any>) => void;
+    export abstract class Model<Schema> extends Base implements IModel<Schema> {
+        private _fields: Object;
 
-    class Computed<T> {
-        public get: TReturningFunc<T>;
-        public set: TSetFunc;
-
-        constructor(getFn: TReturningFunc<T>, setFn?: TSetFunc) {
-            this.get = getFn;
-            this.set = setFn;
-        }
-    }
-
-    export type TComputed<T> = T | Computed<T>; //TReturningFunc<T>;
-
-
-    abstract class Model<Schema> extends Base {
-        public fields: Schema;
-
-        public static computed<T>(getFn: TReturningFunc<T>, setFn?: TSetFunc): Computed<T> {
-            return new Computed(getFn, setFn);
-        }
-
-        public static isComputed(thing: any): boolean {
-            return thing instanceof Computed;
-        }
-
-        constructor() {
+        constructor(args: Schema) {
             super();
 
-            this.initFields();
+            Object.defineProperties(this, {
+                _fields: {
+                    value: {},
+                    enumerable: false
+                }
+            });
+
+            let fields = <any>args,
+                self = <any>this;
+
+            for (let n in fields) {
+                if (fields.hasOwnProperty(n)) {
+                    self[n] = fields[n];
+                }
+            }
         }
 
-        protected abstract attributes(): Schema;
+        public toJSON(): Schema {
+            let o: any = <any>{},
+                fields: Array<string> = Model.keys(this),
+                self: any = <any>this;
 
-        private initFields(): void {
-            let attributes = <any>this.attributes(),
-                fields: any = {},
-                self = this;
-
-            for (var fieldName in attributes) {
-                if (attributes.hasOwnProperty(fieldName)) {
-                    if (Model.isComputed(attributes[fieldName])) {
-                        Object.defineProperty(fields, fieldName, {
-                            get: attributes[fieldName].get.bind(self, fields),
-                            set: (value: any): void => {
-                                attributes[fieldName].set.call(self, value, attributes);
-                            }
-                        });
-                    } else {
-                        fields[fieldName] = attributes[fieldName];
-                    }
+            for (let field of fields) {
+                if (self[field] instanceof Model) {
+                    o[field] = self[field].toJSON();
+                } else {
+                    o[field] = <any>self[field];
                 }
             }
 
-            this.fields = fields;
+            return <Schema>o;
         }
 
-    }
-
-    type TSchema = {
-        a: number;
-        b: number;
-        c: TComputed<number>;
-        d: number;
-    }
-
-    class M extends Model<TSchema> {
-        protected attributes(): TSchema {
-            return {
-                a: 1,
-                b: 2,
-                c: Model.computed(
-                    (attributes: TSchema) => attributes.a * attributes.b,
-                    (value: number, attributes: TSchema) => {
-                        attributes.a = value / 2;
-                    }),
-                d: 4
-            };
+        public static keys(model: Model<any>): Array<string> {
+            return Object.keys(model._fields);
         }
     }
 
-    export let m = new M();
+    export function dProperty(...args: Array<any>): any {
+        let decorateProperty = function (target: Object,
+                                         key: string,
+                                         descriptor?: TypedPropertyDescriptor<any>): any {
+            (function (k: string, C?: any): void {
+                if (!descriptor) {
+                    Object.defineProperty(target, key, {
+                        get: function (): any {
+                            return this._fields[k];
+                        },
+                        set: function (newVal: any): void {
+                            this._fields[k] = C ? new C(newVal) : newVal;
 
+                            //todo Signal dispatching
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+                } else {
+                    let oldGet = descriptor.get,
+                        oldSet = descriptor.set;
+
+                    descriptor.get = function (): any {
+                        return oldGet.call(this);
+                    };
+                    descriptor.set = function (newVal1: any): void {
+                        oldSet.call(this, newVal1);
+                        //todo Signal dispatching
+                    };
+                    descriptor.enumerable = true;
+                    descriptor.configurable = true;
+                }
+
+                //todo Signal creating
+            })(key, (args.length === 1) ? args[0] : undefined);
+
+            return descriptor;
+        };
+
+        if (args.length > 1) {
+            return decorateProperty.apply(this, args);
+        }
+
+        return decorateProperty;
+    }
 }

@@ -47,4 +47,21 @@ declare module Headlight {
 
         getSignals(): Array<ISignal<any>>;
     }
+
+    export interface IModel<Schema> extends IBase {
+        toJSON(): Schema;
+    }
+
+    /*export interface ITransactionOptions<S> {
+     model: IModel;
+     fn: (model: IModel) => any;
+     }
+
+     export interface ITransaction<S> extends IBase {
+     previous: S;
+     current: S;
+     diff: S;
+
+     perform(): S;
+     }*/
 }
