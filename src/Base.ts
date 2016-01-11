@@ -38,4 +38,8 @@ module Headlight {
         OBJECT: 'object',
         FUNCTION: 'function'
     };
+
+    export const EVENTS = {
+        CHANGE: 'change'
+    };
 }

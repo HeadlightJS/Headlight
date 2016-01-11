@@ -6,7 +6,7 @@
 module Headlight {
     'use strict';
 
-    const enum STATE {
+    export const enum STATE {
         DISABLED = 0,
         ENABLED
     }

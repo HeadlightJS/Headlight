@@ -1,4 +1,8 @@
 declare module Headlight {
+    export interface IHash {
+        [key: string]: string;
+    }
+
     export interface ISignalCallback<CallbackParam> extends Function {
         (param?: CallbackParam): void;
         once?: boolean;
@@ -48,7 +52,35 @@ declare module Headlight {
         getSignals(): Array<ISignal<any>>;
     }
 
+    export interface IChangeModelParam<Schema> {
+        model: IModel<Schema>;
+    }
+
+    export interface IChangeModelFieldParam<Schema> extends IChangeModelParam<Schema> {
+        value: any;
+        previous: any;
+    }
+
+    export interface IEventsHash<Schema> {
+        [key: string]: (callback: ISignalCallback<IChangeModelParam<Schema> | IChangeModelFieldParam<Schema>>) => void;
+    }
+
+    export interface IModelSignalsListener<Schema> {
+        change(callback: ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver): void;
+        change(field: any, callback: ISignalCallback<IChangeModelFieldParam<Schema>>, receiver?: IReceiver): void;
+    }
+
+    export interface ISignalShemaHash<Schema> {
+
+    }
+
     export interface IModel<Schema> extends IBase {
+        on: IModelSignalsListener<Schema>;
+        PROPS: Schema & {
+            [key: string]: string;
+        };
+        //signals: ISignalShemaHash<Schema>;
+
         toJSON(): Schema;
     }
 

@@ -1,27 +1,24 @@
 /// <reference path="../typings/tsd.d.ts" />
+///<reference path="../src/interface.d.ts"/>
 ///<reference path="../src/Base.ts"/>
 ///<reference path="../src/Model.ts"/>
 
-describe('Model.', () => {
+describe('Model', () => {
     let assert = chai.assert;
 
-    interface IPersonSchema {
+    interface IPerson {
         name: string;
         surname: string;
         age: number;
 
         patronymic?: string;
-        partner?: IPersonSchema;
+        son?: IPerson;
 
         fullname?: string;
     }
 
-    interface IPerson extends Headlight.IModel<IPersonSchema>, IPersonSchema {
-        partner?: IPerson;
-    }
-
-    class Person extends Headlight.Model<IPersonSchema> implements IPerson {
-        constructor(args: IPersonSchema) {
+    class Person extends Headlight.Model<IPerson> implements IPerson {
+        constructor(args: IPerson) {
             super(args);
         }
 
@@ -38,9 +35,14 @@ describe('Model.', () => {
         patronymic: string;
 
         @Headlight.dProperty(Person)
-        partner: IPerson;
+        son: Person;
 
-        @Headlight.dProperty
+        @Headlight.dProperty((): Array<string> => {
+            return [
+                this.PROPS.name,
+                this.PROPS.surname
+            ];
+        })
         get fullname(): string {
             return this.name + ' ' + this.surname;
         }
@@ -53,40 +55,56 @@ describe('Model.', () => {
         }
     }
 
-    let person: IPerson;
+    class Handler {
+        public count: number = 0;
+
+        public callback(args: Headlight.IChangeModelFieldParam<IPerson>): void {
+            this.count++;
+        }
+
+        public static gc(callback: Headlight.ISignalCallback<any>, ctx: any): Headlight.ISignalCallback<any> {
+            return function (param?: string): void {
+                callback.call(ctx, param);
+            };
+        }
+    }
+
+    let person: Person;
+    let h: Handler;
 
     const PERSON_NAME = 'Anna',
         PERSON_SURNAME = 'Ivanova',
         PERSON_AGE = 38,
-        PARTNER_NAME = 'Boris',
-        PARTNER_SURNAME = 'Ivanov',
-        PARTNER_AGE = 41,
+        SON_NAME = 'Boris',
+        SON_SURNAME = 'Ivanov',
+        SON_AGE = 13,
         MAIN_PERSON = {
             name: PERSON_NAME,
             surname: PERSON_SURNAME,
             age: PERSON_AGE,
-            partner: {
-                name: PARTNER_NAME,
-                surname: PARTNER_SURNAME,
-                age: PARTNER_AGE
+            son: {
+                name: SON_NAME,
+                surname: SON_SURNAME,
+                age: SON_AGE
             }
         };
 
     beforeEach(() => {
         person = new Person(MAIN_PERSON);
+        h = new Handler();
     });
 
-    describe('Fields and computeds.', () => {
-        it('Inits fields with computeds.', () => {
+    describe('Fields and computeds', () => {
+        it('Inits fields with computeds', () => {
+
             assert.equal(person.name, PERSON_NAME);
             assert.equal(person.surname, PERSON_SURNAME);
             assert.equal(person.age, PERSON_AGE);
             assert.equal(person.fullname, PERSON_NAME + ' ' + PERSON_SURNAME);
-            assert.instanceOf(person.partner, Person);
-
+            assert.instanceOf(person.son, Person);
         });
 
-        it('Change computed field.', () => {
+        it('Change computed field', () => {
             const NEW_NAME = 'Elena',
                 OLD_FULL_NAME = PERSON_NAME + ' ' + PERSON_SURNAME;
 
@@ -99,9 +117,70 @@ describe('Model.', () => {
             assert.equal(person.name, PERSON_NAME);
             assert.equal(person.surname, PERSON_SURNAME);
         });
+    });
 
-        it('Get JSON.', () => {
-            assert.deepEqual(person.toJSON(), MAIN_PERSON);
+
+    describe('Signals', () => {
+        it('Dispatching', () => {
+            let mainChangeObj: Headlight.IChangeModelFieldParam<IPerson>,
+                changeObj: Headlight.IChangeModelFieldParam<IPerson>,
+                computedChangeObj: Headlight.IChangeModelFieldParam<IPerson>;
+
+            const NEW_NAME = 'Helen';
+
+            person.on.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                mainChangeObj = args;
+            });
+            person.on.change(person.PROPS.name, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                changeObj = args;
+            });
+            person.on.change(person.PROPS.fullname, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                computedChangeObj = args;
+            });
+
+            person.name = PERSON_NAME;
+
+            assert.isUndefined(mainChangeObj, 'Setting same value to a field should`t provoke change signal');
+            assert.isUndefined(changeObj, 'Setting same value to a field should`t provoke change signal');
+            assert.isUndefined(computedChangeObj,
+                'Setting same value to a dependence field should`t provoke change signal');
+
+            person.name = NEW_NAME;
+
+            assert.deepEqual(mainChangeObj, {
+                model: person
+            }, 'Setting new value to a field should provoke change signal');
+
+
+            assert.deepEqual(changeObj, {
+                model: person,
+                value: person.name,
+                previous: PERSON_NAME
+            }, 'Setting new value to a field should provoke change signal');
+
+            assert.deepEqual(computedChangeObj, {
+                model: person,
+                value: person.name + ' ' + PERSON_SURNAME,
+                previous: PERSON_NAME + ' ' + PERSON_SURNAME
+            }, 'Setting new value to a dependence field should provoke change signal');
+        });
+    });
+
+    it('Get JSON', () => {
+        assert.deepEqual(person.toJSON(), {
+            name: PERSON_NAME,
+            surname: PERSON_SURNAME,
+            age: PERSON_AGE,
+            patronymic: undefined,
+            fullname: PERSON_NAME + ' ' + PERSON_SURNAME,
+            son: {
+                name: SON_NAME,
+                surname: SON_SURNAME,
+                age: SON_AGE,
+                patronymic: undefined,
+                fullname: SON_NAME + ' ' + SON_SURNAME,
+                son: undefined
+            }
         });
     });
 });

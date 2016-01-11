@@ -1,29 +1,68 @@
 ///<reference path="Base.ts"/>
+///<reference path="Signal.ts"/>
 
 module Headlight {
     'use strict';
 
+    const EVENT_SEPARATOR = ':';
+
+    interface ISignalCache<Schema> {
+        [signalCid: string]: ISignal<Schema>;
+    }
+
+    function onChangeDummy(fieldOrCallback: any,
+                           callbackOrReceiver: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
+                           receiver: IReceiver,
+                           once: boolean): void {
+        let self = <Model<any>>this,
+            method = once ? 'addOnce' : 'add',
+            signal: any;
+
+        if (typeof fieldOrCallback === 'function') {
+            signal = <any>self.signals[EVENTS.CHANGE];
+            signal[method](
+                <ISignalCallback<IChangeModelFieldParam<any>>>fieldOrCallback,
+                <IReceiver>callbackOrReceiver
+            );
+        } else {
+            signal = <any>self.signals[EVENTS.CHANGE + EVENT_SEPARATOR + fieldOrCallback];
+            signal[method](
+                <ISignalCallback<IChangeModelFieldParam<any>>>callbackOrReceiver,
+                <IReceiver>receiver
+            );
+        }
+    }
+
+    function onChange(fieldOrCallback: any,
+                      callbackOrReceiver?: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
+                      receiver?: IReceiver): void {
+
+        return onChangeDummy.call(this, fieldOrCallback, callbackOrReceiver, receiver, false);
+    }
+
+    function onChangeOnce(fieldOrCallback: any,
+                          callbackOrReceiver?: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
+                          receiver?: IReceiver): void {
+
+        return onChangeDummy.call(this, fieldOrCallback, callbackOrReceiver, receiver, true);
+    }
+
     export abstract class Model<Schema> extends Base implements IModel<Schema> {
-        private _fields: Object;
+        public on: IModelSignalsListener<Schema>;
+        public PROPS: Schema & IHash;
+        public signals: ISignalCache<Schema> = {};
+
+        private _depsMap: {
+            [key: string]: Array<string>;
+        };
+        private _properties: IHash = {};
 
         constructor(args: Schema) {
             super();
 
-            Object.defineProperties(this, {
-                _fields: {
-                    value: {},
-                    enumerable: false
-                }
-            });
-
-            let fields = <any>args,
-                self = <any>this;
-
-            for (let n in fields) {
-                if (fields.hasOwnProperty(n)) {
-                    self[n] = fields[n];
-                }
-            }
+            this.createSignals();
+            this.initProperties(args);
+            this.enableSignals();
         }
 
         public toJSON(): Schema {
@@ -43,45 +82,137 @@ module Headlight {
         }
 
         public static keys(model: Model<any>): Array<string> {
-            return Object.keys(model._fields);
+            let m = <any>model;
+            return Object.keys(m.PROPS);
+        }
+
+        private createSignals(): void {
+            let fields = Model.keys(this);
+
+            for (let field of fields) {
+                this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + field] = new Signal();
+                this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + field].disable();
+            }
+
+            this.signals[EVENTS.CHANGE] = new Signal();
+            this.signals[EVENTS.CHANGE].disable();
+
+            this.on = {
+                change: onChange.bind(this)
+            };
+        }
+
+        private initProperties(args: Schema): void {
+            let fields = <any>args,
+                self = <any>this;
+
+            for (let n in fields) {
+                if (fields.hasOwnProperty(n)) {
+                    self[n] = fields[n];
+                }
+            }
+        }
+
+        private enableSignals(): void {
+            let signals = Object.keys(this.signals);
+
+            for (var i = signals.length; i--;) {
+                this.signals[signals[i]].enable();
+            }
         }
     }
 
+    // todo Написать честный тип вместо any
     export function dProperty(...args: Array<any>): any {
-        let decorateProperty = function (target: Object,
+        let decorateProperty = function (target: any,
                                          key: string,
                                          descriptor?: TypedPropertyDescriptor<any>): any {
-            (function (k: string, C?: any): void {
+            function dispatchSignals(prop: any, newVal: any, prev: any): void {
+                if (newVal !== prev) {
+                    this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + prop].dispatch({
+                        model: this,
+                        value: newVal,
+                        previous: prev
+                    });
+
+                    let deps = this._depsMap[prop],
+                        d: string,
+                        prevValue: any,
+                        currValue: any;
+
+                    for (var j = deps.length; j--;) {
+                        d = deps[j];
+                        prevValue = this._properties[d];
+                        currValue = this[d];
+
+                        if (currValue !== prevValue) {
+                            this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + d].dispatch({
+                                model: this,
+                                value: currValue,
+                                previous: prevValue
+                            });
+                        }
+                    }
+
+                    this.signals[EVENTS.CHANGE].dispatch({
+                        model: this
+                    });
+                }
+            };
+
+            target.PROPS = target.PROPS || {};
+            target._depsMap = target._depsMap || {};
+            target.PROPS[key] = key;
+            target._depsMap[key] = [];
+
+            (function (k: string, ConstructorOrDeps?: any): void {
                 if (!descriptor) {
                     Object.defineProperty(target, key, {
                         get: function (): any {
-                            return this._fields[k];
+                            return this._properties[k];
                         },
                         set: function (newVal: any): void {
-                            this._fields[k] = C ? new C(newVal) : newVal;
+                            let prev = this._properties[k];
 
-                            //todo Signal dispatching
+                            //todo добавить проверку на instance of Collection
+                            this._properties[k] = (ConstructorOrDeps && !(ConstructorOrDeps instanceof Model))
+                                ? new ConstructorOrDeps(newVal) : newVal;
+
+                            dispatchSignals.call(this, k, this._properties[k], prev);
                         },
                         enumerable: true,
                         configurable: true
                     });
                 } else {
+                    if (ConstructorOrDeps) {
+                        let deps: Array<string> = ConstructorOrDeps.call(target);
+
+                        for (let i = deps.length; i--;) {
+                            let d = target._depsMap[deps[i]];
+
+                            if (d && d.indexOf(k) === -1) {
+                                d.push(k);
+                            }
+                        }
+                    }
+
                     let oldGet = descriptor.get,
                         oldSet = descriptor.set;
 
                     descriptor.get = function (): any {
-                        return oldGet.call(this);
+                        return this._properties[k] = oldGet.call(this);
                     };
-                    descriptor.set = function (newVal1: any): void {
-                        oldSet.call(this, newVal1);
-                        //todo Signal dispatching
+                    descriptor.set = function (newVal: any): void {
+                        let prev = this[k];
+
+                        oldSet.call(this, newVal);
+
+                        dispatchSignals.call(this, k, this[k], prev);
                     };
                     descriptor.enumerable = true;
                     descriptor.configurable = true;
                 }
-
-                //todo Signal creating
-            })(key, (args.length === 1) ? args[0] : undefined);
+            })(key, (args.length === 1 && typeof args[0] === BASE_TYPES.FUNCTION) ? args[0] : undefined);
 
             return descriptor;
         };
