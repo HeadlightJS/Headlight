@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "",
   "main": "",
-  "directories": {
-    "test": "test"
-  },
   "dependencies": {},
   "devDependencies": {
     "karma": "^0.13.14",
@@ -19,7 +16,7 @@
     "typescript": "^1.6.2"
   },
   "scripts": {
-    "pretest": "tsc karma.conf.ts && tsc -p ./ && tsc -p tests/",
+    "pretest": "sh pretest.sh",
     "test": "karma start"
   },
   "repository": {

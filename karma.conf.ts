@@ -17,7 +17,7 @@ module.exports = function(config: any): void {
     // list of files / patterns to load in the browser
     files: [
       './node_modules/phantomjs-polyfill/bind-polyfill.js',
-      'dist/headlight.js',
+      'dist/headlight.processed.js',
       'tests/**/*.test.js'
     ],
 
@@ -33,7 +33,7 @@ module.exports = function(config: any): void {
       // source files, that you wanna generate coverage for
       // do not include tests or libraries
       // (these files will be instrumented by Istanbul)
-      'dist/headlight.js': ['coverage']
+      'dist/headlight.processed.js': ['coverage']
     },
 
     // test results reporter to use
@@ -76,10 +76,10 @@ module.exports = function(config: any): void {
       dir : 'coverage/',
       check: {
         global: {
-          statements: 90,
-          lines: 90,
-          functions: 90,
-          branches: 90
+          statements: 95,
+          lines: 95,
+          functions: 95,
+          branches: 95
         }
       }
     }
