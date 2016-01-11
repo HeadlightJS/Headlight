@@ -13,9 +13,7 @@ module Headlight {
         public cid: string;
         private static cidMap: ICidMap = {};
 
-        protected cidPrefix(): string {
-            return 'b';
-        }
+        protected abstract cidPrefix(): string;
 
         constructor() {
             this.cid = Base.generateCid(this.cidPrefix());
