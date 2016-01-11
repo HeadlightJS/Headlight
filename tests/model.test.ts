@@ -57,11 +57,11 @@ describe('Model.', () => {
 
     let person: Person;
 
-    const PERSON_NAME = 'Anna.',
-        PERSON_SURNAME = 'Ivanova.',
+    const PERSON_NAME = 'Anna',
+        PERSON_SURNAME = 'Ivanova',
         PERSON_AGE = 38,
-        SON_NAME = 'Boris.',
-        SON_SURNAME = 'Ivanov.',
+        SON_NAME = 'Boris',
+        SON_SURNAME = 'Ivanov',
         SON_AGE = 13,
         MAIN_PERSON = {
             name: PERSON_NAME,
@@ -76,6 +76,11 @@ describe('Model.', () => {
 
     beforeEach(() => {
         person = new Person(MAIN_PERSON);
+    });
+
+    it('Creates properly', () => {
+        assert.instanceOf(person, Headlight.Receiver);
+        assert.equal('m', person.cid[0]);
     });
 
     describe('Fields and computeds.', () => {
@@ -105,6 +110,16 @@ describe('Model.', () => {
 
 
     describe('Signals.', () => {
+        it('Creating.', () => {
+            assert.instanceOf(person.signals.change, Headlight.Signal);
+
+            let props = Headlight.Model.keys(person);
+
+            for (var i = 0; i < props.length; i++) {
+                assert.instanceOf(person.signals[props[i]], Headlight.Signal);
+            }
+        });
+
         describe('Dispatching.', () => {
             let mainChangeObj: Headlight.IChangeModelFieldParam<IPerson>,
                 changeObj: Headlight.IChangeModelFieldParam<IPerson>,
@@ -150,10 +165,10 @@ describe('Model.', () => {
                 person.on.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     mainChangeObj = args;
                 });
-                person.on.change(person.PROPS.name, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.on[person.PROPS.name]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     changeObj = args;
                 });
-                person.on.change(person.PROPS.fullname, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.on[person.PROPS.fullname]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     computedChangeObj = args;
                 });
 
@@ -172,10 +187,10 @@ describe('Model.', () => {
                 person.once.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     mainChangeObj = args;
                 });
-                person.once.change(person.PROPS.name, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.once[person.PROPS.name]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     changeObj = args;
                 });
-                person.once.change(person.PROPS.fullname, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.once[person.PROPS.fullname]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     computedChangeObj = args;
                 });
 

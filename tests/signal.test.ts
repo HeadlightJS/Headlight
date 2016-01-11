@@ -27,6 +27,10 @@ describe('Signal.', () => {
         signal = new Headlight.Signal<any>();
     });
 
+    it('Creates properly', () => {
+        assert.equal('s', signal.cid[0]);
+    });
+
     it('Adds new callback function and dispach signal', () => {
         let h = new Handler();
         const NAME = 'Joe';

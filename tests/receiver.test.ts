@@ -24,6 +24,10 @@ describe('Receiver.', () => {
         receiver = new SimpleReceiver();
     });
 
+    it('Creates properly', () => {
+        assert.equal('r', receiver.cid[0]);
+    });
+
     it('Receive signal.', () => {
         let signal = new Headlight.Signal<void>();
         let signal2 = new Headlight.Signal<void>();

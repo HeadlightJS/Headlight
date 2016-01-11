@@ -11,7 +11,7 @@ module Headlight {
         [signalCid: string]: ISignal<IChangeModelFieldParam<Schema>>;
     }
 
-    function onChangeDummy(fieldOrCallback: any,
+    function onChange(fieldOrCallback: any,
                            callbackOrReceiver: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
                            receiver: IReceiver,
                            once: boolean): void {
@@ -32,20 +32,6 @@ module Headlight {
                 <IReceiver>receiver
             );
         }
-    }
-
-    function onChange(fieldOrCallback: any,
-                      callbackOrReceiver?: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
-                      receiver?: IReceiver): void {
-
-        return onChangeDummy.call(this, fieldOrCallback, callbackOrReceiver, receiver, false);
-    }
-
-    function onChangeOnce(fieldOrCallback: any,
-                          callbackOrReceiver?: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
-                          receiver?: IReceiver): void {
-
-        return onChangeDummy.call(this, fieldOrCallback, callbackOrReceiver, receiver, true);
     }
 
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
@@ -88,25 +74,53 @@ module Headlight {
             return Object.keys(m.PROPS);
         }
 
+        protected cidPrefix(): string {
+            return 'm';
+        }
+
         private createSignals(): void {
-            let fields = Model.keys(this);
+            let fields = Model.keys(this),
+                self = this;
 
             this.signals = {
                 change: new Signal()
             };
             this.signals.change.disable();
 
+            this.on = {
+                change: (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                         receiver?: IReceiver): void => {
+                    onChange.call(this, callback, receiver);
+                }
+            };
+            this.once = {
+                change: (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                         receiver?: IReceiver): void => {
+                    onChange.call(this, callback, receiver, null, true);
+                }
+            };
+
             for (let field of fields) {
                 this.signals[field] = new Signal();
                 this.signals[field].disable();
-            }
 
-            this.on = {
-                change: onChange.bind(this)
-            };
-            this.once = {
-                change: onChangeOnce.bind(this)
-            };
+                this.on[field] = (function(f: string): (callback: ISignalCallback<IChangeModelParam<Schema>>,
+                                                        receiver?: IReceiver) => void {
+                    return (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                            receiver?: IReceiver): void => {
+
+                        onChange.call(self, f, callback, receiver);
+                    };
+                })(field);
+                this.once[field] = (function(f: string): (callback: ISignalCallback<IChangeModelParam<Schema>>,
+                                                        receiver?: IReceiver) => void {
+                    return (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                            receiver?: IReceiver): void => {
+
+                        onChange.call(self, f, callback, receiver, true);
+                    };
+                })(field);
+            }
         }
 
         private initProperties(args: Schema): void {

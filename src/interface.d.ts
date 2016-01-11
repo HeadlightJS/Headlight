@@ -67,7 +67,7 @@ declare module Headlight {
 
     export interface IModelSignalsListener<Schema> {
         change(callback: ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver): void;
-        change(field: any, callback: ISignalCallback<IChangeModelFieldParam<Schema>>, receiver?: IReceiver): void;
+        [key: string]: (callback: ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver) => void;
     }
 
     export interface IModel<Schema> extends IReceiver {
