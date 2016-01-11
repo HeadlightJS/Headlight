@@ -70,7 +70,7 @@ declare module Headlight {
         change(field: any, callback: ISignalCallback<IChangeModelFieldParam<Schema>>, receiver?: IReceiver): void;
     }
 
-    export interface IModel<Schema> extends Base {
+    export interface IModel<Schema> extends IReceiver {
         on: IModelSignalsListener<Schema>;
         once: IModelSignalsListener<Schema>;
         PROPS: Schema;

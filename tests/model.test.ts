@@ -3,7 +3,7 @@
 ///<reference path="../src/Base.ts"/>
 ///<reference path="../src/Model.ts"/>
 
-describe('Model', () => {
+describe('Model.', () => {
     let assert = chai.assert;
 
     interface IPerson {
@@ -57,11 +57,11 @@ describe('Model', () => {
 
     let person: Person;
 
-    const PERSON_NAME = 'Anna',
-        PERSON_SURNAME = 'Ivanova',
+    const PERSON_NAME = 'Anna.',
+        PERSON_SURNAME = 'Ivanova.',
         PERSON_AGE = 38,
-        SON_NAME = 'Boris',
-        SON_SURNAME = 'Ivanov',
+        SON_NAME = 'Boris.',
+        SON_SURNAME = 'Ivanov.',
         SON_AGE = 13,
         MAIN_PERSON = {
             name: PERSON_NAME,
@@ -78,8 +78,8 @@ describe('Model', () => {
         person = new Person(MAIN_PERSON);
     });
 
-    describe('Fields and computeds', () => {
-        it('Inits fields with computeds', () => {
+    describe('Fields and computeds.', () => {
+        it('Inits fields with computeds.', () => {
 
             assert.equal(person.name, PERSON_NAME);
             assert.equal(person.surname, PERSON_SURNAME);
@@ -88,8 +88,8 @@ describe('Model', () => {
             assert.instanceOf(person.son, Person);
         });
 
-        it('Change computed field', () => {
-            const NEW_NAME = 'Elena',
+        it('Change computed field.', () => {
+            const NEW_NAME = 'Elena.',
                 OLD_FULL_NAME = PERSON_NAME + ' ' + PERSON_SURNAME;
 
             person.name = NEW_NAME;
@@ -104,8 +104,8 @@ describe('Model', () => {
     });
 
 
-    describe('Signals', () => {
-        describe('Dispatching', () => {
+    describe('Signals.', () => {
+        describe('Dispatching.', () => {
             let mainChangeObj: Headlight.IChangeModelFieldParam<IPerson>,
                 changeObj: Headlight.IChangeModelFieldParam<IPerson>,
                 computedChangeObj: Headlight.IChangeModelFieldParam<IPerson>;
@@ -121,32 +121,32 @@ describe('Model', () => {
             function checkDispatching(): void {
                 person.name = PERSON_NAME;
 
-                assert.isUndefined(mainChangeObj, 'Setting same value to a field should`t provoke change signal');
-                assert.isUndefined(changeObj, 'Setting same value to a field should`t provoke change signal');
+                assert.isUndefined(mainChangeObj, 'Setting same value to a field should`t provoke change signal.');
+                assert.isUndefined(changeObj, 'Setting same value to a field should`t provoke change signal.');
                 assert.isUndefined(computedChangeObj,
-                    'Setting same value to a dependence field should`t provoke change signal');
+                    'Setting same value to a dependence field should`t provoke change signal.');
 
                 person.name = NEW_NAME;
 
                 assert.deepEqual(mainChangeObj, {
                     model: person
-                }, 'Setting new value to a field should provoke change signal');
+                }, 'Setting new value to a field should provoke change signal.');
 
 
                 assert.deepEqual(changeObj, {
                     model: person,
                     value: person.name,
                     previous: PERSON_NAME
-                }, 'Setting new value to a field should provoke change signal');
+                }, 'Setting new value to a field should provoke change signal.');
 
                 assert.deepEqual(computedChangeObj, {
                     model: person,
                     value: person.name + ' ' + PERSON_SURNAME,
                     previous: PERSON_NAME + ' ' + PERSON_SURNAME
-                }, 'Setting new value to a dependence field should provoke change signal');
+                }, 'Setting new value to a dependence field should provoke change signal.');
             }
 
-            it ('Listen to signals via .on()', () => {
+            it ('Listen to signals via .on().', () => {
                 person.on.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     mainChangeObj = args;
                 });
@@ -168,7 +168,7 @@ describe('Model', () => {
                 checkDispatching();
             });
 
-            it ('Listen to signals via .once()', () => {
+            it ('Listen to signals via .once().', () => {
                 person.once.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
                     mainChangeObj = args;
                 });
@@ -192,25 +192,69 @@ describe('Model', () => {
                 assert.isUndefined(computedChangeObj, 'Handler should be called only once.');
             });
 
-            it ('Listen to signals via Receiver', () => {
-                person.on.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
-                    mainChangeObj = args;
-                });
-                person.on.change(person.PROPS.name, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
-                    changeObj = args;
-                });
-                person.on.change(person.PROPS.fullname, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
-                    computedChangeObj = args;
-                });
+            it ('Listen to signals via Receiver#receive().', () => {
+                person.receive<Headlight.IChangeModelFieldParam<IPerson>>(
+                    person.signals.change, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                        mainChangeObj = args;
+                    });
+
+                person.receive<Headlight.IChangeModelFieldParam<IPerson>>(
+                    person.signals[person.PROPS.name],
+                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                        changeObj = args;
+                    });
+
+                person.receive<Headlight.IChangeModelFieldParam<IPerson>>(
+                    person.signals[person.PROPS.fullname],
+                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                        computedChangeObj = args;
+                    });
+
+                checkDispatching();
+
+                person.name = PERSON_NAME;
+
+                mainChangeObj = undefined;
+                changeObj = undefined;
+                computedChangeObj = undefined;
 
                 checkDispatching();
             });
 
+            it ('Listen to signals via Receiver#receiveOnce().', () => {
+                person.receiveOnce<Headlight.IChangeModelFieldParam<IPerson>>(
+                    person.signals.change, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                        mainChangeObj = args;
+                    });
 
+                person.receiveOnce<Headlight.IChangeModelFieldParam<IPerson>>(
+                    person.signals[person.PROPS.name],
+                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                        changeObj = args;
+                    });
+
+                person.receiveOnce<Headlight.IChangeModelFieldParam<IPerson>>(
+                    person.signals[person.PROPS.fullname],
+                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                        computedChangeObj = args;
+                    });
+
+                checkDispatching();
+
+                mainChangeObj = undefined;
+                changeObj = undefined;
+                computedChangeObj = undefined;
+
+                person.name = PERSON_NAME;
+
+                assert.isUndefined(mainChangeObj, 'Handler should be called only once.');
+                assert.isUndefined(changeObj, 'Handler should be called only once.');
+                assert.isUndefined(computedChangeObj, 'Handler should be called only once.');
+            });
         });
     });
 
-    it('Get JSON', () => {
+    it('Get JSON.', () => {
         assert.deepEqual(person.toJSON(), {
             name: PERSON_NAME,
             surname: PERSON_SURNAME,

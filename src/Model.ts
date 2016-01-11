@@ -1,4 +1,4 @@
-///<reference path="Base.ts"/>
+///<reference path="Receiver.ts"/>
 ///<reference path="Signal.ts"/>
 
 module Headlight {
@@ -7,7 +7,8 @@ module Headlight {
     const EVENT_SEPARATOR = ':';
 
     interface ISignalCache<Schema> {
-        [signalCid: string]: ISignal<Schema>;
+        change: ISignal<IChangeModelFieldParam<Schema>>;
+        [signalCid: string]: ISignal<IChangeModelFieldParam<Schema>>;
     }
 
     function onChangeDummy(fieldOrCallback: any,
@@ -19,13 +20,13 @@ module Headlight {
             signal: any;
 
         if (typeof fieldOrCallback === 'function') {
-            signal = <any>self.signals[EVENTS.CHANGE];
+            signal = <any>self.signals.change;
             signal[method](
                 <ISignalCallback<IChangeModelFieldParam<any>>>fieldOrCallback,
                 <IReceiver>callbackOrReceiver
             );
         } else {
-            signal = <any>self.signals[EVENTS.CHANGE + EVENT_SEPARATOR + fieldOrCallback];
+            signal = <any>self.signals[fieldOrCallback];
             signal[method](
                 <ISignalCallback<IChangeModelFieldParam<any>>>callbackOrReceiver,
                 <IReceiver>receiver
@@ -47,11 +48,11 @@ module Headlight {
         return onChangeDummy.call(this, fieldOrCallback, callbackOrReceiver, receiver, true);
     }
 
-    export abstract class Model<Schema> extends Base implements IModel<Schema> {
+    export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
         public on: IModelSignalsListener<Schema>;
         public once: IModelSignalsListener<Schema>;
         public PROPS: Schema;
-        public signals: ISignalCache<Schema> = {};
+        public signals: ISignalCache<Schema>;
 
         private _depsMap: {
             [key: string]: Array<string>;
@@ -90,13 +91,15 @@ module Headlight {
         private createSignals(): void {
             let fields = Model.keys(this);
 
-            for (let field of fields) {
-                this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + field] = new Signal();
-                this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + field].disable();
-            }
+            this.signals = {
+                change: new Signal()
+            };
+            this.signals.change.disable();
 
-            this.signals[EVENTS.CHANGE] = new Signal();
-            this.signals[EVENTS.CHANGE].disable();
+            for (let field of fields) {
+                this.signals[field] = new Signal();
+                this.signals[field].disable();
+            }
 
             this.on = {
                 change: onChange.bind(this)
@@ -133,7 +136,7 @@ module Headlight {
                                          descriptor?: TypedPropertyDescriptor<any>): any {
             function dispatchSignals(prop: any, newVal: any, prev: any): void {
                 if (newVal !== prev) {
-                    this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + prop].dispatch({
+                    this.signals[prop].dispatch({
                         model: this,
                         value: newVal,
                         previous: prev
@@ -150,7 +153,7 @@ module Headlight {
                         currValue = this[d];
 
                         if (currValue !== prevValue) {
-                            this.signals[EVENTS.CHANGE + EVENT_SEPARATOR + d].dispatch({
+                            this.signals[d].dispatch({
                                 model: this,
                                 value: currValue,
                                 previous: prevValue
@@ -158,7 +161,7 @@ module Headlight {
                         }
                     }
 
-                    this.signals[EVENTS.CHANGE].dispatch({
+                    this.signals.change.dispatch({
                         model: this
                     });
                 }
