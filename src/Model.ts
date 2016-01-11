@@ -49,7 +49,8 @@ module Headlight {
 
     export abstract class Model<Schema> extends Base implements IModel<Schema> {
         public on: IModelSignalsListener<Schema>;
-        public PROPS: Schema & IHash;
+        public once: IModelSignalsListener<Schema>;
+        public PROPS: Schema;
         public signals: ISignalCache<Schema> = {};
 
         private _depsMap: {
@@ -100,6 +101,9 @@ module Headlight {
             this.on = {
                 change: onChange.bind(this)
             };
+            this.once = {
+                change: onChangeOnce.bind(this)
+            };
         }
 
         private initProperties(args: Schema): void {
@@ -116,7 +120,7 @@ module Headlight {
         private enableSignals(): void {
             let signals = Object.keys(this.signals);
 
-            for (var i = signals.length; i--;) {
+            for (var i = signals.length; i--; ) {
                 this.signals[signals[i]].enable();
             }
         }
@@ -140,7 +144,7 @@ module Headlight {
                         prevValue: any,
                         currValue: any;
 
-                    for (var j = deps.length; j--;) {
+                    for (var j = deps.length; j--; ) {
                         d = deps[j];
                         prevValue = this._properties[d];
                         currValue = this[d];
@@ -187,7 +191,7 @@ module Headlight {
                     if (ConstructorOrDeps) {
                         let deps: Array<string> = ConstructorOrDeps.call(target);
 
-                        for (let i = deps.length; i--;) {
+                        for (let i = deps.length; i--; ) {
                             let d = target._depsMap[deps[i]];
 
                             if (d && d.indexOf(k) === -1) {

@@ -70,15 +70,10 @@ declare module Headlight {
         change(field: any, callback: ISignalCallback<IChangeModelFieldParam<Schema>>, receiver?: IReceiver): void;
     }
 
-    export interface ISignalShemaHash<Schema> {
-
-    }
-
-    export interface IModel<Schema> extends IBase {
+    export interface IModel<Schema> extends Base {
         on: IModelSignalsListener<Schema>;
-        PROPS: Schema & {
-            [key: string]: string;
-        };
+        once: IModelSignalsListener<Schema>;
+        PROPS: Schema;
         //signals: ISignalShemaHash<Schema>;
 
         toJSON(): Schema;

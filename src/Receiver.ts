@@ -5,7 +5,7 @@ module Headlight {
     'use strict';
 
     export class Receiver extends Base implements IReceiver {
-        private signals: ISignalCache = {};
+        private _signals: ISignalCache = {};
 
         public receive<CallbackParam>(signal: ISignal<CallbackParam>,
                                       callback: ISignalCallback<CallbackParam>): IReceiver {
@@ -27,11 +27,11 @@ module Headlight {
                 this.resetSignals();
             } else if (callback === undefined) {
                 if (typeof signalOrCallback === BASE_TYPES.FUNCTION) {
-                    let cids = Object.keys(this.signals),
+                    let cids = Object.keys(this._signals),
                         c = <ISignalCallback<CallbackParam>>signalOrCallback;
 
                     for (let i = cids.length; i--; ) {
-                        this.signals[cids[i]].remove(c, this);
+                        this._signals[cids[i]].remove(c, this);
                     }
                 } else {
                     let s = <ISignal<CallbackParam>>signalOrCallback;
@@ -48,14 +48,14 @@ module Headlight {
         }
 
         public addSignal(signal: ISignal<any>): IReceiver {
-            this.signals[signal.cid] = signal;
+            this._signals[signal.cid] = signal;
 
             return this;
         }
 
         public removeSignal(signal: ISignal<any>): IReceiver {
             if (this.hasSignal(signal)) {
-                delete this.signals[signal.cid];
+                delete this._signals[signal.cid];
 
                 signal.remove(this);
             }
@@ -64,15 +64,15 @@ module Headlight {
         }
 
         public hasSignal(signal: ISignal<any>): boolean {
-            return signal.cid in this.signals;
+            return signal.cid in this._signals;
         }
 
         public getSignals(): Array<ISignal<any>> {
-            let cids = Object.keys(this.signals),
+            let cids = Object.keys(this._signals),
                 res: Array<ISignal<any>> = [];
 
             for (let i = cids.length; i--; ) {
-                res.push(this.signals[cids[i]]);
+                res.push(this._signals[cids[i]]);
             }
 
             return res;
@@ -83,13 +83,13 @@ module Headlight {
         }
 
         private resetSignals(): IReceiver {
-            let cids = Object.keys(this.signals);
+            let cids = Object.keys(this._signals);
 
             for (let i = cids.length; i--; ) {
-                this.signals[cids[i]].remove(this);
+                this._signals[cids[i]].remove(this);
             }
 
-            this.signals = {};
+            this._signals = {};
 
             return this;
         }
