@@ -33,7 +33,7 @@ module Headlight {
         toJSON(): Schema;
     }
 
-    function onChange<Schema, Type>(fieldOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
+    function onChange<Schema, Type>(propOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
                                   TSignalCallbackOnChangeModelProp<Schema, Type>,
                               callbackOrReceiver: TSignalCallbackOnChangeModel<Schema> |
                                   TSignalCallbackOnChangeModelProp<Schema, Type> | IReceiver,
@@ -44,14 +44,14 @@ module Headlight {
             method = once ? 'addOnce' : 'add',
             signal: TSignalOnChangeModel<Schema> | TSignalOnChangeModelProp<Schema, Type> ;
 
-        if (typeof fieldOrCallback === 'function') {
+        if (typeof propOrCallback === 'function') {
             signal = <TSignalOnChangeModel<Schema>>self.signals.change;
             signal[method](
-                <TSignalCallbackOnChangeModel<Schema>>fieldOrCallback,
+                <TSignalCallbackOnChangeModel<Schema>>propOrCallback,
                 <IReceiver>callbackOrReceiver
             );
         } else {
-            signal = <TSignalOnChangeModelProp<Schema, Type>>self.signals[<string>fieldOrCallback];
+            signal = <TSignalOnChangeModelProp<Schema, Type>>self.signals[<string>propOrCallback];
             signal[method](
                 <TSignalCallbackOnChangeModelProp<Schema, Type>>callbackOrReceiver,
                 <IReceiver>receiver
@@ -104,7 +104,8 @@ module Headlight {
         }
 
         private createSignals(): void {
-            let fields = Model.keys(this),
+            let props = Model.keys(this),
+                prop: string,
                 self = this;
 
             this.signals = {
@@ -125,26 +126,28 @@ module Headlight {
                 }
             };
 
-            for (let field of fields) {
-                this.signals[field] = new Signal();
-                this.signals[field].disable();
+            for (var i = props.length; i--; ) {
+                prop = props[i];
 
-                this.on[field] =
+                this.signals[prop] = new Signal();
+                this.signals[prop].disable();
+
+                this.on[prop] =
                     (function(f: string): (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                            receiver?: IReceiver) => void {
                         return (callback: TSignalCallbackOnChangeModelProp<Schema, any>,
                                 receiver?: IReceiver): void => {
                             onChange.call(self, f, callback, receiver);
                         };
-                    })(field);
-                this.once[field] =
+                    })(prop);
+                this.once[prop] =
                     (function(f: string): (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                            receiver?: IReceiver) => void {
                         return (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                 receiver?: IReceiver): void => {
                             onChange.call(self, f, callback, receiver, true);
                         };
-                    })(field);
+                    })(prop);
             }
         }
 
@@ -201,7 +204,7 @@ module Headlight {
                         model: this
                     });
                 }
-            };
+            }
 
             target.PROPS = target.PROPS || {};
             target._depsMap = target._depsMap || {};
