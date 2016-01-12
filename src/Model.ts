@@ -5,48 +5,65 @@
 module Headlight {
     'use strict';
 
+    type TSignalOnChangeModel<S> = ISignal<Model.IChangeModelParam<S>>;
+    type TSignalOnChangeModelProp<S, T> = ISignal<Model.IChangeModelPropParam<S, T>>;
+
+    type TSignalCallbackOnChangeModel<S> = Signal.ISignalCallback<Model.IChangeModelParam<S>>;
+    type TSignalCallbackOnChangeModelProp<S, T> = Signal.ISignalCallback<Model.IChangeModelPropParam<S, T>>;
+
+    type TSignalOnChangeModelAnyProp<S> = TSignalOnChangeModelProp<S, any>;
+    type TSignalCallbackOnChangeModelAnyProp<S> = TSignalCallbackOnChangeModelProp<S, any>;
+
+    interface ISignalHash<Schema> {
+        change: TSignalOnChangeModel<Schema>;
+        [signalCid: string]: TSignalOnChangeModelAnyProp<Schema>;
+    }
+
+    export interface IModelSignalsListener<Schema> {
+        change(callback: TSignalCallbackOnChangeModel<Schema>, receiver?: IReceiver): void;
+        [key: string]: (callback: TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
+    }
+
     export interface IModel<Schema> extends IReceiver {
-        on: Model.IModelSignalsListener<Schema>;
-        once: Model.IModelSignalsListener<Schema>;
+        on: IModelSignalsListener<Schema>;
+        once: IModelSignalsListener<Schema>;
         PROPS: Schema;
-        //signals: ISignalShemaHash<Schema>;
+        signals: ISignalHash<Schema>;
 
         toJSON(): Schema;
     }
 
-    interface ISignalCache<Schema> {
-        change: ISignal<Model.IChangeModelFieldParam<Schema>>;
-        [signalCid: string]: ISignal<Model.IChangeModelFieldParam<Schema>>;
-    }
+    function onChange<Schema, Type>(fieldOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
+                                  TSignalCallbackOnChangeModelProp<Schema, Type>,
+                              callbackOrReceiver: TSignalCallbackOnChangeModel<Schema> |
+                                  TSignalCallbackOnChangeModelProp<Schema, Type> | IReceiver,
+                              receiver?: IReceiver,
+                              once?: boolean): void {
 
-    function onChange(fieldOrCallback: any,
-                           callbackOrReceiver: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>> | IReceiver,
-                           receiver: IReceiver,
-                           once: boolean): void {
-        let self = <Model<any>>this,
+        let self = <Model<Schema>>this,
             method = once ? 'addOnce' : 'add',
-            signal: any;
+            signal: TSignalOnChangeModel<Schema> | TSignalOnChangeModelProp<Schema, Type> ;
 
         if (typeof fieldOrCallback === 'function') {
-            signal = <any>self.signals.change;
+            signal = <TSignalOnChangeModel<Schema>>self.signals.change;
             signal[method](
-                <Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>>fieldOrCallback,
+                <TSignalCallbackOnChangeModel<Schema>>fieldOrCallback,
                 <IReceiver>callbackOrReceiver
             );
         } else {
-            signal = <any>self.signals[fieldOrCallback];
+            signal = <TSignalOnChangeModelProp<Schema, Type>>self.signals[<string>fieldOrCallback];
             signal[method](
-                <Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>>callbackOrReceiver,
+                <TSignalCallbackOnChangeModelProp<Schema, Type>>callbackOrReceiver,
                 <IReceiver>receiver
             );
         }
     }
 
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
-        public on: Model.IModelSignalsListener<Schema>;
-        public once: Model.IModelSignalsListener<Schema>;
+        public on: IModelSignalsListener<Schema>;
+        public once: IModelSignalsListener<Schema>;
         public PROPS: Schema;
-        public signals: ISignalCache<Schema>;
+        public signals: ISignalHash<Schema>;
 
         private _depsMap: {
             [key: string]: Array<string>;
@@ -62,23 +79,23 @@ module Headlight {
         }
 
         public toJSON(): Schema {
-            let o: any = <any>{},
-                fields: Array<string> = Model.keys(this),
-                self: any = <any>this;
+            let o: Schema = <Schema>{},
+                props: Array<string> = Model.keys(this),
+                prop: string,
+                value: any;
 
-            for (let field of fields) {
-                if (self[field] instanceof Model) {
-                    o[field] = self[field].toJSON();
-                } else {
-                    o[field] = <any>self[field];
-                }
+            for (var i = props.length; i--; ) {
+                prop = props[i];
+                value = this[prop];
+
+                o[prop] = (value instanceof Model) ? value.toJSON() : value;
             }
 
-            return <Schema>o;
+            return o;
         }
 
-        public static keys(model: Model<any>): Array<string> {
-            let m = <any>model;
+        public static keys<Schema>(model: Model<Schema>): Array<string> {
+            let m = <Model<Schema>>model;
             return Object.keys(m.PROPS);
         }
 
@@ -96,13 +113,13 @@ module Headlight {
             this.signals.change.disable();
 
             this.on = {
-                change: (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
+                change: (callback: TSignalCallbackOnChangeModel<Schema>,
                          receiver?: IReceiver): void => {
                     onChange.call(this, callback, receiver);
                 }
             };
             this.once = {
-                change: (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
+                change: (callback: TSignalCallbackOnChangeModel<Schema>,
                          receiver?: IReceiver): void => {
                     onChange.call(this, callback, receiver, null, true);
                 }
@@ -112,36 +129,29 @@ module Headlight {
                 this.signals[field] = new Signal();
                 this.signals[field].disable();
 
-                this.on[field] = (function(f: string): (
-                    callback: Signal.ISignalCallback<Model.IChangeModelParam<Schema>>,
-                    receiver?: IReceiver) => void {
-
-                    return (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
-                            receiver?: IReceiver): void => {
-
-                        onChange.call(self, f, callback, receiver);
-                    };
-                })(field);
-                this.once[field] = (function(f: string): (
-                    callback: Signal.ISignalCallback<Model.IChangeModelParam<Schema>>,
-                    receiver?: IReceiver) => void {
-
-                    return (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
-                            receiver?: IReceiver): void => {
-
-                        onChange.call(self, f, callback, receiver, true);
-                    };
-                })(field);
+                this.on[field] =
+                    (function(f: string): (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
+                                           receiver?: IReceiver) => void {
+                        return (callback: TSignalCallbackOnChangeModelProp<Schema, any>,
+                                receiver?: IReceiver): void => {
+                            onChange.call(self, f, callback, receiver);
+                        };
+                    })(field);
+                this.once[field] =
+                    (function(f: string): (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
+                                           receiver?: IReceiver) => void {
+                        return (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
+                                receiver?: IReceiver): void => {
+                            onChange.call(self, f, callback, receiver, true);
+                        };
+                    })(field);
             }
         }
 
         private initProperties(args: Schema): void {
-            let fields = <any>args,
-                self = <any>this;
-
-            for (let n in fields) {
-                if (fields.hasOwnProperty(n)) {
-                    self[n] = fields[n];
+            for (let a in args) {
+                if (args.hasOwnProperty(a)) {
+                    this[a] = args[a];
                 }
             }
         }
@@ -155,7 +165,6 @@ module Headlight {
         }
     }
 
-    // todo Написать честный тип вместо any
     export function dProperty(...args: Array<any>): any {
         let decorateProperty = function (target: any,
                                          key: string,
@@ -275,19 +284,9 @@ module Headlight {
             model: IModel<Schema>;
         }
 
-        export interface IChangeModelFieldParam<Schema> extends IChangeModelParam<Schema> {
-            value: any;
-            previous: any;
-        }
-
-        export interface IEventsHash<Schema> {
-            [key: string]: (callback: Signal.ISignalCallback<IChangeModelParam<Schema> |
-                IChangeModelFieldParam<Schema>>) => void;
-        }
-
-        export interface IModelSignalsListener<Schema> {
-            change(callback: Signal.ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver): void;
-            [key: string]: (callback: Signal.ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver) => void;
+        export interface IChangeModelPropParam<Schema, Type> extends IChangeModelParam<Schema> {
+            value: Type;
+            previous: Type;
         }
     }
 }

@@ -16,7 +16,7 @@
     "typescript": "^1.6.2"
   },
   "scripts": {
-    "pretest": "sh pretest.sh",
+    "pretest": "sh pretest.sh && exit 0",
     "test": "karma start"
   },
   "repository": {
