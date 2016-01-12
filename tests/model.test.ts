@@ -15,6 +15,7 @@ describe('Model.', () => {
         son?: IPerson;
 
         fullname?: string;
+        nameUpperCase?: string;
     }
 
     class Person extends Headlight.Model<IPerson> implements IPerson {
@@ -53,6 +54,12 @@ describe('Model.', () => {
             this.name = arr[0];
             this.surname = arr[1];
         }
+
+        @Headlight.dProperty(['name'])
+        get nameUpperCase(): string {
+            return this.name.toUpperCase();
+        }
+
     }
 
     let person: Person;
@@ -276,12 +283,14 @@ describe('Model.', () => {
             age: PERSON_AGE,
             patronymic: undefined,
             fullname: PERSON_NAME + ' ' + PERSON_SURNAME,
+            nameUpperCase: PERSON_NAME.toUpperCase(),
             son: {
                 name: SON_NAME,
                 surname: SON_SURNAME,
                 age: SON_AGE,
                 patronymic: undefined,
                 fullname: SON_NAME + ' ' + SON_SURNAME,
+                nameUpperCase: SON_NAME.toUpperCase(),
                 son: undefined
             }
         });

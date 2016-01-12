@@ -148,6 +148,7 @@ module Headlight {
         let decorateProperty = function (target: any,
                                          key: string,
                                          descriptor?: TypedPropertyDescriptor<any>): any {
+
             function dispatchSignals(prop: any, newVal: any, prev: any): void {
                 if (newVal !== prev) {
                     this.signals[prop].dispatch({
@@ -188,7 +189,7 @@ module Headlight {
 
             (function (k: string, ConstructorOrDeps?: any): void {
                 if (!descriptor) {
-                    Object.defineProperty(target, key, {
+                    Object.defineProperty(target, k, {
                         get: function (): any {
                             return this._properties[k];
                         },
@@ -206,7 +207,8 @@ module Headlight {
                     });
                 } else {
                     if (ConstructorOrDeps) {
-                        let deps: Array<string> = ConstructorOrDeps.call(target);
+                        let deps: Array<string> =
+                            Array.isArray(ConstructorOrDeps) ? ConstructorOrDeps : ConstructorOrDeps.call(target);
 
                         for (let i = deps.length; i--; ) {
                             let d = target._depsMap[deps[i]];
@@ -217,23 +219,34 @@ module Headlight {
                         }
                     }
 
-                    let oldGet = descriptor.get,
-                        oldSet = descriptor.set;
+                    let originalGet = descriptor.get,
+                        originalSet = descriptor.set;
+
+                    if (!originalGet) {
+                        throw Error('`get` accessor for property `' + k +
+                            '` of class `' + target.name + '` should be specified.');
+                    }
 
                     descriptor.get = function (): any {
-                        return this._properties[k] = oldGet.call(this);
+                        return this._properties[k] = originalGet.call(this);
                     };
-                    descriptor.set = function (newVal: any): void {
-                        let prev = this[k];
 
-                        oldSet.call(this, newVal);
+                    if (originalSet) {
+                        descriptor.set = function (newVal: any): void {
+                            let prev = this[k];
 
-                        dispatchSignals.call(this, k, this[k], prev);
-                    };
+                            originalSet.call(this, newVal);
+
+                            dispatchSignals.call(this, k, this[k], prev);
+                        };
+                    }
+
                     descriptor.enumerable = true;
                     descriptor.configurable = true;
                 }
-            })(key, (args.length === 1 && typeof args[0] === BASE_TYPES.FUNCTION) ? args[0] : undefined);
+            })(key,
+                (args.length === 1 && ((typeof args[0] === BASE_TYPES.FUNCTION) || Array.isArray(args[0])))
+                    ? args[0] : undefined);
 
             return descriptor;
         };
