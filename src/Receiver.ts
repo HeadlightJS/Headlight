@@ -1,34 +1,54 @@
 ///<reference path="Base.ts"/>
-///<reference path="interface.d.ts"/>
+///<reference path="Signal.ts"/>
 
 module Headlight {
     'use strict';
 
+    export interface IReceiver extends IBase {
+        receive<CallbackParam>(signal: ISignal<CallbackParam>,
+                               callback: Signal.ISignalCallback<CallbackParam>): IReceiver;
+        receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
+                                   callback: Signal.ISignalCallback<CallbackParam>): IReceiver;
+
+        stopReceiving(): IReceiver;
+        stopReceiving(signal: ISignal<any>): IReceiver;
+        stopReceiving(callback: Signal.ISignalCallback<any>): IReceiver;
+        stopReceiving<CallbackParam>(signal: ISignal<CallbackParam>,
+                                     callback: Signal.ISignalCallback<CallbackParam>): IReceiver;
+
+        addSignal(signal: ISignal<any>): IReceiver;
+        removeSignal(signal: ISignal<any>): IReceiver;
+
+        getSignals(): Array<ISignal<any>>;
+    }
+
     export class Receiver extends Base implements IReceiver {
-        private _signals: ISignalCache = {};
+        private _signals: Signal.ISignalCache = {};
 
         public receive<CallbackParam>(signal: ISignal<CallbackParam>,
-                                      callback: ISignalCallback<CallbackParam>): IReceiver {
+                                      callback: Signal.ISignalCallback<CallbackParam>): IReceiver {
             signal.add(callback, this);
 
             return this.addSignal(signal);
         }
 
         public receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
-                                          callback: ISignalCallback<CallbackParam>): IReceiver {
+                                          callback: Signal.ISignalCallback<CallbackParam>): IReceiver {
             signal.addOnce(callback, this);
 
             return this.addSignal(signal);
         }
 
-        public stopReceiving<CallbackParam>(signalOrCallback?: ISignal<CallbackParam> | ISignalCallback<CallbackParam>,
-                             callback?: ISignalCallback<CallbackParam>): IReceiver {
+        public stopReceiving<CallbackParam>(
+            signalOrCallback?: ISignal<CallbackParam> | Signal.ISignalCallback<CallbackParam>,
+            callback?: Signal.ISignalCallback<CallbackParam>): IReceiver {
+            
             if (signalOrCallback === undefined && callback === undefined) {
                 this.resetSignals();
             } else if (callback === undefined) {
                 if (typeof signalOrCallback === BASE_TYPES.FUNCTION) {
                     let cids = Object.keys(this._signals),
-                        c = <ISignalCallback<CallbackParam>>signalOrCallback;
+                        c = <Signal.ISignalCallback<CallbackParam>>signalOrCallback;
 
                     for (let i = cids.length; i--; ) {
                         this._signals[cids[i]].remove(c, this);

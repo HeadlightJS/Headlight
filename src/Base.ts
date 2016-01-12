@@ -40,4 +40,8 @@ module Headlight {
     export const EVENTS = {
         CHANGE: 'change'
     };
+
+    export interface IHash {
+        [key: string]: string;
+    }
 }

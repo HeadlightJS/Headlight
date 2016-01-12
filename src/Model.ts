@@ -1,18 +1,26 @@
+///<reference path="Base.ts"/>
 ///<reference path="Receiver.ts"/>
 ///<reference path="Signal.ts"/>
 
 module Headlight {
     'use strict';
 
-    const EVENT_SEPARATOR = ':';
+    export interface IModel<Schema> extends IReceiver {
+        on: Model.IModelSignalsListener<Schema>;
+        once: Model.IModelSignalsListener<Schema>;
+        PROPS: Schema;
+        //signals: ISignalShemaHash<Schema>;
+
+        toJSON(): Schema;
+    }
 
     interface ISignalCache<Schema> {
-        change: ISignal<IChangeModelFieldParam<Schema>>;
-        [signalCid: string]: ISignal<IChangeModelFieldParam<Schema>>;
+        change: ISignal<Model.IChangeModelFieldParam<Schema>>;
+        [signalCid: string]: ISignal<Model.IChangeModelFieldParam<Schema>>;
     }
 
     function onChange(fieldOrCallback: any,
-                           callbackOrReceiver: ISignalCallback<IChangeModelFieldParam<any>> | IReceiver,
+                           callbackOrReceiver: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>> | IReceiver,
                            receiver: IReceiver,
                            once: boolean): void {
         let self = <Model<any>>this,
@@ -22,21 +30,21 @@ module Headlight {
         if (typeof fieldOrCallback === 'function') {
             signal = <any>self.signals.change;
             signal[method](
-                <ISignalCallback<IChangeModelFieldParam<any>>>fieldOrCallback,
+                <Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>>fieldOrCallback,
                 <IReceiver>callbackOrReceiver
             );
         } else {
             signal = <any>self.signals[fieldOrCallback];
             signal[method](
-                <ISignalCallback<IChangeModelFieldParam<any>>>callbackOrReceiver,
+                <Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>>callbackOrReceiver,
                 <IReceiver>receiver
             );
         }
     }
 
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
-        public on: IModelSignalsListener<Schema>;
-        public once: IModelSignalsListener<Schema>;
+        public on: Model.IModelSignalsListener<Schema>;
+        public once: Model.IModelSignalsListener<Schema>;
         public PROPS: Schema;
         public signals: ISignalCache<Schema>;
 
@@ -88,13 +96,13 @@ module Headlight {
             this.signals.change.disable();
 
             this.on = {
-                change: (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                change: (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
                          receiver?: IReceiver): void => {
                     onChange.call(this, callback, receiver);
                 }
             };
             this.once = {
-                change: (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                change: (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
                          receiver?: IReceiver): void => {
                     onChange.call(this, callback, receiver, null, true);
                 }
@@ -104,17 +112,21 @@ module Headlight {
                 this.signals[field] = new Signal();
                 this.signals[field].disable();
 
-                this.on[field] = (function(f: string): (callback: ISignalCallback<IChangeModelParam<Schema>>,
-                                                        receiver?: IReceiver) => void {
-                    return (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                this.on[field] = (function(f: string): (
+                    callback: Signal.ISignalCallback<Model.IChangeModelParam<Schema>>,
+                    receiver?: IReceiver) => void {
+
+                    return (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
                             receiver?: IReceiver): void => {
 
                         onChange.call(self, f, callback, receiver);
                     };
                 })(field);
-                this.once[field] = (function(f: string): (callback: ISignalCallback<IChangeModelParam<Schema>>,
-                                                        receiver?: IReceiver) => void {
-                    return (callback: ISignalCallback<IChangeModelFieldParam<any>>,
+                this.once[field] = (function(f: string): (
+                    callback: Signal.ISignalCallback<Model.IChangeModelParam<Schema>>,
+                    receiver?: IReceiver) => void {
+
+                    return (callback: Signal.ISignalCallback<Model.IChangeModelFieldParam<any>>,
                             receiver?: IReceiver): void => {
 
                         onChange.call(self, f, callback, receiver, true);
@@ -256,5 +268,26 @@ module Headlight {
         }
 
         return decorateProperty;
+    }
+    
+    export module Model {
+        export interface IChangeModelParam<Schema> {
+            model: IModel<Schema>;
+        }
+
+        export interface IChangeModelFieldParam<Schema> extends IChangeModelParam<Schema> {
+            value: any;
+            previous: any;
+        }
+
+        export interface IEventsHash<Schema> {
+            [key: string]: (callback: Signal.ISignalCallback<IChangeModelParam<Schema> |
+                IChangeModelFieldParam<Schema>>) => void;
+        }
+
+        export interface IModelSignalsListener<Schema> {
+            change(callback: Signal.ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver): void;
+            [key: string]: (callback: Signal.ISignalCallback<IChangeModelParam<Schema>>, receiver?: IReceiver) => void;
+        }
     }
 }

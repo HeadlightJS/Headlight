@@ -16,7 +16,9 @@ describe('Signal.', () => {
             this.name = name;
         }
 
-        public static gc(callback: Headlight.ISignalCallback<any>, ctx: any): Headlight.ISignalCallback<any> {
+        public static gc(callback: Headlight.Signal.ISignalCallback<any>, ctx: any):
+            Headlight.Signal.ISignalCallback<any> {
+
             return function (param?: string): void {
                 callback.call(ctx, param);
             };

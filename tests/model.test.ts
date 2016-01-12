@@ -1,5 +1,4 @@
 /// <reference path="../typings/tsd.d.ts" />
-///<reference path="../src/interface.d.ts"/>
 ///<reference path="../src/Base.ts"/>
 ///<reference path="../src/Model.ts"/>
 
@@ -128,9 +127,9 @@ describe('Model.', () => {
         });
 
         describe('Dispatching.', () => {
-            let mainChangeObj: Headlight.IChangeModelFieldParam<IPerson>,
-                changeObj: Headlight.IChangeModelFieldParam<IPerson>,
-                computedChangeObj: Headlight.IChangeModelFieldParam<IPerson>;
+            let mainChangeObj: Headlight.Model.IChangeModelFieldParam<IPerson>,
+                changeObj: Headlight.Model.IChangeModelFieldParam<IPerson>,
+                computedChangeObj: Headlight.Model.IChangeModelFieldParam<IPerson>;
 
             const NEW_NAME = 'Helen';
 
@@ -169,13 +168,13 @@ describe('Model.', () => {
             }
 
             it ('Listen to signals via .on().', () => {
-                person.on.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.on.change((args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                     mainChangeObj = args;
                 });
-                person.on[person.PROPS.name]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.on[person.PROPS.name]((args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                     changeObj = args;
                 });
-                person.on[person.PROPS.fullname]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.on[person.PROPS.fullname]((args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                     computedChangeObj = args;
                 });
 
@@ -191,13 +190,13 @@ describe('Model.', () => {
             });
 
             it ('Listen to signals via .once().', () => {
-                person.once.change((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.once.change((args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                     mainChangeObj = args;
                 });
-                person.once[person.PROPS.name]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.once[person.PROPS.name]((args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                     changeObj = args;
                 });
-                person.once[person.PROPS.fullname]((args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.once[person.PROPS.fullname]((args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                     computedChangeObj = args;
                 });
 
@@ -215,20 +214,20 @@ describe('Model.', () => {
             });
 
             it ('Listen to signals via Receiver#receive().', () => {
-                person.receive<Headlight.IChangeModelFieldParam<IPerson>>(
-                    person.signals.change, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.receive<Headlight.Model.IChangeModelFieldParam<IPerson>>(
+                    person.signals.change, (args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                         mainChangeObj = args;
                     });
 
-                person.receive<Headlight.IChangeModelFieldParam<IPerson>>(
+                person.receive<Headlight.Model.IChangeModelFieldParam<IPerson>>(
                     person.signals[person.PROPS.name],
-                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                    (args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                         changeObj = args;
                     });
 
-                person.receive<Headlight.IChangeModelFieldParam<IPerson>>(
+                person.receive<Headlight.Model.IChangeModelFieldParam<IPerson>>(
                     person.signals[person.PROPS.fullname],
-                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                    (args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                         computedChangeObj = args;
                     });
 
@@ -244,20 +243,20 @@ describe('Model.', () => {
             });
 
             it ('Listen to signals via Receiver#receiveOnce().', () => {
-                person.receiveOnce<Headlight.IChangeModelFieldParam<IPerson>>(
-                    person.signals.change, (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                person.receiveOnce<Headlight.Model.IChangeModelFieldParam<IPerson>>(
+                    person.signals.change, (args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                         mainChangeObj = args;
                     });
 
-                person.receiveOnce<Headlight.IChangeModelFieldParam<IPerson>>(
+                person.receiveOnce<Headlight.Model.IChangeModelFieldParam<IPerson>>(
                     person.signals[person.PROPS.name],
-                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                    (args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                         changeObj = args;
                     });
 
-                person.receiveOnce<Headlight.IChangeModelFieldParam<IPerson>>(
+                person.receiveOnce<Headlight.Model.IChangeModelFieldParam<IPerson>>(
                     person.signals[person.PROPS.fullname],
-                    (args: Headlight.IChangeModelFieldParam<IPerson>): void => {
+                    (args: Headlight.Model.IChangeModelFieldParam<IPerson>): void => {
                         computedChangeObj = args;
                     });
 
