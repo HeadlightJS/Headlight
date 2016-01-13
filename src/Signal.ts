@@ -17,8 +17,6 @@ module Headlight {
         remove(callback: Signal.ISignalCallback<CallbackParam>): void;
         remove(callback: Signal.ISignalCallback<CallbackParam>, receiver: IReceiver): void;
         dispatch(param?: CallbackParam): void;
-        enable(): void;
-        disable(): void;
         getReceivers(): Array<IReceiver>;
     }
 
@@ -27,7 +25,6 @@ module Headlight {
      */
     export class Signal<CallbackParam> extends Base implements ISignal<CallbackParam> {
         private eventStorage: IEventStorage<CallbackParam>;
-        private state: Signal.STATE = Signal.STATE.ENABLED;
 
         constructor() {
             super();
@@ -91,29 +88,19 @@ module Headlight {
         }
 
         public dispatch(param?: CallbackParam): void {
-            if (this.state === Signal.STATE.ENABLED) {
-                let cids = Object.keys(this.eventStorage);
+            let cids = Object.keys(this.eventStorage);
 
-                for (let i = cids.length; i--; ) {
-                    let eventGroups = this.getEventGroups(cids[i]);
+            for (let i = cids.length; i--;) {
+                let eventGroups = this.getEventGroups(cids[i]);
 
-                    for (let j = eventGroups.length; j--; ) {
-                        eventGroups[j].callback.call(eventGroups[j].receiver || this, param);
+                for (let j = eventGroups.length; j--;) {
+                    eventGroups[j].callback.call(eventGroups[j].receiver || this, param);
 
-                        if (eventGroups[j].once) {
-                            this.remove(eventGroups[j].callback, eventGroups[j].receiver);
-                        }
+                    if (eventGroups[j].once) {
+                        this.remove(eventGroups[j].callback, eventGroups[j].receiver);
                     }
                 }
-            } // TODO: Throw an error?
-        }
-
-        public enable(): void {
-            this.state = Signal.STATE.ENABLED;
-        }
-
-        public disable(): void {
-            this.state = Signal.STATE.DISABLED;
+            }
         }
 
         public getReceivers(): Array<IReceiver> {
@@ -210,11 +197,6 @@ module Headlight {
 
         export interface ISignalCache {
             [signalCid: string]: ISignal<any>;
-        }
-
-        export const enum STATE {
-            DISABLED = 0,
-            ENABLED
         }
     }
 }

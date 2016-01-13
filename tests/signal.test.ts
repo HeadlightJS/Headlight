@@ -153,19 +153,6 @@ describe('Signal.', () => {
         assert.equal(h2.count, 1, 'Callback2 function should be called 1 time.');
     });
 
-    it('Disables signal and enabling after some time', () => {
-        let h = new Handler();
-
-        signal.add(Handler.gc(h.callback, h));
-        signal.dispatch();
-        signal.disable();
-        signal.dispatch();
-        signal.enable();
-        signal.dispatch();
-
-        assert.equal(h.count, 2, 'Callback function should be called 2 times.');
-    });
-
     it('Removing anything which hasn`t been added doesn`t throw Error.', () => {
         let h = new Handler();
         let callback = Handler.gc(h.callback, h);

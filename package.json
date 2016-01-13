@@ -18,7 +18,7 @@
   },
   "scripts": {
     "pretest": "sh pretest.sh",
-    "test": "find ./src -name '*.ts' -print0 | xargs -0 node_modules/tslint/bin/tslint -c ./tslint.json && karma start"
+    "test": "karma start"
   },
   "repository": {
     "type": "git",

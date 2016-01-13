@@ -19,6 +19,11 @@ module Headlight {
         [signalCid: string]: TSignalOnChangeModelAnyProp<Schema>;
     }
 
+    interface ITransactionArtifact<Schema> {
+        signal: TSignalOnChangeModel<Schema> | TSignalOnChangeModelProp<Schema, any>;
+        attr: Model.IChangeModelParam<Schema> | Model.IChangeModelPropParam<Schema, any>;
+    }
+
     export interface IModelSignalsListener<Schema> {
         change(callback: TSignalCallbackOnChangeModel<Schema>, receiver?: IReceiver): void;
         [key: string]: (callback: TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
@@ -44,6 +49,11 @@ module Headlight {
             [key: string]: Array<string>;
         };
         private _properties: IHash = {};
+        private _state: Model.STATE = Model.STATE.SILENT;
+        private _transactionArtifacts: Array<ITransactionArtifact<Schema>> = [];
+        private _transactionArtifactsMap: {
+            [key: string]: number;
+        } = {};
 
         constructor(args: Schema) {
             super();
@@ -73,12 +83,83 @@ module Headlight {
             return Model.keys(this);
         }
 
-        public static keys<Schema>(model: Model<Schema>): Array<string> {
+        public performTransaction(callback: (model: Model<Schema>) => void): void {
+            Model.performTransaction<Schema>(this, callback);
+        }
+
+        public performSilentTransaction(callback: (model: Model<Schema>) => void): void {
+            Model.performSilentTransaction<Schema>(this, callback);
+        }
+
+        public static keys<S>(model: Model<S>): Array<string> {
             return Object.keys(model.PROPS);
+        }
+
+        public static performTransaction<S>(model: Model<S>,
+                                            callback: (model: Model<S>) => void): void {
+            model._state = Model.STATE.IN_TRANSACTION;
+
+            callback(model);
+
+            for (let i = model._transactionArtifacts.length; i--;) {
+                let artifact = model._transactionArtifacts[i];
+
+                if (artifact) {
+                    artifact.signal.dispatch(artifact.attr);
+                }
+            }
+
+            model.clearTransactionArtifacts();
+            model._state = Model.STATE.NORMAL;
+
+        }
+
+        public static performSilentTransaction<S>(model: Model<S>,
+                                                  callback: (model: Model<S>) => void): void {
+            model._state = Model.STATE.IN_SILENT_TRANSACTION;
+
+            callback(model);
+
+            model._state = Model.STATE.NORMAL;
+        }
+
+        public static dispatch<S>(model: Model<S>, propName: string,
+                                  attr: Model.IChangeModelParam<any> | Model.IChangeModelPropParam<any, any>): void {
+
+            let signal = <Signal<any>>model.signals[propName];
+
+            switch (model._state) {
+                case Model.STATE.NORMAL:
+                    signal.dispatch(attr);
+
+                    break;
+                case Model.STATE.IN_TRANSACTION:
+                    let currentIndex = model._transactionArtifactsMap[propName];
+
+                    if (currentIndex !== undefined) {
+                        model._transactionArtifacts[currentIndex] = undefined;
+                    }
+
+                    model._transactionArtifactsMap[propName] = model._transactionArtifacts.length;
+                    model._transactionArtifacts.push({
+                        signal: signal,
+                        attr: attr
+                    });
+
+                    break;
+                default:
+                    break;
+
+            }
         }
 
         protected cidPrefix(): string {
             return 'm';
+        }
+
+        private clearTransactionArtifacts(): void {
+            this._transactionArtifacts = [];
+            this._transactionArtifactsMap = {};
         }
 
         private createSignals(): void {
@@ -91,8 +172,6 @@ module Headlight {
             this.signals = {
                 change: new Signal()
             };
-            //TODO silent mode in model 13.01.16 10:40
-            this.signals.change.disable();
 
             this.on = {
                 change: (callback: TSignalCallbackOnChangeModel<Schema>,
@@ -111,8 +190,6 @@ module Headlight {
                 prop = props[i];
 
                 this.signals[prop] = new Signal();
-                //TODO silent mode in model 13.01.16 10:40
-                this.signals[prop].disable();
 
                 this.on[prop] =
                     ((p: string): LSCallbackAnyProp => {
@@ -140,12 +217,7 @@ module Headlight {
         }
 
         private enableSignals(): void {
-            let signals = Object.keys(this.signals);
-
-            for (let i = signals.length; i--;) {
-                //TODO silent mode in model 13.01.16 10:39
-                this.signals[signals[i]].enable();
-            }
+            this._state = Model.STATE.NORMAL;
         }
 
         private onChange<Type>(propOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
@@ -182,7 +254,7 @@ module Headlight {
 
             function dispatchSignals(prop: any, newVal: any, prev: any): void {
                 if (newVal !== prev) {
-                    this.signals[prop].dispatch({
+                    Model.dispatch(this, prop, {
                         model: this,
                         value: newVal,
                         previous: prev
@@ -199,7 +271,7 @@ module Headlight {
                         currValue = this[d];
 
                         if (currValue !== prevValue) {
-                            this.signals[d].dispatch({
+                            Model.dispatch(this, d, {
                                 model: this,
                                 value: currValue,
                                 previous: prevValue
@@ -207,7 +279,7 @@ module Headlight {
                         }
                     }
 
-                    this.signals.change.dispatch({
+                    Model.dispatch(this, 'change', {
                         model: this
                     });
                 }
@@ -298,6 +370,13 @@ module Headlight {
         export interface IChangeModelPropParam<Schema, Type> extends IChangeModelParam<Schema> {
             value: Type;
             previous: Type;
+        }
+
+        export const enum STATE {
+            NORMAL,
+            IN_TRANSACTION,
+            IN_SILENT_TRANSACTION,
+            SILENT
         }
     }
 }
