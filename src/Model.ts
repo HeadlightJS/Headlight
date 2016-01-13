@@ -59,7 +59,7 @@ module Headlight {
                 prop: string,
                 value: any;
 
-            for (var i = props.length; i--; ) {
+            for (let i = props.length; i--;) {
                 prop = props[i];
                 value = this[prop];
 
@@ -107,7 +107,7 @@ module Headlight {
                 }
             };
 
-            for (var i = props.length; i--; ) {
+            for (let i = props.length; i--;) {
                 prop = props[i];
 
                 this.signals[prop] = new Signal();
@@ -134,7 +134,7 @@ module Headlight {
         private initProperties(args: Schema): void {
             let props = Object.keys(args);
 
-            for (let i = props.length; i--; ) {
+            for (let i = props.length; i--;) {
                 this[props[i]] = args[props[i]];
             }
         }
@@ -142,7 +142,7 @@ module Headlight {
         private enableSignals(): void {
             let signals = Object.keys(this.signals);
 
-            for (let i = signals.length; i--; ) {
+            for (let i = signals.length; i--;) {
                 //TODO silent mode in model 13.01.16 10:39
                 this.signals[signals[i]].enable();
             }
@@ -193,7 +193,7 @@ module Headlight {
                         prevValue: any,
                         currValue: any;
 
-                    for (var j = deps.length; j--; ) {
+                    for (let j = deps.length; j--;) {
                         d = deps[j];
                         prevValue = this._properties[d];
                         currValue = this[d];
@@ -241,7 +241,7 @@ module Headlight {
                         let deps: Array<string> =
                             Array.isArray(ConstructorOrDeps) ? ConstructorOrDeps : ConstructorOrDeps.call(target);
 
-                        for (let i = deps.length; i--; ) {
+                        for (let i = deps.length; i--;) {
                             let d = target._depsMap[deps[i]];
 
                             if (d && d.indexOf(k) === -1) {

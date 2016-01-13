@@ -13,11 +13,12 @@
     "mocha": "^2.3.3",
     "phantomjs": "^1.9.18",
     "phantomjs-polyfill": "0.0.1",
+    "tslint": "^3.2.1",
     "typescript": "^1.6.2"
   },
   "scripts": {
-    "pretest": "sh pretest.sh && exit 0",
-    "test": "karma start"
+    "pretest": "sh pretest.sh",
+    "test": "find ./src -name '*.ts' -print0 | xargs -0 node_modules/tslint/bin/tslint -c ./tslint.json && karma start"
   },
   "repository": {
     "type": "git",
