@@ -16,7 +16,9 @@ describe('Signal.', () => {
             this.name = name;
         }
 
-        public static gc(callback: Headlight.ISignalCallback<any>, ctx: any): Headlight.ISignalCallback<any> {
+        public static gc(callback: Headlight.Signal.ISignalCallback<any>, ctx: any):
+            Headlight.Signal.ISignalCallback<any> {
+
             return function (param?: string): void {
                 callback.call(ctx, param);
             };
@@ -25,6 +27,10 @@ describe('Signal.', () => {
 
     beforeEach(() => {
         signal = new Headlight.Signal<any>();
+    });
+
+    it('Creates properly', () => {
+        assert.equal('s', signal.cid[0]);
     });
 
     it('Adds new callback function and dispach signal', () => {

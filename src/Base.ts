@@ -13,9 +13,7 @@ module Headlight {
         public cid: string;
         private static cidMap: ICidMap = {};
 
-        protected cidPrefix(): string {
-            return 'b';
-        }
+        protected abstract cidPrefix(): string;
 
         constructor() {
             this.cid = Base.generateCid(this.cidPrefix());
@@ -38,4 +36,12 @@ module Headlight {
         OBJECT: 'object',
         FUNCTION: 'function'
     };
+
+    export const EVENTS = {
+        CHANGE: 'change'
+    };
+
+    export interface IHash {
+        [key: string]: string;
+    }
 }

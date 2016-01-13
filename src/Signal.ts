@@ -1,14 +1,25 @@
 ///<reference path="Base.ts"/>
-///<reference path="interface.d.ts"/>
 ///<reference path="EventGroup.ts"/>
-
 
 module Headlight {
     'use strict';
 
-    const enum STATE {
-        DISABLED = 0,
-        ENABLED
+    export interface IEventStorage<CallbackParam> {
+        common: Array<IEventGroup<CallbackParam>>;
+        [key: string]: Array<IEventGroup<CallbackParam>>;
+    }
+
+    export interface ISignal<CallbackParam> extends IBase {
+        add(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver): void;
+        addOnce(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver): void;
+        remove(): void;
+        remove(receiver: IReceiver): void;
+        remove(callback: Signal.ISignalCallback<CallbackParam>): void;
+        remove(callback: Signal.ISignalCallback<CallbackParam>, receiver: IReceiver): void;
+        dispatch(param?: CallbackParam): void;
+        enable(): void;
+        disable(): void;
+        getReceivers(): Array<IReceiver>;
     }
 
     /**
@@ -16,7 +27,7 @@ module Headlight {
      */
     export class Signal<CallbackParam> extends Base implements ISignal<CallbackParam> {
         private eventStorage: IEventStorage<CallbackParam>;
-        private state: STATE = STATE.ENABLED;
+        private state: Signal.STATE = Signal.STATE.ENABLED;
 
         constructor() {
             super();
@@ -24,7 +35,7 @@ module Headlight {
             this.resetEventStorage();
         }
 
-        public add(callback: ISignalCallback<CallbackParam>, receiver?: IReceiver, once?: boolean): string {
+        public add(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver, once?: boolean): string {
             let eventGroup = Signal.createEventGroup<CallbackParam>(callback, receiver, once);
 
             this.getEventGroups(receiver).push(eventGroup);
@@ -36,11 +47,13 @@ module Headlight {
             return eventGroup.cid;
         }
 
-        public addOnce(callback: ISignalCallback<CallbackParam>, receiver?: IReceiver): string {
+        public addOnce(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver): string {
             return this.add(callback, receiver, true);
         }
 
-        public remove(callbackOrReceiver?: ISignalCallback<CallbackParam> | IReceiver, receiver?: IReceiver): void {
+        public remove(callbackOrReceiver?: Signal.ISignalCallback<CallbackParam> | IReceiver,
+                      receiver?: IReceiver): void {
+
             if (callbackOrReceiver === undefined && receiver === undefined) {
                 this.resetEventStorage();
             } else if (callbackOrReceiver && receiver === undefined) {
@@ -56,7 +69,7 @@ module Headlight {
                         }
 
                         if (Signal.removeCallbackFromEventGroups<CallbackParam>(groups,
-                                <ISignalCallback<CallbackParam>>callbackOrReceiver) && r) {
+                                <Signal.ISignalCallback<CallbackParam>>callbackOrReceiver) && r) {
                             r.removeSignal(this);
                         }
                     }
@@ -70,7 +83,7 @@ module Headlight {
             } else {
                 if (Signal.removeCallbackFromEventGroups(
                         this.getEventGroups(receiver.cid),
-                        <ISignalCallback<CallbackParam>>callbackOrReceiver)) {
+                        <Signal.ISignalCallback<CallbackParam>>callbackOrReceiver)) {
 
                     receiver.removeSignal(this);
                 }
@@ -78,7 +91,7 @@ module Headlight {
         }
 
         public dispatch(param?: CallbackParam): void {
-            if (this.state === STATE.ENABLED) {
+            if (this.state === Signal.STATE.ENABLED) {
                 let cids = Object.keys(this.eventStorage);
 
                 for (let i = cids.length; i--; ) {
@@ -96,11 +109,11 @@ module Headlight {
         }
 
         public enable(): void {
-            this.state = STATE.ENABLED;
+            this.state = Signal.STATE.ENABLED;
         }
 
         public disable(): void {
-            this.state = STATE.DISABLED;
+            this.state = Signal.STATE.DISABLED;
         }
 
         public getReceivers(): Array<IReceiver> {
@@ -160,7 +173,7 @@ module Headlight {
             return this.eventStorage[cid];
         }
 
-        private static createEventGroup<CallbackParam>(callback: ISignalCallback<CallbackParam>,
+        private static createEventGroup<CallbackParam>(callback: Signal.ISignalCallback<CallbackParam>,
                                         receiver?: IReceiver,
                                         once?: boolean): IEventGroup<CallbackParam> {
             let res: IEventGroup<CallbackParam> = new EventGroup(callback, once);
@@ -173,7 +186,7 @@ module Headlight {
         }
 
         private static removeCallbackFromEventGroups<CallbackParam>(eventGroups: Array<IEventGroup<CallbackParam>>,
-                                                     callback: ISignalCallback<CallbackParam>): boolean {
+                                                     callback: Signal.ISignalCallback<CallbackParam>): boolean {
             let removedCount = 0;
             let length = eventGroups.length;
 
@@ -186,6 +199,22 @@ module Headlight {
             }
 
             return removedCount === length;
+        }
+    }
+
+    export module Signal {
+        export interface ISignalCallback<CallbackParam> extends Function {
+            (param?: CallbackParam): void;
+            once?: boolean;
+        }
+
+        export interface ISignalCache {
+            [signalCid: string]: ISignal<any>;
+        }
+
+        export const enum STATE {
+            DISABLED = 0,
+            ENABLED
         }
     }
 }

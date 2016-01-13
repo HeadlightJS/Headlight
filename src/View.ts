@@ -11,7 +11,10 @@ module Headlight {
         protected el: HTMLElement = document.createElement('div');
 
         constructor() {
+            // dummy for tslint
+            let a = 1;
 
+            a = 2;
         }
 
         public $(selector: string): NodeListOf<Element> {
