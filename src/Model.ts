@@ -30,33 +30,8 @@ module Headlight {
         PROPS: Schema;
         signals: ISignalHash<Schema>;
 
+        keys(): Array<string>;
         toJSON(): Schema;
-    }
-
-    function onChange<Schema, Type>(propOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
-                                  TSignalCallbackOnChangeModelProp<Schema, Type>,
-                              callbackOrReceiver: TSignalCallbackOnChangeModel<Schema> |
-                                  TSignalCallbackOnChangeModelProp<Schema, Type> | IReceiver,
-                              receiver?: IReceiver,
-                              once?: boolean): void {
-
-        let self = <Model<Schema>>this,
-            method = once ? 'addOnce' : 'add',
-            signal: TSignalOnChangeModel<Schema> | TSignalOnChangeModelProp<Schema, Type> ;
-
-        if (typeof propOrCallback === 'function') {
-            signal = <TSignalOnChangeModel<Schema>>self.signals.change;
-            signal[method](
-                <TSignalCallbackOnChangeModel<Schema>>propOrCallback,
-                <IReceiver>callbackOrReceiver
-            );
-        } else {
-            signal = <TSignalOnChangeModelProp<Schema, Type>>self.signals[<string>propOrCallback];
-            signal[method](
-                <TSignalCallbackOnChangeModelProp<Schema, Type>>callbackOrReceiver,
-                <IReceiver>receiver
-            );
-        }
     }
 
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
@@ -94,9 +69,12 @@ module Headlight {
             return o;
         }
 
+        public keys(): Array<string> {
+            return Model.keys(this);
+        }
+
         public static keys<Schema>(model: Model<Schema>): Array<string> {
-            let m = <Model<Schema>>model;
-            return Object.keys(m.PROPS);
+            return Object.keys(model.PROPS);
         }
 
         protected cidPrefix(): string {
@@ -104,25 +82,28 @@ module Headlight {
         }
 
         private createSignals(): void {
+            type LSCallbackAnyProp =
+                (callback: TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
+
             let props = Model.keys(this),
-                prop: string,
-                self = this;
+                prop: string;
 
             this.signals = {
                 change: new Signal()
             };
+            //TODO silent mode in model 13.01.16 10:40
             this.signals.change.disable();
 
             this.on = {
                 change: (callback: TSignalCallbackOnChangeModel<Schema>,
                          receiver?: IReceiver): void => {
-                    onChange.call(this, callback, receiver);
+                    this.onChange(callback, receiver);
                 }
             };
             this.once = {
                 change: (callback: TSignalCallbackOnChangeModel<Schema>,
                          receiver?: IReceiver): void => {
-                    onChange.call(this, callback, receiver, null, true);
+                    this.onChange(callback, receiver, null, true);
                 }
             };
 
@@ -130,44 +111,70 @@ module Headlight {
                 prop = props[i];
 
                 this.signals[prop] = new Signal();
+                //TODO silent mode in model 13.01.16 10:40
                 this.signals[prop].disable();
 
                 this.on[prop] =
-                    (function(f: string): (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
-                                           receiver?: IReceiver) => void {
-                        return (callback: TSignalCallbackOnChangeModelProp<Schema, any>,
+                    ((p: string): LSCallbackAnyProp => {
+                        return (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                 receiver?: IReceiver): void => {
-                            onChange.call(self, f, callback, receiver);
+                            this.onChange(p, callback, receiver);
                         };
                     })(prop);
                 this.once[prop] =
-                    (function(f: string): (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
-                                           receiver?: IReceiver) => void {
+                    ((p: string): LSCallbackAnyProp => {
                         return (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                 receiver?: IReceiver): void => {
-                            onChange.call(self, f, callback, receiver, true);
+                            this.onChange(p, callback, receiver, true);
                         };
                     })(prop);
             }
         }
 
         private initProperties(args: Schema): void {
-            for (let a in args) {
-                if (args.hasOwnProperty(a)) {
-                    this[a] = args[a];
-                }
+            let props = Object.keys(args);
+
+            for (let i = props.length; i--; ) {
+                this[props[i]] = args[props[i]];
             }
         }
 
         private enableSignals(): void {
             let signals = Object.keys(this.signals);
 
-            for (var i = signals.length; i--; ) {
+            for (let i = signals.length; i--; ) {
+                //TODO silent mode in model 13.01.16 10:39
                 this.signals[signals[i]].enable();
+            }
+        }
+
+        private onChange<Type>(propOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
+            TSignalCallbackOnChangeModelProp<Schema, Type>,
+                               callbackOrReceiver: TSignalCallbackOnChangeModel<Schema> |
+                                   TSignalCallbackOnChangeModelProp<Schema, Type> | IReceiver,
+                               receiver?: IReceiver,
+                               once?: boolean): void {
+
+            let method = once ? 'addOnce' : 'add',
+                signal: TSignalOnChangeModel<Schema> | TSignalOnChangeModelProp<Schema, Type>;
+
+            if (typeof propOrCallback === 'function') {
+                signal = <TSignalOnChangeModel<Schema>>this.signals.change;
+                signal[method](
+                    <TSignalCallbackOnChangeModel<Schema>>propOrCallback,
+                    <IReceiver>callbackOrReceiver
+                );
+            } else {
+                signal = <TSignalOnChangeModelProp<Schema, Type>>this.signals[<string>propOrCallback];
+                signal[method](
+                    <TSignalCallbackOnChangeModelProp<Schema, Type>>callbackOrReceiver,
+                    <IReceiver>receiver
+                );
             }
         }
     }
 
+    //TODO Избавиться от any 13.01.16 11:07
     export function dProperty(...args: Array<any>): any {
         let decorateProperty = function (target: any,
                                          key: string,
@@ -247,6 +254,7 @@ module Headlight {
                         originalSet = descriptor.set;
 
                     if (!originalGet) {
+                        //TODO native template 13.01.16 11:08
                         throw Error('`get` accessor for property `' + k +
                             '` of class `' + target.name + '` should be specified.');
                     }
@@ -281,7 +289,7 @@ module Headlight {
 
         return decorateProperty;
     }
-    
+
     export module Model {
         export interface IChangeModelParam<Schema> {
             model: IModel<Schema>;
