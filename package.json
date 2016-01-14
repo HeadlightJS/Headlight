@@ -18,7 +18,9 @@
   },
   "scripts": {
     "pretest": "sh pretest.sh",
-    "test": "karma start"
+    "test": "karma start",
+    "posttest": "npm run performance",
+    "performance": "tsc -p ./tests/performance/ && node tests/performance/performance.test.js"
   },
   "repository": {
     "type": "git",

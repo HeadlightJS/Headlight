@@ -101,6 +101,7 @@ module Headlight {
 
             callback(model);
 
+            //todo: исследовать бытродействие этого же действия с помощью foreach().
             for (let artifact of model._transactionArtifacts) {
                 if (artifact) {
                     artifact.signal.dispatch(artifact.attr);

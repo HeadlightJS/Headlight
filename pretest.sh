@@ -10,7 +10,7 @@ echo 'Compiling Headlight'
 node_modules/typescript/bin/tsc -p ./ || exit 1
 
 echo 'Compiling tests'
-node_modules/typescript/bin/tsc -p ./tests/ || exit 1
+node_modules/typescript/bin/tsc -p ./tests/unit || exit 1
 
 echo 'Process Distributive for tests'
 sed -e 's/Headlight || (Headlight = {})/Headlight || \/* istanbul ignore next *\/ (Headlight = {})/g' -i .tmp dist/headlight.js
