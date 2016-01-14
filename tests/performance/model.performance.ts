@@ -1,21 +1,8 @@
 ///<reference path="../../src/Model.ts"/>
+///<reference path="performance.test.ts"/>
 
-(function (): void {
+module Perform {
     'use strict';
-
-    function test(testName: string,
-                  callback: () => void): number {
-        let timeStart: number = Date.now(),
-            time: number;
-
-        callback();
-
-        time = Date.now() - timeStart;
-
-        console.log(testName + ':', time, 'ms');
-
-        return time;
-    }
 
     interface ISampleModel {
         propString: string;
@@ -89,5 +76,4 @@
             });
         }
     });
-
-})();
+}
