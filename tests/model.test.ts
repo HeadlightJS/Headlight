@@ -288,7 +288,8 @@ describe('Model.', () => {
             tchangeObj2: TChangePersonPropParam<string>,
             tcomputedChangeObj: TChangePersonPropParam<string>,
             computedCallbackCount = 0,
-            mainCallbackCount = 0;
+            mainCallbackCount = 0,
+            handlersOrderArray = [];
 
         const NEW_NAME = 'Helen';
         const NEW_SURNAME = 'Petrova';
@@ -302,22 +303,29 @@ describe('Model.', () => {
             tchangeObj = undefined;
             tchangeObj2 = undefined;
             tcomputedChangeObj = undefined;
+            computedCallbackCount = 0;
+            mainCallbackCount = 0;
+            handlersOrderArray = [];
         });
 
         it('Performing transaction.', () => {
             person.on.change((args: TChangePersonParam): void => {
                 mainChangeObj = args;
                 mainCallbackCount++;
+                handlersOrderArray.push('change');
             });
             person.on[person.PROPS.name]((args: TChangePersonPropParam<string>): void => {
                 changeObj = args;
+                handlersOrderArray.push(person.PROPS.name);
             });
             person.on[person.PROPS.surname]((args: TChangePersonPropParam<string>): void => {
                 changeObj2 = args;
+                handlersOrderArray.push(person.PROPS.surname);
             });
             person.on[person.PROPS.fullname]((args: TChangePersonPropParam<string>): void => {
                 computedChangeObj = args;
                 computedCallbackCount++;
+                handlersOrderArray.push(person.PROPS.fullname);
             });
 
             person.performTransaction((pers: Person) => {
@@ -343,6 +351,9 @@ describe('Model.', () => {
 
             assert.equal(mainCallbackCount, 1, 'Main handler should be called after transaction');
             assert.equal(computedCallbackCount, 1, 'Computed handler should be called after transaction');
+
+            assert.deepEqual(handlersOrderArray,
+                [person.PROPS.name, person.PROPS.surname, person.PROPS.fullname, 'change']);
         });
 
         it('Performing silent transaction.', () => {
@@ -366,8 +377,6 @@ describe('Model.', () => {
             assert.isUndefined(changeObj2, 'Handler shouldn`t be called in silent transaction.');
             assert.isUndefined(computedChangeObj, 'Handler shouldn`t be called in silent transaction.');
         });
-
-
     });
 
     it('Get JSON.', () => {

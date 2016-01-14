@@ -101,9 +101,7 @@ module Headlight {
 
             callback(model);
 
-            for (let i = model._transactionArtifacts.length; i--;) {
-                let artifact = model._transactionArtifacts[i];
-
+            for (let artifact of model._transactionArtifacts) {
                 if (artifact) {
                     artifact.signal.dispatch(artifact.attr);
                 }
@@ -145,6 +143,12 @@ module Headlight {
                         signal: signal,
                         attr: attr
                     });
+
+                    break;
+                case Model.STATE.IN_SILENT_TRANSACTION:
+
+                    break;
+                case Model.STATE.SILENT:
 
                     break;
                 default:
