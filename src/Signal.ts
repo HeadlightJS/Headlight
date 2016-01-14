@@ -29,13 +29,13 @@ module Headlight {
         constructor() {
             super();
 
-            this.resetEventStorage();
+            this._resetEventStorage();
         }
 
         public add(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver, once?: boolean): string {
             let eventGroup = Signal.createEventGroup<CallbackParam>(callback, receiver, once);
 
-            this.getEventGroups(receiver).push(eventGroup);
+            this._getEventGroups(receiver).push(eventGroup);
 
             if (receiver) {
                 receiver.addSignal(this);
@@ -52,13 +52,13 @@ module Headlight {
                       receiver?: IReceiver): void {
 
             if (callbackOrReceiver === undefined && receiver === undefined) {
-                this.resetEventStorage();
+                this._resetEventStorage();
             } else if (callbackOrReceiver && receiver === undefined) {
                 if (typeof callbackOrReceiver === BASE_TYPES.FUNCTION) {
                     let cids = Object.keys(this.eventStorage);
 
                     for (let i = cids.length; i--; ) {
-                        let groups = this.getEventGroups(cids[i]),
+                        let groups = this._getEventGroups(cids[i]),
                             r: IReceiver;
 
                         if (groups.length) {
@@ -79,7 +79,7 @@ module Headlight {
                 }
             } else {
                 if (Signal.removeCallbackFromEventGroups(
-                        this.getEventGroups(receiver.cid),
+                        this._getEventGroups(receiver.cid),
                         <Signal.ISignalCallback<CallbackParam>>callbackOrReceiver)) {
 
                     receiver.removeSignal(this);
@@ -91,7 +91,7 @@ module Headlight {
             let cids = Object.keys(this.eventStorage);
 
             for (let i = cids.length; i--;) {
-                let eventGroups = this.getEventGroups(cids[i]);
+                let eventGroups = this._getEventGroups(cids[i]);
 
                 for (let j = eventGroups.length; j--;) {
                     eventGroups[j].callback.call(eventGroups[j].receiver || this, param);
@@ -108,7 +108,7 @@ module Headlight {
             let cids = Object.keys(this.eventStorage);
 
             for (let i = cids.length; i--; ) {
-                let eventGroups = this.getEventGroups(cids[i]);
+                let eventGroups = this._getEventGroups(cids[i]);
 
                 if (eventGroups[0] && eventGroups[0].receiver) {
                     receivers.push(eventGroups[0].receiver);
@@ -122,12 +122,12 @@ module Headlight {
             return 's';
         }
 
-        private resetEventStorage(): ISignal<CallbackParam> {
+        private _resetEventStorage(): ISignal<CallbackParam> {
             if (this.eventStorage) {
                 let cids = Object.keys(this.eventStorage);
 
                 for (let i = cids.length; i--; ) {
-                    let eventGroups = this.getEventGroups(cids[i]);
+                    let eventGroups = this._getEventGroups(cids[i]);
 
                     if (eventGroups[0] && eventGroups[0].receiver) {
                         eventGroups[0].receiver.removeSignal(this);
@@ -142,7 +142,7 @@ module Headlight {
             return this;
         }
 
-        private getEventGroups(receiverOrCid?: IReceiver | string): Array<IEventGroup<CallbackParam>> {
+        private _getEventGroups(receiverOrCid?: IReceiver | string): Array<IEventGroup<CallbackParam>> {
             let cid = 'common';
 
             if (receiverOrCid !== undefined) {

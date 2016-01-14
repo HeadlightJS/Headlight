@@ -58,9 +58,9 @@ module Headlight {
         constructor(args: Schema) {
             super();
 
-            this.createSignals();
-            this.initProperties(args);
-            this.enableSignals();
+            this._createSignals();
+            this._initProperties(args);
+            this._enableSignals();
         }
 
         public toJSON(): Schema {
@@ -108,7 +108,7 @@ module Headlight {
                 }
             }
 
-            model.clearTransactionArtifacts();
+            model._clearTransactionArtifacts();
             model._state = Model.STATE.NORMAL;
 
         }
@@ -162,12 +162,12 @@ module Headlight {
             return 'm';
         }
 
-        private clearTransactionArtifacts(): void {
+        private _clearTransactionArtifacts(): void {
             this._transactionArtifacts = [];
             this._transactionArtifactsMap = {};
         }
 
-        private createSignals(): void {
+        private _createSignals(): void {
             type LSCallbackAnyProp =
                 (callback: TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
 
@@ -181,13 +181,13 @@ module Headlight {
             this.on = {
                 change: (callback: TSignalCallbackOnChangeModel<Schema>,
                          receiver?: IReceiver): void => {
-                    this.onChange(callback, receiver);
+                    this._onChange(callback, receiver);
                 }
             };
             this.once = {
                 change: (callback: TSignalCallbackOnChangeModel<Schema>,
                          receiver?: IReceiver): void => {
-                    this.onChange(callback, receiver, null, true);
+                    this._onChange(callback, receiver, null, true);
                 }
             };
 
@@ -200,20 +200,20 @@ module Headlight {
                     ((p: string): LSCallbackAnyProp => {
                         return (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                 receiver?: IReceiver): void => {
-                            this.onChange(p, callback, receiver);
+                            this._onChange(p, callback, receiver);
                         };
                     })(prop);
                 this.once[prop] =
                     ((p: string): LSCallbackAnyProp => {
                         return (callback: TSignalCallbackOnChangeModelAnyProp<Schema>,
                                 receiver?: IReceiver): void => {
-                            this.onChange(p, callback, receiver, true);
+                            this._onChange(p, callback, receiver, true);
                         };
                     })(prop);
             }
         }
 
-        private initProperties(args: Schema): void {
+        private _initProperties(args: Schema): void {
             let props = Object.keys(args);
 
             for (let i = props.length; i--;) {
@@ -221,16 +221,16 @@ module Headlight {
             }
         }
 
-        private enableSignals(): void {
+        private _enableSignals(): void {
             this._state = Model.STATE.NORMAL;
         }
 
-        private onChange<Type>(propOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
+        private _onChange<Type>(propOrCallback: string | TSignalCallbackOnChangeModel<Schema> |
             TSignalCallbackOnChangeModelProp<Schema, Type>,
-                               callbackOrReceiver: TSignalCallbackOnChangeModel<Schema> |
+                                callbackOrReceiver: TSignalCallbackOnChangeModel<Schema> |
                                    TSignalCallbackOnChangeModelProp<Schema, Type> | IReceiver,
-                               receiver?: IReceiver,
-                               once?: boolean): void {
+                                receiver?: IReceiver,
+                                once?: boolean): void {
 
             let method = once ? 'addOnce' : 'add',
                 signal: TSignalOnChangeModel<Schema> | TSignalOnChangeModelProp<Schema, Type>;
