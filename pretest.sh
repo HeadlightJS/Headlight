@@ -13,10 +13,9 @@ echo 'Compiling tests'
 node_modules/typescript/bin/tsc -p ./tests/unit || exit 1
 
 echo 'Process Distributive for tests'
-sed -i .tmp -e 's/Headlight || (Headlight = {})/Headlight || \/* istanbul ignore next *\/ (Headlight = {})/g' dist/headlight.js
-sed -i .tmp -e 's/d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());/d.prototype = b === null ? \/* istanbul ignore next *\/ Object.create(b) : (__.prototype = b.prototype, new __());/g' dist/headlight.js
-mv dist/headlight.js dist/headlight.processed.js
-mv dist/headlight.js.tmp dist/headlight.js
+cp dist/headlight.js dist/headlight.processed.js
+sed -i -e 's/Headlight || (Headlight = {})/Headlight || \/* istanbul ignore next *\/ (Headlight = {})/g' dist/headlight.processed.js dist/headlight.processed.js
+sed -i -e 's/d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());/d.prototype = b === null ? \/* istanbul ignore next *\/ Object.create(b) : (__.prototype = b.prototype, new __());/g' dist/headlight.processed.js
 
 echo '\nDONE'
 
