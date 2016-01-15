@@ -1,6 +1,12 @@
 ///<reference path="../../src/Base.ts"/>
 
 declare let process: any;
+declare let Promise: any;
+/* tslint:disable */
+interface Promise<T> {
+    then: (resolve: (data: T) => void) => Promise<T>;
+}
+/* tslint:enable */
 
 module Perform {
     'use strict';
@@ -48,6 +54,7 @@ module Perform {
 
     export let result: EXIT_CODES = EXIT_CODES.OK;
     export let tests: Array<ITest> = [];
+    let testCount = 0;
 
     module log {
         export let ok = function ok(index: number,
@@ -65,7 +72,7 @@ module Perform {
             }
 
             /* tslint:disable */
-            console.log(`${C.FgGreen}${index} of ${tests.length}:\tOK\t ${testName} ${word} ${referenceTestName}: ${C.FgCyan}${testTime}${C.FgGreen} ms vs ${C.FgCyan}${referenceTestTime}${C.FgGreen} ms.${C.Reset}`);
+            console.log(`${C.FgGreen}${index} of ${testCount}:\tOK\t ${testName} ${word} ${referenceTestName}: ${C.FgCyan}${testTime}${C.FgGreen} ms vs ${C.FgCyan}${referenceTestTime}${C.FgGreen} ms.${C.Reset}`);
             /* tslint:enable */
         };
 
@@ -78,7 +85,7 @@ module Perform {
             let ratio = parseFloat((testTime / referenceTestTime).toFixed(2));
 
             /* tslint:disable */
-            console.log(`${C.FgRed}${index} of ${tests.length}:\tERROR\t ${testName} is ${C.FgYellow}${ratio}${C.FgRed} times slower than ${referenceTestName}: ${C.FgYellow}${testTime}${C.FgRed} ms vs ${C.FgYellow}${referenceTestTime}${C.FgRed} ms.${C.Reset}`);
+            console.log(`${C.FgRed}${index} of ${testCount}:\tERROR\t ${testName} is ${C.FgYellow}${ratio}${C.FgRed} times slower than ${referenceTestName}: ${C.FgYellow}${testTime}${C.FgRed} ms vs ${C.FgYellow}${referenceTestTime}${C.FgRed} ms.${C.Reset}`);
             /* tslint:enable */
         };
     }
@@ -96,50 +103,85 @@ module Perform {
             referenceTestName: referenceTestName,
             referenceCallbackOrNumber: referenceCallbackOrNumber
         });
+
+        testCount = tests.length;
     }
 
-    const MEDIUM_ARRAY_LAST_ITEM_INDEX = 10;
+    const MEADIAN_ITERATIONS_COUNT = 21;
 
-    function getMedium(iterationsCount: number, callback: () => void): number {
-        let arr: Array<number> = [];
+    function getMedian(iterationsCount: number, callback: () => void): Promise<number> {
+        return new Promise(function (resolve: (time: number) => void): void {
+            let arr: Array<number> = [],
+                j = 0;
 
-        for (let j = 0; j <= MEDIUM_ARRAY_LAST_ITEM_INDEX; j++) {
-            let timeStart: number = Date.now();
+            function iterate(): void {
+                if (arr.length === MEADIAN_ITERATIONS_COUNT) {
+                    arr.sort();
 
-            for (let i = iterationsCount; i--;) {
-                callback();
+                    resolve((MEADIAN_ITERATIONS_COUNT % 2)
+                        ? (arr[(MEADIAN_ITERATIONS_COUNT - 1) / 2] + arr[((MEADIAN_ITERATIONS_COUNT - 1) / 2) + 1]) / 2
+                        : arr[MEADIAN_ITERATIONS_COUNT / 2]);
+
+                    return;
+                }
+
+                let timeStart: number = Date.now();
+
+                for (let i = iterationsCount; i--;) {
+                    callback();
+                }
+
+                arr.push(Date.now() - timeStart);
+                j++;
+
+                setTimeout(function (): void {
+                    iterate();
+                }, 10);
             }
 
-            arr.push(Date.now() - timeStart);
-        }
-
-        arr.sort();
-
-        return arr[MEDIUM_ARRAY_LAST_ITEM_INDEX / 2];
+            setTimeout(function (): void {
+                iterate();
+            }, 10);
+        });
     }
 
     export function start(): void {
-        for (let i = 0; i < tests.length; i++) {
-            let test = tests[i],
-                index = i + 1,
-                time: number,
-                timeReference: number;
+        let index = 0;
 
-            time = getMedium(test.iterationsCount, test.callback);
+        function performTest(test: ITest): void {
+            let time: number;
 
-            if (typeof test.referenceCallbackOrNumber === Headlight.BASE_TYPES.FUNCTION) {
-                timeReference = getMedium(test.iterationsCount, <() => void>test.referenceCallbackOrNumber);
-            }
+            getMedian(test.iterationsCount, test.callback)
+                .then(function (res: number): Promise<number> {
+                    time = res;
 
-            if (time <= timeReference) {
-                log.ok(index, test.testName, time, test.referenceTestName, timeReference);
-            } else {
-                log.error(index, test.testName, time, test.referenceTestName, timeReference);
+                    return getMedian(test.iterationsCount, <() => void>test.referenceCallbackOrNumber);
+                })
+                .then(function (timeReference: number): void {
+                    index++;
 
-                result = EXIT_CODES.ERROR;
-            }
+                    if (time <= timeReference) {
+                        log.ok(index, test.testName, time, test.referenceTestName, timeReference);
+                    } else {
+                        log.error(index, test.testName, time, test.referenceTestName, timeReference);
+
+                        result = EXIT_CODES.ERROR;
+                    }
+
+                    let nextTest: ITest = tests.shift();
+
+                    if (nextTest) {
+                        setTimeout(function (): void {
+                            performTest(nextTest);
+                        }, 10);
+                    } else {
+                        process.exit(result);
+                    }
+                });
         }
 
-        process.exit(result);
+        setTimeout(function (): void {
+            performTest(tests.shift());
+        }, 10);
     };
 }
