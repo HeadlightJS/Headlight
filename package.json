@@ -5,6 +5,8 @@
   "main": "",
   "dependencies": {},
   "devDependencies": {
+    "backbone": "^1.2.3",
+    "backbone.ribs": "^1.0.1",
     "karma": "^0.13.14",
     "karma-chai-plugins": "^0.6.0",
     "karma-coverage": "^0.5.3",
