@@ -39,6 +39,7 @@ module Perform {
     };
 
     export interface ITest {
+        iterationsCount: number;
         testName: string;
         callback: () => void;
         referenceTestName: string;
@@ -82,12 +83,14 @@ module Perform {
         };
     }
 
-    export function test(testName: string,
+    export function test(iterationsCount: number,
+                         testName: string,
                          callback: () => void,
                          referenceTestName: string,
                          referenceCallbackOrNumber: (() => void) | number): void {
 
         tests.push({
+            iterationsCount: iterationsCount,
             testName: testName,
             callback: callback,
             referenceTestName: referenceTestName,
@@ -95,24 +98,37 @@ module Perform {
         });
     }
 
+    const MEDIUM_ARRAY_LAST_ITEM_INDEX = 10;
+
+    function getMedium(iterationsCount: number, callback: () => void): number {
+        let arr: Array<number> = [];
+
+        for (let j = 0; j <= MEDIUM_ARRAY_LAST_ITEM_INDEX; j++) {
+            let timeStart: number = Date.now();
+
+            for (let i = iterationsCount; i--;) {
+                callback();
+            }
+
+            arr.push(Date.now() - timeStart);
+        }
+
+        arr.sort();
+
+        return arr[MEDIUM_ARRAY_LAST_ITEM_INDEX / 2];
+    }
+
     export function start(): void {
         for (let i = 0; i < tests.length; i++) {
             let test = tests[i],
                 index = i + 1,
-                timeStart: number = Date.now(),
                 time: number,
-                timeReference: number = <number>test.referenceCallbackOrNumber;
+                timeReference: number;
 
-            test.callback();
-
-            time = Date.now() - timeStart;
+            time = getMedium(test.iterationsCount, test.callback);
 
             if (typeof test.referenceCallbackOrNumber === Headlight.BASE_TYPES.FUNCTION) {
-                timeStart = Date.now();
-
-                (<() => void>test.referenceCallbackOrNumber)();
-
-                timeReference = Date.now() - timeStart;
+                timeReference = getMedium(test.iterationsCount, <() => void>test.referenceCallbackOrNumber);
             }
 
             if (time <= timeReference) {

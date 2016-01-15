@@ -123,71 +123,55 @@ module Perform {
         }
     });
 
-    const ITERATION_COUNT = 100000;
-
     test(
+        10000,
         'Creating models without computeds',
         () => {
-            let m: SampleModel;
-
-            for (let i = ITERATION_COUNT; i--;) {
-                m = new SampleModel({
-                    propString: 'olo',
-                    propString2: 'ala',
-                    propNumber: 3,
-                    propNumber2: 4,
-                    propBoolean: true,
-                    propBoolean2: false
-                });
-            }
+            let m: SampleModel = new SampleModel({
+                propString: 'olo',
+                propString2: 'ala',
+                propNumber: 3,
+                propNumber2: 4,
+                propBoolean: true,
+                propBoolean2: false
+            });
         },
         'Backbone',
         () => {
-            let m: any;
-
-            for (let i = ITERATION_COUNT; i--;) {
-                m = new BackboneModel({
-                    propString: 'olo',
-                    propString2: 'ala',
-                    propNumber: 3,
-                    propNumber2: 4,
-                    propBoolean: true,
-                    propBoolean2: false
-                });
-            }
+            let m: any = new BackboneModel({
+                propString: 'olo',
+                propString2: 'ala',
+                propNumber: 3,
+                propNumber2: 4,
+                propBoolean: true,
+                propBoolean2: false
+            });
         }
     );
 
     test(
+        10000,
         'Creating models with computeds',
         () => {
-            let m: SampleModelWithComputeds;
-
-            for (let i = ITERATION_COUNT; i--;) {
-                m = new SampleModelWithComputeds({
-                    propString: 'olo',
-                    propString2: 'ala',
-                    propNumber: 3,
-                    propNumber2: 4,
-                    propBoolean: true,
-                    propBoolean2: false
-                });
-            }
+            let m: SampleModelWithComputeds = new SampleModelWithComputeds({
+                propString: 'olo',
+                propString2: 'ala',
+                propNumber: 3,
+                propNumber2: 4,
+                propBoolean: true,
+                propBoolean2: false
+            });
         },
         'Ribs',
         () => {
-            let m: any;
-
-            for (let i = ITERATION_COUNT; i--;) {
-                m = new RibsModelWithComputeds({
-                    propString: 'olo',
-                    propString2: 'ala',
-                    propNumber: 3,
-                    propNumber2: 4,
-                    propBoolean: true,
-                    propBoolean2: false
-                });
-            }
+            let m: any = new RibsModelWithComputeds({
+                propString: 'olo',
+                propString2: 'ala',
+                propNumber: 3,
+                propNumber2: 4,
+                propBoolean: true,
+                propBoolean2: false
+            });
         }
     );
 
