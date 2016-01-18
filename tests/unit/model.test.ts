@@ -1,6 +1,5 @@
 /// <reference path="../../typings/tsd.d.ts" />
-///<reference path="../../src/Base.ts"/>
-///<reference path="../../src/Model.ts"/>
+///<reference path="../../dist/headlight.d.ts"/>
 
 describe('Model.', () => {
     let assert = chai.assert;

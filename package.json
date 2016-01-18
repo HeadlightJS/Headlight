@@ -19,9 +19,10 @@
     "typescript": "^1.6.2"
   },
   "scripts": {
-    "pretest": "sh pretest.sh",
+    "compile": "sh scripts/compile.sh",
+    "pretest": "sh scripts/pretest.sh",
     "test": "karma start",
-    "posttest": "tsc -p ./tests/performance/ && node tests/performance/performance.test.js"
+    "performance": "tsc -p ./tests/performance/ && node tests/performance/performance.test.js"
   },
   "repository": {
     "type": "git",

@@ -7,9 +7,11 @@
     "sourceMap": false,
     "target": "es5",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "declaration": true
   },
   "exclude": [
+    "dist",
     "karma.conf.ts",
     "tests",
     "node_modules"

@@ -1,7 +1,5 @@
 /// <reference path="../../typings/tsd.d.ts" />
-///<reference path="../../src/Base.ts"/>
-///<reference path="../../src/Signal.ts"/>
-///<reference path="../../src/Receiver.ts"/>
+///<reference path="../../dist/headlight.d.ts"/>
 
 describe('Receiver.', () => {
     interface ISimpleReceiver extends Headlight.IReceiver {
