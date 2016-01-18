@@ -25,14 +25,14 @@ module Headlight {
         attr: Model.IChangeModelParam<Schema> | Model.IChangeModelPropParam<Schema, any>;
     }
 
-    export interface IModelSignalsListener<Schema> {
+    export interface IModelSignalListeners<Schema> {
         change(callback: TSignalCallbackOnChangeModel<Schema>, receiver?: IReceiver): void;
         [key: string]: (callback: TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
     }
 
     export interface IModel<Schema> extends IReceiver {
-        on: IModelSignalsListener<Schema>;
-        once: IModelSignalsListener<Schema>;
+        on: IModelSignalListeners<Schema>;
+        once: IModelSignalListeners<Schema>;
         PROPS: Schema;
         signals: ISignalHash<Schema>;
 
@@ -41,8 +41,8 @@ module Headlight {
     }
 
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
-        public on: IModelSignalsListener<Schema>;
-        public once: IModelSignalsListener<Schema>;
+        public on: IModelSignalListeners<Schema>;
+        public once: IModelSignalListeners<Schema>;
         public PROPS: Schema;
         public signals: ISignalHash<Schema>;
 
