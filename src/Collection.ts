@@ -8,6 +8,8 @@ module Headlight {
     export interface ICollection<Schema> extends IReceiver, IBase, Array<IModel<Schema>> {
         toJSON(): Array<Schema>;
 
+        push(...items: Array<TModelOrSchema<Schema>>): number;
+        pop(): IModel<Schema>;
         concat(...items: Array<TArrayOrCollection<Schema> | TModelOrSchema<Schema>>): ICollection<Schema>;
     }
 

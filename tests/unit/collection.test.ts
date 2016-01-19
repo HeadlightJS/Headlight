@@ -136,6 +136,22 @@ describe('Collection.', () => {
                 assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
             });
         });
+
+        it('#push()', () => {
+            let p = family.pop();
+
+            assert.deepEqual(p.toJSON(), oleg);
+
+            p = family.pop();
+
+            assert.deepEqual(p.toJSON(), anna);
+            assert.equal(family.length, 0);
+
+            p = family.pop();
+
+            assert.isUndefined(p);
+        });
+
     });
 
 });
