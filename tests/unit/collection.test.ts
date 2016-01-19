@@ -304,7 +304,26 @@ describe('Collection.', () => {
             });
         });
 
+        describe('#filter()', () => {
+            it('works', () => {
+                let a = {};
 
+                let col = family.filter(function (value: Person,
+                                                  index: number,
+                                                  collection: Family): boolean {
+                    assert.equal(this, a);
+                    assert.instanceOf(value, Person);
+                    assert.typeOf(index, 'number');
+                    assert.equal(collection, family);
+
+                    return value.age < 40;
+                }, a);
+
+                checkForInstanceOfModel(col);
+
+                assert.deepEqual(col.toJSON(), [anna]);
+            });
+        });
 
     });
 

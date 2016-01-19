@@ -23,7 +23,7 @@ module Headlight {
                ...items: Array<TModelOrSchema<Schema>>): ICollection<Schema>;
         unshift(...items: Array<TModelOrSchema<Schema>>): number;
         indexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
-        /*lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
+        lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
         every(callbackfn: (value: IModel<Schema>,
                            index: number,
                            array: Array<IModel<Schema>>) => boolean,
@@ -36,14 +36,19 @@ module Headlight {
                              index: number,
                              array: Array<IModel<Schema>>) => void,
                 thisArg?: any): void;
-         map(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => ICollection<Schema>,
-         thisArg?: any): ICollection<Schema>;
-         filter(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => boolean,
-         thisArg?: any): Array<IModel<Schema>>;
+        map<T>(callbackfn: (value: IModel<Schema>,
+                            index: number,
+                            array: Array<IModel<Schema>>) => ICollection<Schema>,
+               thisArg?: any): Array<T>;
+
+        filter(callbackfn: (value: IModel<Schema>,
+                            index: number,
+                            collection: ICollection<Schema>) => boolean,
+               thisArg?: any): ICollection<Schema>;
+        /*
+
+
+
          reduce(callbackfn: (previousValue: IModel<Schema>,
          currentValue: IModel<Schema>,
          currentIndex: number,
@@ -171,27 +176,20 @@ module Headlight {
             return this.length;
         };
 
+        public filter(callbackfn: (value: IModel<Schema>,
+                                   index: number,
+                                   collection: ICollection<Schema>) => boolean,
+                      thisArg?: any): ICollection<Schema> {
+
+            return new SimpleCollection<Schema>(
+                Array.prototype.filter.call(this, callbackfn, thisArg),
+                this.model()
+            );
+        };
+
         /*
-         every(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => boolean,
-         thisArg?: any): boolean;
-         some(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => boolean,
-         thisArg?: any): boolean;
-         forEach(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => void,
-         thisArg?: any): void;
-         map(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => ICollection<Schema>,
-         thisArg?: any): ICollection<Schema>;
-         filter(callbackfn: (value: IModel<Schema>,
-         index: number,
-         array: Array<IModel<Schema>>) => boolean,
-         thisArg?: any): Array<IModel<Schema>>;
+
+
          reduce(callbackfn: (previousValue: IModel<Schema>,
          currentValue: IModel<Schema>,
          currentIndex: number,
