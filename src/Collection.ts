@@ -40,25 +40,21 @@ module Headlight {
                             index: number,
                             array: Array<IModel<Schema>>) => ICollection<Schema>,
                thisArg?: any): Array<T>;
-
         filter(callbackfn: (value: IModel<Schema>,
                             index: number,
                             collection: ICollection<Schema>) => boolean,
                thisArg?: any): ICollection<Schema>;
-        /*
+        reduce<T>(callbackfn: (previousValue: IModel<Schema>,
+                               currentValue: IModel<Schema>,
+                               currentIndex: number,
+                               collection: ICollection<Schema>) => IModel<Schema>,
+                  initialValue?: IModel<Schema>): T;
+        reduceRight<T>(callbackfn: (previousValue: IModel<Schema>,
+                                    currentValue: IModel<Schema>,
+                                    currentIndex: number,
+                                    collection: ICollection<Schema>) => IModel<Schema>,
+                       initialValue?: IModel<Schema>): T;
 
-
-
-         reduce(callbackfn: (previousValue: IModel<Schema>,
-         currentValue: IModel<Schema>,
-         currentIndex: number,
-         array: Array<IModel<Schema>>) => IModel<Schema>,
-         initialValue?: IModel<Schema>): IModel<Schema>;
-         reduceRight(callbackfn: (previousValue: IModel<Schema>,
-         currentValue: IModel<Schema>,
-         currentIndex: number,
-         array: Array<IModel<Schema>>) => IModel<Schema>,
-         initialValue?: IModel<Schema>): IModel<Schema>;*/
         [index: number]: IModel<Schema>;
     }
 
@@ -186,23 +182,6 @@ module Headlight {
                 this.model()
             );
         };
-
-        /*
-
-
-         reduce(callbackfn: (previousValue: IModel<Schema>,
-         currentValue: IModel<Schema>,
-         currentIndex: number,
-         array: Array<IModel<Schema>>) => IModel<Schema>,
-         initialValue?: IModel<Schema>): IModel<Schema>;
-         reduceRight(callbackfn: (previousValue: IModel<Schema>,
-         currentValue: IModel<Schema>,
-         currentIndex: number,
-         array: Array<IModel<Schema>>) => IModel<Schema>,
-         initialValue?: IModel<Schema>): IModel<Schema>;*/
-
-
-
 
 
 
