@@ -137,36 +137,71 @@ describe('Collection.', () => {
             });
         });
 
-        it('#push()', () => {
-            let p = family.pop();
+        describe('#push()', () => {
+            it('works', () => {
+                let p = family.pop();
 
-            assert.deepEqual(p.toJSON(), oleg);
+                assert.deepEqual(p.toJSON(), oleg);
 
-            p = family.pop();
+                p = family.pop();
 
-            assert.deepEqual(p.toJSON(), anna);
-            assert.equal(family.length, 0);
+                assert.deepEqual(p.toJSON(), anna);
+                assert.equal(family.length, 0);
 
-            p = family.pop();
+                p = family.pop();
 
-            assert.isUndefined(p);
+                assert.isUndefined(p);
+            });
         });
 
-        it('#join()', () => {
-            const SEPARATOR = '*';
+        describe('#join()', () => {
+            it('works', () => {
+                const SEPARATOR = '*';
 
 
-            let string = '';
+                let string = '';
 
-            for (let i = 0; i < family.length; i++) {
-                string += JSON.stringify(family[i].toJSON());
+                for (let i = 0; i < family.length; i++) {
+                    string += JSON.stringify(family[i].toJSON());
 
-                if (i !== family.length - 1) {
-                    string += SEPARATOR;
+                    if (i !== family.length - 1) {
+                        string += SEPARATOR;
+                    }
                 }
-            }
 
-            assert.equal(family.join(SEPARATOR), string);
+                assert.equal(family.join(SEPARATOR), string);
+            });
+        });
+
+        describe('#shift()', () => {
+            it('works', () => {
+                let p = family.shift();
+
+                assert.deepEqual(p.toJSON(), anna);
+
+                p = family.shift();
+
+                assert.deepEqual(p.toJSON(), oleg);
+                assert.equal(family.length, 0);
+
+                p = family.pop();
+
+                assert.isUndefined(p);
+            });
+        });
+
+        describe('#slice()', () => {
+            it('works', () => {
+                family.push(boris, helen);
+
+                let newCollection = family.slice(0, 2);
+
+                assert.instanceOf(newCollection, Headlight.Collection);
+                assert.deepEqual(newCollection.toJSON(), [anna, oleg]);
+
+                newCollection = family.slice(2, 10);
+                assert.deepEqual(newCollection.toJSON(), [boris, helen]);
+            });
         });
 
     });

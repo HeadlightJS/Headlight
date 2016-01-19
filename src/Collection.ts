@@ -6,12 +6,56 @@ module Headlight {
     'use strict';
 
     export interface ICollection<Schema> extends IReceiver, IBase, Array<IModel<Schema>> {
+        length: number;
         toJSON(): Array<Schema>;
-
+        toLocaleString(): string;
         push(...items: Array<TModelOrSchema<Schema>>): number;
         pop(): IModel<Schema>;
         concat(...items: Array<TArrayOrCollection<Schema> | TModelOrSchema<Schema>>): ICollection<Schema>;
         join(separator?: string): string;
+        reverse(): ICollection<Schema>;
+        shift(): IModel<Schema>;
+        slice(start?: number, end?: number): ICollection<Schema>;
+        //sort(compareFn?: (a: IModel<Schema>, b: IModel<Schema>) => number): ICollection<Schema>;
+        //splice(start: number): ICollection<Schema>;
+        /*splice(start: number,
+         deleteCount: number,
+         ...items: Array<TModelOrSchema<Schema>>): ICollection<Schema>;*/
+        unshift(...items: Array<TModelOrSchema<Schema>>): number;
+        indexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
+        lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
+        every(callbackfn: (value: IModel<Schema>,
+                           index: number,
+                           array: Array<IModel<Schema>>) => boolean,
+              thisArg?: any): boolean;
+        some(callbackfn: (value: IModel<Schema>,
+                          index: number,
+                          array: Array<IModel<Schema>>) => boolean,
+             thisArg?: any): boolean;
+        forEach(callbackfn: (value: IModel<Schema>,
+                             index: number,
+                             array: Array<IModel<Schema>>) => void,
+                thisArg?: any): void;
+        /*map(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => ICollection<Schema>,
+         thisArg?: any): ICollection<Schema>;
+         filter(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => boolean,
+         thisArg?: any): Array<IModel<Schema>>;
+         reduce(callbackfn: (previousValue: IModel<Schema>,
+         currentValue: IModel<Schema>,
+         currentIndex: number,
+         array: Array<IModel<Schema>>) => IModel<Schema>,
+         initialValue?: IModel<Schema>): IModel<Schema>;
+         reduceRight(callbackfn: (previousValue: IModel<Schema>,
+         currentValue: IModel<Schema>,
+         currentIndex: number,
+         array: Array<IModel<Schema>>) => IModel<Schema>,
+         initialValue?: IModel<Schema>): IModel<Schema>;*/
+
+        [index: number]: IModel<Schema>;
     }
 
     export type TModelOrSchema<Schema> = IModel<Schema> | Schema;
@@ -59,6 +103,8 @@ module Headlight {
         }
 
         public concat(...items: Array<TArrayOrCollection<Schema> | TModelOrSchema<Schema>>): ICollection<Schema> {
+            //todo Signals!
+
             let models = [],
                 newModels = Collection._convertToModels(this, items);
 
@@ -70,6 +116,8 @@ module Headlight {
         }
 
         public join(separator?: string): string {
+            //todo Signals!
+
             let string = '';
 
             for (let i = 0; i < this.length; i++) {
@@ -82,6 +130,27 @@ module Headlight {
 
             return string;
         }
+
+        public reverse(): ICollection<Schema> {
+            //todo Signals!
+
+            return Array.prototype.reverse.call(this);
+        }
+
+        public shift(): IModel<Schema> {
+            //todo Signals!
+
+            return Array.prototype.shift.call(this);
+        }
+
+        public slice(start?: number, end?: number): ICollection<Schema> {
+            //todo Signals!
+
+            return new SimpleCollection<Schema>(Array.prototype.slice.call(this, start, end), this.model());
+        }
+
+
+
 
 
 
