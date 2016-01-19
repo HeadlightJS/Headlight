@@ -11,6 +11,7 @@ module Headlight {
         push(...items: Array<TModelOrSchema<Schema>>): number;
         pop(): IModel<Schema>;
         concat(...items: Array<TArrayOrCollection<Schema> | TModelOrSchema<Schema>>): ICollection<Schema>;
+        join(separator?: string): string;
     }
 
     export type TModelOrSchema<Schema> = IModel<Schema> | Schema;
@@ -67,6 +68,23 @@ module Headlight {
 
             return new SimpleCollection<Schema>(models.concat(newModels), this.model());
         }
+
+        public join(separator?: string): string {
+            let string = '';
+
+            for (let i = 0; i < this.length; i++) {
+                string += JSON.stringify(this[i].toJSON());
+
+                if (i !== this.length - 1) {
+                    string += separator;
+                }
+            }
+
+            return string;
+        }
+
+
+
 
 
         public receive<CallbackParam>(signal: ISignal<CallbackParam>,

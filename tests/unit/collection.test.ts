@@ -152,6 +152,23 @@ describe('Collection.', () => {
             assert.isUndefined(p);
         });
 
+        it('#join()', () => {
+            const SEPARATOR = '*';
+
+
+            let string = '';
+
+            for (let i = 0; i < family.length; i++) {
+                string += JSON.stringify(family[i].toJSON());
+
+                if (i !== family.length - 1) {
+                    string += SEPARATOR;
+                }
+            }
+
+            assert.equal(family.join(SEPARATOR), string);
+        });
+
     });
 
 });
