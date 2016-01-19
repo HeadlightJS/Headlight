@@ -173,6 +173,15 @@ describe('Collection.', () => {
             });
         });
 
+        describe('#reverse()', () => {
+            it('works', () => {
+                let col = family.reverse();
+
+                assert.equal(family, col);
+                assert.deepEqual(col.toJSON(), [oleg, anna]);
+            });
+        });
+
         describe('#shift()', () => {
             it('works', () => {
                 let p = family.shift();
@@ -203,6 +212,23 @@ describe('Collection.', () => {
                 assert.deepEqual(newCollection.toJSON(), [boris, helen]);
             });
         });
+
+        describe('#sort()', () => {
+            it('works', () => {
+                let col = family.sort();
+
+                assert.equal(family, col);
+                assert.deepEqual(col.toJSON(), [anna, oleg]);
+
+                family.sort((a: IPerson, b: IPerson) => {
+                    return b.age - a.age;
+                });
+
+                assert.deepEqual(family.toJSON(), [oleg, anna]);
+            });
+        });
+
+
 
     });
 

@@ -16,7 +16,7 @@ module Headlight {
         reverse(): ICollection<Schema>;
         shift(): IModel<Schema>;
         slice(start?: number, end?: number): ICollection<Schema>;
-        //sort(compareFn?: (a: IModel<Schema>, b: IModel<Schema>) => number): ICollection<Schema>;
+        sort(compareFn?: (a: IModel<Schema>, b: IModel<Schema>) => number): ICollection<Schema>;
         //splice(start: number): ICollection<Schema>;
         /*splice(start: number,
          deleteCount: number,
@@ -148,6 +148,14 @@ module Headlight {
 
             return new SimpleCollection<Schema>(Array.prototype.slice.call(this, start, end), this.model());
         }
+
+        public sort(compareFn?: (a: TModelOrSchema<Schema>, b: TModelOrSchema<Schema>) => number): ICollection<Schema> {
+            //todo Signals!
+
+            return Array.prototype.sort.call(this, compareFn);
+        };
+
+
 
 
 
