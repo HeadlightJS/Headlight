@@ -17,13 +17,13 @@ module Headlight {
         shift(): IModel<Schema>;
         slice(start?: number, end?: number): ICollection<Schema>;
         sort(compareFn?: (a: IModel<Schema>, b: IModel<Schema>) => number): ICollection<Schema>;
-        //splice(start: number): ICollection<Schema>;
-        /*splice(start: number,
-         deleteCount: number,
-         ...items: Array<TModelOrSchema<Schema>>): ICollection<Schema>;*/
+        splice(start: number): ICollection<Schema>;
+        splice(start: number,
+               deleteCount: number,
+               ...items: Array<TModelOrSchema<Schema>>): ICollection<Schema>;
         unshift(...items: Array<TModelOrSchema<Schema>>): number;
         indexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
-        lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
+        /*lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
         every(callbackfn: (value: IModel<Schema>,
                            index: number,
                            array: Array<IModel<Schema>>) => boolean,
@@ -36,7 +36,7 @@ module Headlight {
                              index: number,
                              array: Array<IModel<Schema>>) => void,
                 thisArg?: any): void;
-        /*map(callbackfn: (value: IModel<Schema>,
+         map(callbackfn: (value: IModel<Schema>,
          index: number,
          array: Array<IModel<Schema>>) => ICollection<Schema>,
          thisArg?: any): ICollection<Schema>;
@@ -54,7 +54,6 @@ module Headlight {
          currentIndex: number,
          array: Array<IModel<Schema>>) => IModel<Schema>,
          initialValue?: IModel<Schema>): IModel<Schema>;*/
-
         [index: number]: IModel<Schema>;
     }
 
@@ -155,8 +154,54 @@ module Headlight {
             return Array.prototype.sort.call(this, compareFn);
         };
 
+        public splice(start: number,
+                      ...items: Array<number | TModelOrSchema<Schema>>): ICollection<Schema> {
+            // todo Signals
 
+            return new SimpleCollection<Schema>(Array.prototype.splice.apply(this,
+                [start, items.shift()].concat(Collection._convertToModels(this, items))
+            ), this.model());
+        };
 
+        public unshift(...items: Array<TModelOrSchema<Schema>>): number {
+            Array.prototype.unshift.apply(this, Collection._convertToModels(this, items));
+
+            //todo Signals!
+
+            return this.length;
+        };
+
+        /*
+         every(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => boolean,
+         thisArg?: any): boolean;
+         some(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => boolean,
+         thisArg?: any): boolean;
+         forEach(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => void,
+         thisArg?: any): void;
+         map(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => ICollection<Schema>,
+         thisArg?: any): ICollection<Schema>;
+         filter(callbackfn: (value: IModel<Schema>,
+         index: number,
+         array: Array<IModel<Schema>>) => boolean,
+         thisArg?: any): Array<IModel<Schema>>;
+         reduce(callbackfn: (previousValue: IModel<Schema>,
+         currentValue: IModel<Schema>,
+         currentIndex: number,
+         array: Array<IModel<Schema>>) => IModel<Schema>,
+         initialValue?: IModel<Schema>): IModel<Schema>;
+         reduceRight(callbackfn: (previousValue: IModel<Schema>,
+         currentValue: IModel<Schema>,
+         currentIndex: number,
+         array: Array<IModel<Schema>>) => IModel<Schema>,
+         initialValue?: IModel<Schema>): IModel<Schema>;*/
 
 
 

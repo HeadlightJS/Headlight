@@ -64,6 +64,13 @@ describe('Collection.', () => {
     });
 
     describe('Array methods', () => {
+        function checkForInstanceOfModel(collection: Headlight.ICollection<any>): void {
+            for (let i = 0; i < collection.length; i++) {
+                assert.instanceOf(collection[i], Headlight.Model);
+                assert.instanceOf(collection[i], Person);
+            }
+        }
+        
         describe('#concat()', () => {
             function check(fam: Headlight.ICollection<IPerson>, newFamily: Headlight.ICollection<IPerson>): void {
                 assert.notEqual(fam, newFamily);
@@ -78,42 +85,52 @@ describe('Collection.', () => {
 
             it('Concatenates with raw objects.', () => {
                 check(family, family.concat(boris, helen));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with models.', () => {
                 check(family, family.concat(new Person(boris), new Person(helen)));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with raw objects and models.', () => {
                 check(family, family.concat(boris, new Person(helen)));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with Array\<raw object\>.', () => {
                 check(family, family.concat([boris, helen]));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with Array\<Model\>.', () => {
                 check(family, family.concat([new Person(boris), new Person(helen)]));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with Array\<Model | raw object\>.', () => {
                 check(family, family.concat([boris, new Person(helen)]));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with Collection.', () => {
                 check(family, family.concat(new Family([boris, helen])));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with Array\<raw object\> and Collection', () => {
                 check(family, family.concat([boris], new Family([helen])));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with raw object and Collection', () => {
                 check(family, family.concat(boris, new Family([helen])));
+                checkForInstanceOfModel(family);
             });
 
             it('Concatenates with raw object and Array<raw object>', () => {
                 check(family, family.concat(boris, [helen]));
+                checkForInstanceOfModel(family);
             });
         });
 
@@ -122,22 +139,25 @@ describe('Collection.', () => {
                 family.push(boris, helen);
 
                 assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
+                checkForInstanceOfModel(family);
             });
 
             it('Pushes models', () => {
                 family.push(new Person(boris), new Person(helen));
 
                 assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
+                checkForInstanceOfModel(family);
             });
 
             it('Pushes raw objects and models', () => {
                 family.push(boris, new Person(helen));
 
                 assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
+                checkForInstanceOfModel(family);
             });
         });
 
-        describe('#push()', () => {
+        describe('#pop()', () => {
             it('works', () => {
                 let p = family.pop();
 
@@ -210,6 +230,8 @@ describe('Collection.', () => {
 
                 newCollection = family.slice(2, 10);
                 assert.deepEqual(newCollection.toJSON(), [boris, helen]);
+
+                checkForInstanceOfModel(newCollection);
             });
         });
 
@@ -225,6 +247,60 @@ describe('Collection.', () => {
                 });
 
                 assert.deepEqual(family.toJSON(), [oleg, anna]);
+            });
+        });
+
+        describe('#splice()', () => {
+            it('Removes items', () => {
+                let col = family.splice(1, 1);
+
+                assert.deepEqual(family.toJSON(), [anna]);
+                assert.deepEqual(col.toJSON(), [oleg]);
+
+                checkForInstanceOfModel(family);
+                checkForInstanceOfModel(col);
+            });
+
+            it('Adds items', () => {
+                let col = family.splice(1, 0, boris);
+
+                assert.deepEqual(family.toJSON(), [anna, boris, oleg]);
+                assert.equal(col.length, 0);
+
+                checkForInstanceOfModel(family);
+            });
+
+            it('Adds and removes items', () => {
+                let col = family.splice(1, 1, boris);
+
+                assert.deepEqual(family.toJSON(), [anna, boris]);
+                assert.deepEqual(col.toJSON(), [oleg]);
+
+                checkForInstanceOfModel(family);
+                checkForInstanceOfModel(col);
+            });
+        });
+
+        describe('#unshift()', () => {
+            it('Unshifts raw objects', () => {
+                family.unshift(boris, helen);
+
+                assert.deepEqual(family.toJSON(), [boris, helen, anna, oleg]);
+                checkForInstanceOfModel(family);
+            });
+
+            it('Unshifts models', () => {
+                family.unshift(new Person(boris), new Person(helen));
+
+                assert.deepEqual(family.toJSON(), [boris, helen, anna, oleg]);
+                checkForInstanceOfModel(family);
+            });
+
+            it('Unshifts raw objects and models', () => {
+                family.unshift(boris, new Person(helen));
+
+                assert.deepEqual(family.toJSON(), [boris, helen, anna, oleg]);
+                checkForInstanceOfModel(family);
             });
         });
 
