@@ -1,4 +1,5 @@
 ///<reference path="Base.ts"/>
+///<reference path="Signal.ts"/>
 ///<reference path="Model.ts"/>
 ///<reference path="Receiver.ts"/>
 
@@ -6,22 +7,27 @@ module Headlight {
     'use strict';
 
     export interface ICollection<Schema> extends IReceiver, IBase, Array<IModel<Schema>> {
+        on: Collection.ISignalListeners<Schema>;
+        signals: Collection.ISignalHash<Schema>;
+
         length: number;
         toJSON(): Array<Schema>;
         toLocaleString(): string;
-        push(...items: Array<TModelOrSchema<Schema>>): number;
+        push(...items: Array<Model.TModelOrSchema<Schema>>): number;
         pop(): IModel<Schema>;
-        concat(...items: Array<TArrayOrCollection<Schema> | TModelOrSchema<Schema>>): ICollection<Schema>;
+        concat(...items: Array<Collection.TArrayOrCollection<Schema> |
+            Model.TModelOrSchema<Schema>>): ICollection<Schema>;
         join(separator?: string): string;
         reverse(): ICollection<Schema>;
         shift(): IModel<Schema>;
         slice(start?: number, end?: number): ICollection<Schema>;
-        sort(compareFn?: (a: IModel<Schema>, b: IModel<Schema>) => number): ICollection<Schema>;
+        sort(compareFn?: (a: Model.TModelOrSchema<Schema>,
+                          b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema>;
         splice(start: number): ICollection<Schema>;
         splice(start: number,
                deleteCount: number,
-               ...items: Array<TModelOrSchema<Schema>>): ICollection<Schema>;
-        unshift(...items: Array<TModelOrSchema<Schema>>): number;
+               ...items: Array<Model.TModelOrSchema<Schema>>): ICollection<Schema>;
+        unshift(...items: Array<Model.TModelOrSchema<Schema>>): number;
         indexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
         lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
         every(callbackfn: (value: IModel<Schema>,
@@ -58,17 +64,10 @@ module Headlight {
         [index: number]: IModel<Schema>;
     }
 
-    export type TModelOrSchema<Schema> = IModel<Schema> | Schema;
-    export type TArrayOrCollection<Schema> = Array<TModelOrSchema<Schema>> | ICollection<Schema>;
-
-    export interface ICollectionModelSignalsListener<Schema> extends IModelSignalListeners<Schema> {
-        add(callback: TSignalCallbackOnChangeModel<Schema>, receiver?: IReceiver): void;
-        remove(callback: TSignalCallbackOnChangeModel<Schema>, receiver?: IReceiver): void;
-    }
-
     export abstract class Collection<Schema> extends Array<IModel<Schema>> implements ICollection<Schema> {
         public cid: string;
-        public on: ICollectionModelSignalsListener<Schema>;
+        public on: Collection.ISignalListeners<Schema>;
+        public signals: Collection.ISignalHash<Schema>;
 
         constructor(items: Array<IModel<Schema>> | Array<Schema>) {
             super();
@@ -78,7 +77,6 @@ module Headlight {
         }
 
         public toJSON(): Array<Schema> {
-
             return Array.prototype.map.call(this, (model: IModel<Schema>) => {
                 return model.toJSON();
             });
@@ -88,10 +86,11 @@ module Headlight {
             return JSON.stringify(this.toJSON());
         }
 
-        public push(...items: Array<TModelOrSchema<Schema>>): number {
+        public push(...items: Array<Model.TModelOrSchema<Schema>>): number {
             Array.prototype.push.apply(this, Collection._convertToModels(this, items));
 
             //todo Signals!
+
 
             return this.length;
         }
@@ -102,7 +101,8 @@ module Headlight {
             return Array.prototype.pop.call(this);
         }
 
-        public concat(...items: Array<TArrayOrCollection<Schema> | TModelOrSchema<Schema>>): ICollection<Schema> {
+        public concat(...items: Array<Collection.TArrayOrCollection<Schema> |
+            Model.TModelOrSchema<Schema>>): ICollection<Schema> {
             //todo Signals!
 
             let models = [],
@@ -112,7 +112,7 @@ module Headlight {
                 models[i] = this[i];
             }
 
-            return new SimpleCollection<Schema>(models.concat(newModels), this.model());
+            return new Collection.SimpleCollection<Schema>(models.concat(newModels), this.model());
         }
 
         public join(separator?: string): string {
@@ -146,25 +146,26 @@ module Headlight {
         public slice(start?: number, end?: number): ICollection<Schema> {
             //todo Signals!
 
-            return new SimpleCollection<Schema>(Array.prototype.slice.call(this, start, end), this.model());
+            return new Collection.SimpleCollection<Schema>(Array.prototype.slice.call(this, start, end), this.model());
         }
 
-        public sort(compareFn?: (a: TModelOrSchema<Schema>, b: TModelOrSchema<Schema>) => number): ICollection<Schema> {
+        public sort(compareFn?: (a: Model.TModelOrSchema<Schema>,
+                                 b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema> {
             //todo Signals!
 
             return Array.prototype.sort.call(this, compareFn);
         };
 
         public splice(start: number,
-                      ...items: Array<number | TModelOrSchema<Schema>>): ICollection<Schema> {
+                      ...items: Array<number | Model.TModelOrSchema<Schema>>): ICollection<Schema> {
             // todo Signals
 
-            return new SimpleCollection<Schema>(Array.prototype.splice.apply(this,
+            return new Collection.SimpleCollection<Schema>(Array.prototype.splice.apply(this,
                 [start, items.shift()].concat(Collection._convertToModels(this, items))
             ), this.model());
         };
 
-        public unshift(...items: Array<TModelOrSchema<Schema>>): number {
+        public unshift(...items: Array<Model.TModelOrSchema<Schema>>): number {
             Array.prototype.unshift.apply(this, Collection._convertToModels(this, items));
 
             //todo Signals!
@@ -177,7 +178,7 @@ module Headlight {
                                    collection: ICollection<Schema>) => boolean,
                       thisArg?: any): ICollection<Schema> {
 
-            return new SimpleCollection<Schema>(
+            return new Collection.SimpleCollection<Schema>(
                 Array.prototype.filter.call(this, callbackfn, thisArg),
                 this.model()
             );
@@ -265,23 +266,57 @@ module Headlight {
         }
     }
 
-    class SimpleCollection<Schema> extends Collection<Schema> implements ICollection<Schema> {
-        private _M: typeof Model;
+    export module Collection {
+        export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | ICollection<Schema>;
 
-        constructor(items: Array<IModel<Schema>> | Array<Schema>, M: typeof Model) {
-            super(this._initProps(items, M));
+        /*export interface ISignalHash<Schema> {
+         change: Model.TSignalOnChangeModel<Schema>;
+         [signalCid: string]: Model.TSignalOnChangeModelAnyProp<Schema>;
+         }*/
+
+        export interface ISignalHash<Schema> {
         }
 
-        protected model(): typeof Model {
-            return this._M;
+        export interface ISignalListeners<Schema> {
+            change(callback: ISignalCallbackChangeModelArgs<Schema>,
+                   receiver?: IReceiver): void;
+            add(callback: ISignalCallbackChangeModelArgs<Schema>, receiver?: IReceiver): void;
+            remove(callback: ISignalCallbackChangeModelArgs<Schema>, receiver?: IReceiver): void;
+            sort(callback: ISignalCallbackArgs<Schema>, receiver?: IReceiver): void;
+            [key: string]: (callback: ISignalCallbackChangeModelPropArgs<Schema, any>,
+                            receiver?: IReceiver) => void;
+        }
+
+        export interface ISignalCallbackArgs<Schema> {
+            collection: ICollection<Schema>;
         };
 
-        private _initProps(items: Array<IModel<Schema>> | Array<Schema>,
-                           M: typeof Model): Array<IModel<Schema>> | Array<Schema> {
+        export interface ISignalCallbackChangeModelArgs<Schema> extends Model.IChangeModelParam<Schema>, ISignalCallbackArgs<Schema> {
+        }
+        ;
 
-            this._M = M;
+        export interface ISignalCallbackChangeModelPropArgs<Schema, T> extends Model.IChangeModelPropParam<Schema, T>, ISignalCallbackArgs<Schema> {
+        }
+        ;
 
-            return items;
+        export class SimpleCollection<Schema> extends Collection<Schema> implements ICollection<Schema> {
+            private _M: typeof Model;
+
+            constructor(items: Array<IModel<Schema>> | Array<Schema>, M: typeof Model) {
+                super(this._initProps(items, M));
+            }
+
+            protected model(): typeof Model {
+                return this._M;
+            };
+
+            private _initProps(items: Array<IModel<Schema>> | Array<Schema>,
+                               M: typeof Model): Array<IModel<Schema>> | Array<Schema> {
+
+                this._M = M;
+
+                return items;
+            }
         }
     }
 }
