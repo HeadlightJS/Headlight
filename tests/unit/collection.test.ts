@@ -1,7 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 ///<reference path="../../dist/headlight.d.ts"/>
 
-import Collection = Headlight.Collection;
 describe('Collection.', () => {
     let assert = chai.assert;
 
@@ -115,6 +114,26 @@ describe('Collection.', () => {
 
             it('Concatenates with raw object and Array<raw object>', () => {
                 check(family, family.concat(boris, [helen]));
+            });
+        });
+
+        describe('#push()', () => {
+            it('Pushes raw objects', () => {
+                family.push(boris, helen);
+
+                assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
+            });
+
+            it('Pushes models', () => {
+                family.push(new Person(boris), new Person(helen));
+
+                assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
+            });
+
+            it('Pushes raw objects and models', () => {
+                family.push(boris, new Person(helen));
+
+                assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
             });
         });
     });
