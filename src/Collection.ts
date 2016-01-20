@@ -186,14 +186,14 @@ module Headlight {
                     [start, end].concat(models)
                 ), M);
 
-            this.signals.add.dispatch({
-                collection: this,
-                models: new Collection.SimpleCollection<Schema>(models, M)
-            });
-
             this.signals.remove.dispatch({
                 collection: this,
                 models: removed
+            });
+
+            this.signals.add.dispatch({
+                collection: this,
+                models: new Collection.SimpleCollection<Schema>(models, M)
             });
 
             return removed;

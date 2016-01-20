@@ -136,13 +136,35 @@ module Headlight {
             }
         }
 
-        public static filter<S>(propName: string,
+        public static filter<S>(propName: string | Array<string>,
                              handler: Signal.ISignalCallback<Model.IChangeParam<S>>):
             Signal.ISignalCallback<Model.IChangeParam<S>> {
 
+            let names = Array.isArray(propName) ? <Array<string>>propName : [<string>propName];
+
             return (param: Model.IChangeParam<S>) => {
-                if (propName in param.values) {
-                    handler(param);
+                let values = <S>{},
+                    previous = <S>{},
+                    n: string,
+                    flag = false;
+
+                for (let i = names.length; i--;) {
+                    n = names[i];
+
+                    if (n in param.values) {
+                        values[n] = param.values[n];
+                        previous[n] = param.previous[n];
+
+                        flag = true;
+                    }
+                }
+
+                if (flag) {
+                    handler({
+                        model: param.model,
+                        values: values,
+                        previous: previous
+                    });
                 }
             };
         }

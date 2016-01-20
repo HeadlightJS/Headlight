@@ -9,64 +9,31 @@ module Headlight {
 
             function dispatchSignals(prop: string, newVal: any, prev: any): void {
                 if (newVal !== prev) {
-                    /*Model.dispatch(this, prop, {
-                        model: this,
-                        value: newVal,
-                        previous: prev
-                    });
-
-                    let deps = this._depsMap[prop],
-                        d: string,
-                        prevValue: any,
-                        currValue: any;
-
-                    for (let j = deps.length; j--;) {
-                        d = deps[j];
-                        prevValue = this._properties[d];
-                        currValue = this[d];
-
-                        if (currValue !== prevValue) {
-                            Model.dispatch(this, d, {
-                                model: this,
-                                value: currValue,
-                                previous: prevValue
-                            });
-                        }
-                    }*/
-
-                    /*Model.dispatch(this, 'change', {
-                        model: this
-                    });*/
-
-                    let model = <Model<any>>this,
-                        values = {},
+                    let values = {},
                         previous = {},
-                        deps = this._depsMap[prop],
                         d: string,
                         prevValue: any,
-                        currValue: any;
+                        currValue: any,
+                        self = this;
 
                     values[prop] = newVal;
                     previous[prop] = prev;
 
                     //todo итерация через зависимости зависимостей
+                    (function iterateThroughDeps(deps:  Array<string>): void {
+                        for (let j = deps.length; j--;) {
+                            d = deps[j];
+                            prevValue = self._properties[d];
+                            currValue = self[d];
 
-                    for (let j = deps.length; j--;) {
-                        d = deps[j];
-                        prevValue = this._properties[d];
-                        currValue = this[d];
+                            if (currValue !== prevValue) {
+                                values[d] = currValue;
+                                previous[d] = prevValue;
 
-                        if (currValue !== prevValue) {
-                            /*Model.dispatch(this, d, {
-                                model: this,
-                                value: currValue,
-                                previous: prevValue
-                            });*/
-
-                            values[d] = currValue;
-                            previous[d] = prevValue;
+                                iterateThroughDeps(self._depsMap[d]);
+                            }
                         }
-                    }
+                    })(this._depsMap[prop]);
 
                     Model.dispatch(this, 'change', {
                         model: this,

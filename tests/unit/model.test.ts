@@ -61,6 +61,11 @@ describe('Model.', () => {
             return this.name.toUpperCase();
         }
 
+        @Headlight.dProperty(['fullname'])
+        get fullnameUpperCase(): string {
+            return this.fullname.toUpperCase();
+        }
+
     }
 
     let person: Person;
@@ -143,12 +148,14 @@ describe('Model.', () => {
                     values: {
                         name: person.name,
                         nameUpperCase: person.name.toUpperCase(),
-                        fullname: person.name + ' ' + PERSON_SURNAME
+                        fullname: person.name + ' ' + PERSON_SURNAME,
+                        fullnameUpperCase: (person.name + ' ' + PERSON_SURNAME).toUpperCase()
                     },
                     previous: {
                         name: PERSON_NAME,
                         nameUpperCase: PERSON_NAME.toUpperCase(),
-                        fullname: PERSON_NAME + ' ' + PERSON_SURNAME
+                        fullname: PERSON_NAME + ' ' + PERSON_SURNAME,
+                        fullnameUpperCase: (PERSON_NAME + ' ' + PERSON_SURNAME).toUpperCase()
                     }
                 }, 'Setting new value to a field should provoke change signal.');
             }
@@ -182,27 +189,85 @@ describe('Model.', () => {
             });
 
             it ('Listen to filtered signals.', () => {
+                let arg,
+                    arg2;
+
                 person.on.change(
                     Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
                         changeObj = args;
                     })
                 );
 
+                person.on.change(
+                    Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
+                        arg = args;
+                    })
+                );
+
+                person.on.change(
+                    Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
+                        (args: TChangePersonParam): void => {
+
+                        arg2 = args;
+                    })
+                );
+
                 person.surname = PERSON_NAME;
 
                 assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
+                assert.isObject(arg);
+                assert.equal(arg.model, person);
+                assert.deepEqual(arg.values, {
+                    fullname: person.fullname
+                });
+
+                assert.isObject(arg2);
+                assert.equal(arg2.model, person);
+                assert.deepEqual(arg2.values, {
+                    surname: person.surname,
+                    fullname: person.fullname
+                });
             });
 
             it ('Listen to filtered signals via .once().', () => {
+                let arg,
+                    arg2;
+
                 person.once.change(
                     Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
                         changeObj = args;
                     })
                 );
 
+                person.once.change(
+                    Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
+                        arg = args;
+                    })
+                );
+
+                person.once.change(
+                    Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
+                        (args: TChangePersonParam): void => {
+
+                            arg2 = args;
+                        })
+                );
+
                 person.surname = PERSON_NAME;
 
                 assert.isUndefined(changeObj, 'Handler should be called only once for change of `name` prop.');
+                assert.isObject(arg);
+                assert.equal(arg.model, person);
+                assert.deepEqual(arg.values, {
+                    fullname: person.fullname
+                });
+
+                assert.isObject(arg2);
+                assert.equal(arg2.model, person);
+                assert.deepEqual(arg2.values, {
+                    surname: person.surname,
+                    fullname: person.fullname
+                });
             });
 
             it ('Listen to signals via Receiver#receive().', () => {
@@ -323,6 +388,7 @@ describe('Model.', () => {
             patronymic: undefined,
             fullname: PERSON_NAME + ' ' + PERSON_SURNAME,
             nameUpperCase: PERSON_NAME.toUpperCase(),
+            fullnameUpperCase: (PERSON_NAME + ' ' + PERSON_SURNAME).toUpperCase(),
             son: {
                 name: SON_NAME,
                 surname: SON_SURNAME,
@@ -330,6 +396,7 @@ describe('Model.', () => {
                 patronymic: undefined,
                 fullname: SON_NAME + ' ' + SON_SURNAME,
                 nameUpperCase: SON_NAME.toUpperCase(),
+                fullnameUpperCase: (SON_NAME + ' ' + SON_SURNAME).toUpperCase(),
                 son: undefined
             }
         });
