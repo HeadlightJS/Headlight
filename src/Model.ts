@@ -7,18 +7,12 @@ module Headlight {
     'use strict';
 
     interface ITransactionArtifact<Schema> {
-        signal: Model.TSignalOnChangeModel<Schema> | Model.TSignalOnChangeModelProp<Schema, any>;
-        attr: Model.IChangeModelParam<Schema> | Model.IChangeModelPropParam<Schema, any>;
+        signal: Model.TSignalOnChange<Schema>;
+        attr: Model.IChangeParam<Schema>;
     }
-
-    export interface IModelSignalListeners<Schema> {
-        change(callback: Model.TSignalCallbackOnChangeModel<Schema>, receiver?: IReceiver): void;
-        [key: string]: (callback: Model.TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
-    }
-
     export interface IModel<Schema> extends IReceiver {
-        on: IModelSignalListeners<Schema>;
-        once: IModelSignalListeners<Schema>;
+        on: Model.ISignalListeners<Schema>;
+        once: Model.ISignalListeners<Schema>;
         PROPS: Schema;
         signals: Model.ISignalHash<Schema>;
 
@@ -27,8 +21,8 @@ module Headlight {
     }
 
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
-        public on: IModelSignalListeners<Schema>;
-        public once: IModelSignalListeners<Schema>;
+        public on: Model.ISignalListeners<Schema>;
+        public once: Model.ISignalListeners<Schema>;
         public PROPS: Schema;
         public signals: Model.ISignalHash<Schema>;
 
@@ -88,7 +82,6 @@ module Headlight {
 
             callback(model);
 
-            //todo: исследовать бытродействие этого же действия с помощью foreach().
             for (let artifact of model._transactionArtifacts) {
                 if (artifact) {
                     artifact.signal.dispatch(artifact.attr);
@@ -109,9 +102,7 @@ module Headlight {
             model._state = Model.STATE.NORMAL;
         }
 
-        public static dispatch<S>(model: Model<S>, propName: string,
-                                  attr: Model.IChangeModelParam<any> | Model.IChangeModelPropParam<any, any>): void {
-
+        public static dispatch<S>(model: Model<S>, propName: string, attr: Model.IChangeParam<any>): void {
             let signal = <Signal<any>>model.signals[propName];
 
             switch (model._state) {
@@ -145,6 +136,17 @@ module Headlight {
             }
         }
 
+        public static filter<S>(propName: string,
+                             handler: Signal.ISignalCallback<Model.IChangeParam<S>>):
+            Signal.ISignalCallback<Model.IChangeParam<S>> {
+
+            return (param: Model.IChangeParam<S>) => {
+                if (propName in param.values) {
+                    handler(param);
+                }
+            };
+        }
+
         protected cidPrefix(): string {
             return 'm';
         }
@@ -155,53 +157,26 @@ module Headlight {
         }
 
         private _createSignals(): void {
-            type LSCallbackAnyProp =
-                (callback: Model.TSignalCallbackOnChangeModelAnyProp<Schema>, receiver?: IReceiver) => void;
-
-            let props = Model.keys(this),
-                prop: string;
-
             this.signals = {
                 change: new Signal()
             };
 
             this.on = {
-                change: (callback: Model.TSignalCallbackOnChangeModel<Schema>,
+                change: (callback: Model.TSignalCallbackOnChange<Schema>,
                          receiver?: IReceiver): void => {
-                    this._onChange(callback, receiver);
+                    this.signals.change.add(callback, receiver);
                 }
             };
             this.once = {
-                change: (callback: Model.TSignalCallbackOnChangeModel<Schema>,
+                change: (callback: Model.TSignalCallbackOnChange<Schema>,
                          receiver?: IReceiver): void => {
-                    this._onChange(callback, receiver, null, true);
+                    this.signals.change.addOnce(callback, receiver);
                 }
             };
-
-            for (let i = props.length; i--;) {
-                prop = props[i];
-
-                this.signals[prop] = new Signal();
-
-                this.on[prop] =
-                    ((p: string): LSCallbackAnyProp => {
-                        return (callback: Model.TSignalCallbackOnChangeModelAnyProp<Schema>,
-                                receiver?: IReceiver): void => {
-                            this._onChange(p, callback, receiver);
-                        };
-                    })(prop);
-                this.once[prop] =
-                    ((p: string): LSCallbackAnyProp => {
-                        return (callback: Model.TSignalCallbackOnChangeModelAnyProp<Schema>,
-                                receiver?: IReceiver): void => {
-                            this._onChange(p, callback, receiver, true);
-                        };
-                    })(prop);
-            }
         }
 
         private _initProperties(args: Schema): void {
-            let props = Object.keys(args);
+            let props = Object.keys(args || {});
 
             for (let i = props.length; i--;) {
                 this[props[i]] = args[props[i]];
@@ -211,58 +186,27 @@ module Headlight {
         private _enableSignals(): void {
             this._state = Model.STATE.NORMAL;
         }
-
-        private _onChange<Type>(propOrCallback: string | Model.TSignalCallbackOnChangeModel<Schema> |
-            Model.TSignalCallbackOnChangeModelProp<Schema, Type>,
-                                callbackOrReceiver: Model.TSignalCallbackOnChangeModel<Schema> |
-                                    Model.TSignalCallbackOnChangeModelProp<Schema, Type> | IReceiver,
-                                receiver?: IReceiver,
-                                once?: boolean): void {
-
-            let method = once ? 'addOnce' : 'add',
-                signal: Model.TSignalOnChangeModel<Schema> | Model.TSignalOnChangeModelProp<Schema, Type>;
-
-            if (typeof propOrCallback === 'function') {
-                signal = <Model.TSignalOnChangeModel<Schema>>this.signals.change;
-                signal[method](
-                    <Model.TSignalCallbackOnChangeModel<Schema>>propOrCallback,
-                    <IReceiver>callbackOrReceiver
-                );
-            } else {
-                signal = <Model.TSignalOnChangeModelProp<Schema, Type>>this.signals[<string>propOrCallback];
-                signal[method](
-                    <Model.TSignalCallbackOnChangeModelProp<Schema, Type>>callbackOrReceiver,
-                    <IReceiver>receiver
-                );
-            }
-        }
     }
 
     export module Model {
         export type TModelOrSchema<Schema> = IModel<Schema> | Schema;
+        export type TSignalOnChange<S> = ISignal<Model.IChangeParam<S>>;
+        export type TSignalCallbackOnChange<S> = Signal.ISignalCallback<Model.IChangeParam<S>>;
+
+        export interface ISignalListeners<Schema> {
+            change(callback: TSignalCallbackOnChange<Schema>, receiver?: IReceiver): void;
+        }
+
 
         export interface ISignalHash<Schema> {
-            change: TSignalOnChangeModel<Schema>;
-            [signalCid: string]: TSignalOnChangeModelAnyProp<Schema>;
+            change: TSignalOnChange<Schema>;
         }
 
-        export interface IChangeModelParam<Schema> {
+        export interface IChangeParam<Schema> {
             model: IModel<Schema>;
+            values: Schema;
+            previous: Schema;
         }
-
-        export interface IChangeModelPropParam<Schema, Type> extends IChangeModelParam<Schema> {
-            value: Type;
-            previous: Type;
-        }
-
-        export type TSignalOnChangeModel<S> = ISignal<Model.IChangeModelParam<S>>;
-        export type TSignalOnChangeModelProp<S, T> = ISignal<Model.IChangeModelPropParam<S, T>>;
-
-        export type TSignalCallbackOnChangeModel<S> = Signal.ISignalCallback<Model.IChangeModelParam<S>>;
-        export type TSignalCallbackOnChangeModelProp<S, T> = Signal.ISignalCallback<Model.IChangeModelPropParam<S, T>>;
-
-        export type TSignalOnChangeModelAnyProp<S> = TSignalOnChangeModelProp<S, any>;
-        export type TSignalCallbackOnChangeModelAnyProp<S> = TSignalCallbackOnChangeModelProp<S, any>;
 
         export const enum STATE {
             NORMAL,

@@ -7,9 +7,9 @@ module Headlight {
                                          key: string,
                                          descriptor?: TypedPropertyDescriptor<any>): any {
 
-            function dispatchSignals(prop: any, newVal: any, prev: any): void {
+            function dispatchSignals(prop: string, newVal: any, prev: any): void {
                 if (newVal !== prev) {
-                    Model.dispatch(this, prop, {
+                    /*Model.dispatch(this, prop, {
                         model: this,
                         value: newVal,
                         previous: prev
@@ -32,10 +32,46 @@ module Headlight {
                                 previous: prevValue
                             });
                         }
+                    }*/
+
+                    /*Model.dispatch(this, 'change', {
+                        model: this
+                    });*/
+
+                    let model = <Model<any>>this,
+                        values = {},
+                        previous = {},
+                        deps = this._depsMap[prop],
+                        d: string,
+                        prevValue: any,
+                        currValue: any;
+
+                    values[prop] = newVal;
+                    previous[prop] = prev;
+
+                    //todo итерация через зависимости зависимостей
+
+                    for (let j = deps.length; j--;) {
+                        d = deps[j];
+                        prevValue = this._properties[d];
+                        currValue = this[d];
+
+                        if (currValue !== prevValue) {
+                            /*Model.dispatch(this, d, {
+                                model: this,
+                                value: currValue,
+                                previous: prevValue
+                            });*/
+
+                            values[d] = currValue;
+                            previous[d] = prevValue;
+                        }
                     }
 
                     Model.dispatch(this, 'change', {
-                        model: this
+                        model: this,
+                        values: values,
+                        previous: previous
                     });
                 }
             }
