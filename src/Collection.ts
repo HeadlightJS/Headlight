@@ -8,6 +8,7 @@ module Headlight {
 
     export interface ICollection<Schema> extends IReceiver, IBase, Array<IModel<Schema>> {
         on: Collection.ISignalListeners<Schema>;
+        once: Collection.ISignalListeners<Schema>;
         signals: Collection.ISignalHash<Schema>;
 
         length: number;
@@ -67,12 +68,15 @@ module Headlight {
     export abstract class Collection<Schema> extends Array<IModel<Schema>> implements ICollection<Schema> {
         public cid: string;
         public on: Collection.ISignalListeners<Schema>;
+        public once: Collection.ISignalListeners<Schema>;
         public signals: Collection.ISignalHash<Schema>;
 
         constructor(items: Array<IModel<Schema>> | Array<Schema>) {
             super();
 
             this.cid = Base.generateCid(this.cidPrefix());
+
+            this._createSignals();
             this._initItems(items);
         }
 
@@ -87,23 +91,31 @@ module Headlight {
         }
 
         public push(...items: Array<Model.TModelOrSchema<Schema>>): number {
+            let oldLength = this.length;
+
             Array.prototype.push.apply(this, Collection._convertToModels(this, items));
 
-            //todo Signals!
-
+            this.signals.add.dispatch({
+                collection: this,
+                models: this.slice(oldLength, this.length)
+            });
 
             return this.length;
         }
 
         public pop(): IModel<Schema> {
-            //todo Signals!
+            let model = Array.prototype.pop.call(this);
 
-            return Array.prototype.pop.call(this);
+            this.signals.remove.dispatch({
+                collection: this,
+                models: new Collection.SimpleCollection<Schema>([model], this.model())
+            });
+
+            return model;
         }
 
         public concat(...items: Array<Collection.TArrayOrCollection<Schema> |
             Model.TModelOrSchema<Schema>>): ICollection<Schema> {
-            //todo Signals!
 
             let models = [],
                 newModels = Collection._convertToModels(this, items);
@@ -116,8 +128,6 @@ module Headlight {
         }
 
         public join(separator?: string): string {
-            //todo Signals!
-
             let string = '';
 
             for (let i = 0; i < this.length; i++) {
@@ -132,28 +142,39 @@ module Headlight {
         }
 
         public reverse(): ICollection<Schema> {
-            //todo Signals!
+            Array.prototype.reverse.call(this);
 
-            return Array.prototype.reverse.call(this);
+            this.signals.sort.dispatch({
+                collection: this
+            });
+
+            return this;
         }
 
         public shift(): IModel<Schema> {
-            //todo Signals!
+            let model = Array.prototype.shift.call(this);
 
-            return Array.prototype.shift.call(this);
+            this.signals.remove.dispatch({
+                collection: this,
+                models: new Collection.SimpleCollection<Schema>([model], this.model())
+            });
+
+            return model;
         }
 
         public slice(start?: number, end?: number): ICollection<Schema> {
-            //todo Signals!
-
             return new Collection.SimpleCollection<Schema>(Array.prototype.slice.call(this, start, end), this.model());
         }
 
         public sort(compareFn?: (a: Model.TModelOrSchema<Schema>,
                                  b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema> {
-            //todo Signals!
+            Array.prototype.sort.call(this, compareFn);
 
-            return Array.prototype.sort.call(this, compareFn);
+            this.signals.sort.dispatch({
+                collection: this
+            });
+
+            return this;
         };
 
         public splice(start: number,
@@ -168,7 +189,10 @@ module Headlight {
         public unshift(...items: Array<Model.TModelOrSchema<Schema>>): number {
             Array.prototype.unshift.apply(this, Collection._convertToModels(this, items));
 
-            //todo Signals!
+            this.signals.add.dispatch({
+                collection: this,
+                models: this.slice(0, items.length)
+            });
 
             return this.length;
         };
@@ -177,7 +201,6 @@ module Headlight {
                                    index: number,
                                    collection: ICollection<Schema>) => boolean,
                       thisArg?: any): ICollection<Schema> {
-
             return new Collection.SimpleCollection<Schema>(
                 Array.prototype.filter.call(this, callbackfn, thisArg),
                 this.model()
@@ -226,8 +249,54 @@ module Headlight {
 
         protected abstract model(): typeof Model;
 
+        private _createSignals(): void {
+            this.signals = {
+                change: new Signal(),
+                add: new Signal(),
+                remove: new Signal(),
+                sort: new Signal()
+            };
+
+            this.on = {
+                change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
+                         receiver?: IReceiver): void => {
+                    this.signals.change.add(callback, receiver);
+                },
+                add: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
+                         receiver?: IReceiver): void => {
+                    this.signals.add.add(callback, receiver);
+                },
+                remove: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
+                         receiver?: IReceiver): void => {
+                    this.signals.remove.add(callback, receiver);
+                },
+                sort: (callback: Signal.ISignalCallback<Collection.ISignalCallbackParam<Schema>>,
+                       receiver?: IReceiver): void => {
+                    this.signals.sort.add(callback, receiver);
+                }
+            };
+            this.once = {
+                change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
+                         receiver?: IReceiver): void => {
+                    this.signals.change.addOnce(callback, receiver);
+                },
+                add: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
+                      receiver?: IReceiver): void => {
+                    this.signals.add.addOnce(callback, receiver);
+                },
+                remove: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
+                         receiver?: IReceiver): void => {
+                    this.signals.remove.addOnce(callback, receiver);
+                },
+                sort: (callback: Signal.ISignalCallback<Collection.ISignalCallbackParam<Schema>>,
+                       receiver?: IReceiver): void => {
+                    this.signals.sort.addOnce(callback, receiver);
+                }
+            };
+        }
+
         private _initItems(items: Array<IModel<Schema>> | Array<Schema>): void {
-            this.push.apply(this, items);
+            Array.prototype.push.apply(this, Collection._convertToModels(this, items));
         }
 
         private static _convertToModels(collection: Collection<any>,
@@ -269,35 +338,33 @@ module Headlight {
     export module Collection {
         export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | ICollection<Schema>;
 
-        /*export interface ISignalHash<Schema> {
-         change: Model.TSignalOnChangeModel<Schema>;
-         [signalCid: string]: Model.TSignalOnChangeModelAnyProp<Schema>;
-         }*/
+        export interface ISignalCallbackParam<Schema> {
+            collection: ICollection<Schema>;
+        }
+
+        export interface ISignalCallbackModelsParam<Schema> extends ISignalCallbackParam<Schema> {
+            models: ICollection<Schema>;
+        }
+
+        export interface ISignalCallbackChangeParam<Schema> extends ISignalCallbackModelsParam<Schema> {
+            values: IHash<Schema>;
+            previous: IHash<Schema>;
+        }
 
         export interface ISignalHash<Schema> {
+            change: ISignal<ISignalCallbackChangeParam<Schema>>;
+            add: ISignal<ISignalCallbackModelsParam<Schema>>;
+            remove: ISignal<ISignalCallbackModelsParam<Schema>>;
+            sort: ISignal<ISignalCallbackParam<Schema>>;
         }
 
         export interface ISignalListeners<Schema> {
-            change(callback: ISignalCallbackChangeModelArgs<Schema>,
+            change(callback: Signal.ISignalCallback<ISignalCallbackChangeParam<Schema>>,
                    receiver?: IReceiver): void;
-            add(callback: ISignalCallbackChangeModelArgs<Schema>, receiver?: IReceiver): void;
-            remove(callback: ISignalCallbackChangeModelArgs<Schema>, receiver?: IReceiver): void;
-            sort(callback: ISignalCallbackArgs<Schema>, receiver?: IReceiver): void;
-            [key: string]: (callback: ISignalCallbackChangeModelPropArgs<Schema, any>,
-                            receiver?: IReceiver) => void;
+            add(callback: Signal.ISignalCallback<ISignalCallbackModelsParam<Schema>>, receiver?: IReceiver): void;
+            remove(callback: Signal.ISignalCallback<ISignalCallbackModelsParam<Schema>>, receiver?: IReceiver): void;
+            sort(callback: Signal.ISignalCallback<ISignalCallbackParam<Schema>>, receiver?: IReceiver): void;
         }
-
-        export interface ISignalCallbackArgs<Schema> {
-            collection: ICollection<Schema>;
-        };
-
-        export interface ISignalCallbackChangeModelArgs<Schema> extends Model.IChangeModelParam<Schema>, ISignalCallbackArgs<Schema> {
-        }
-        ;
-
-        export interface ISignalCallbackChangeModelPropArgs<Schema, T> extends Model.IChangeModelPropParam<Schema, T>, ISignalCallbackArgs<Schema> {
-        }
-        ;
 
         export class SimpleCollection<Schema> extends Collection<Schema> implements ICollection<Schema> {
             private _M: typeof Model;

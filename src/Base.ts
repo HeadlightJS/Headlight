@@ -41,7 +41,7 @@ module Headlight {
         CHANGE: 'change'
     };
 
-    export interface IHash {
-        [key: string]: string;
+    export interface IHash<T> {
+        [key: string]: T;
     }
 }

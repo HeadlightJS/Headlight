@@ -29,7 +29,7 @@ module Headlight {
         private _depsMap: {
             [key: string]: Array<string>;
         };
-        private _properties: IHash = {};
+        private _properties: Schema = <Schema>{};
         private _state: Model.STATE = Model.STATE.SILENT;
         private _transactionArtifacts: Array<ITransactionArtifact<Schema>> = [];
         private _transactionArtifactsMap: {

@@ -155,6 +155,21 @@ describe('Collection.', () => {
                 assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
                 checkForInstanceOfModel(family);
             });
+
+            it('Dispatches `add` signal', () => {
+                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    addObject = args;
+                });
+
+                family.push(boris, new Person(helen));
+
+                assert.isObject(addObject);
+                assert.equal(addObject.collection, family);
+                assert.instanceOf(addObject.models, Headlight.Collection);
+                assert.deepEqual(addObject.models.toJSON(), [boris, helen]);
+            });
         });
 
         describe('#pop()', () => {
@@ -171,6 +186,21 @@ describe('Collection.', () => {
                 p = family.pop();
 
                 assert.isUndefined(p);
+            });
+
+            it('Dispatches `remove` signal', () => {
+                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    removeObject = args;
+                });
+
+                family.pop();
+
+                assert.isObject(removeObject);
+                assert.equal(removeObject.collection, family);
+                assert.instanceOf(removeObject.models, Headlight.Collection);
+                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
             });
         });
 
@@ -200,6 +230,19 @@ describe('Collection.', () => {
                 assert.equal(family, col);
                 assert.deepEqual(col.toJSON(), [oleg, anna]);
             });
+
+            it('Dispatches `sort` signal', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    evtObject = args;
+                });
+
+                family.reverse();
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+            });
         });
 
         describe('#shift()', () => {
@@ -213,9 +256,24 @@ describe('Collection.', () => {
                 assert.deepEqual(p.toJSON(), oleg);
                 assert.equal(family.length, 0);
 
-                p = family.pop();
+                p = family.shift();
 
                 assert.isUndefined(p);
+            });
+
+            it('Dispatches `remove` signal', () => {
+                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    removeObject = args;
+                });
+
+                family.shift();
+
+                assert.isObject(removeObject);
+                assert.equal(removeObject.collection, family);
+                assert.instanceOf(removeObject.models, Headlight.Collection);
+                assert.deepEqual(removeObject.models.toJSON(), [anna]);
             });
         });
 
@@ -248,6 +306,19 @@ describe('Collection.', () => {
 
                 assert.deepEqual(family.toJSON(), [oleg, anna]);
             });
+
+            it('Dispatches `sort` signal', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    evtObject = args;
+                });
+
+                family.sort();
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+            });
         });
 
         describe('#splice()', () => {
@@ -279,6 +350,8 @@ describe('Collection.', () => {
                 checkForInstanceOfModel(family);
                 checkForInstanceOfModel(col);
             });
+
+            // todo events
         });
 
         describe('#unshift()', () => {
@@ -301,6 +374,21 @@ describe('Collection.', () => {
 
                 assert.deepEqual(family.toJSON(), [boris, helen, anna, oleg]);
                 checkForInstanceOfModel(family);
+            });
+
+            it('Dispatches `add` signal', () => {
+                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    addObject = args;
+                });
+
+                family.unshift(boris, new Person(helen));
+
+                assert.isObject(addObject);
+                assert.equal(addObject.collection, family);
+                assert.instanceOf(addObject.models, Headlight.Collection);
+                assert.deepEqual(addObject.models.toJSON(), [boris, helen]);
             });
         });
 
