@@ -351,7 +351,31 @@ describe('Collection.', () => {
                 checkForInstanceOfModel(col);
             });
 
-            // todo events
+            it('Dispatches signals', () => {
+                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>,
+                    removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    addObject = args;
+                });
+
+                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    removeObject = args;
+                });
+
+                let col = family.splice(1, 1, boris);
+
+                assert.isObject(addObject);
+                assert.isObject(removeObject);
+
+                assert.equal(addObject.collection, family);
+                assert.instanceOf(addObject.models, Headlight.Collection);
+                assert.deepEqual(addObject.models.toJSON(), [boris]);
+
+                assert.equal(removeObject.collection, family);
+                assert.equal(removeObject.models, col);
+                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+            });
         });
 
         describe('#unshift()', () => {

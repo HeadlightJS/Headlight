@@ -179,11 +179,24 @@ module Headlight {
 
         public splice(start: number,
                       ...items: Array<number | Model.TModelOrSchema<Schema>>): ICollection<Schema> {
-            // todo Signals
+            let M = this.model(),
+                end = items.shift(),
+                models = Collection._convertToModels(this, items),
+                removed = new Collection.SimpleCollection<Schema>(Array.prototype.splice.apply(this,
+                    [start, end].concat(models)
+                ), M);
 
-            return new Collection.SimpleCollection<Schema>(Array.prototype.splice.apply(this,
-                [start, items.shift()].concat(Collection._convertToModels(this, items))
-            ), this.model());
+            this.signals.add.dispatch({
+                collection: this,
+                models: new Collection.SimpleCollection<Schema>(models, M)
+            });
+
+            this.signals.remove.dispatch({
+                collection: this,
+                models: removed
+            });
+
+            return removed;
         };
 
         public unshift(...items: Array<Model.TModelOrSchema<Schema>>): number {
