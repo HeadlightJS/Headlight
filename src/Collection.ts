@@ -72,6 +72,8 @@ module Headlight {
         public signals: Collection.ISignalHash<Schema>;
 
         private _signals: Signal.ISignalCache = {};
+        private _state: Collection.STATE = Collection.STATE.SILENT;
+        private _modelChangeCallbacks: IHash<Signal.ISignalCallback<Model.IChangeParam<Schema>>> = {};
 
         constructor(items?: Array<IModel<Schema>> | Array<Schema>) {
             super();
@@ -80,6 +82,7 @@ module Headlight {
 
             this._createSignals();
             this._initItems(items);
+            this._enableSignals();
         }
 
         public toJSON(): Array<Schema> {
@@ -93,11 +96,14 @@ module Headlight {
         }
 
         public push(...items: Array<Model.TModelOrSchema<Schema>>): number {
-            let oldLength = this.length;
+            let oldLength = this.length,
+                models = Collection._convertToModels(this, items);
 
-            Array.prototype.push.apply(this, Collection._convertToModels(this, items));
+            Array.prototype.push.apply(this, models);
 
-            this.signals.add.dispatch({
+            this._receiveModelsChangeSignals(models);
+
+            this._dispatchSignal(this.signals.add, {
                 collection: this,
                 models: this.slice(oldLength, this.length)
             });
@@ -108,10 +114,16 @@ module Headlight {
         public pop(): IModel<Schema> {
             let model = Array.prototype.pop.call(this);
 
-            this.signals.remove.dispatch({
-                collection: this,
-                models: new Collection.SimpleCollection<Schema>([model], this.model())
-            });
+            if (model) {
+                let models = [model];
+
+                this._stopReceivingModelsChangeSignals(models);
+
+                this._dispatchSignal(this.signals.remove, {
+                    collection: this,
+                    models: new Collection.SimpleCollection<Schema>(models, this.model())
+                });
+            }
 
             return model;
         }
@@ -146,7 +158,7 @@ module Headlight {
         public reverse(): ICollection<Schema> {
             Array.prototype.reverse.call(this);
 
-            this.signals.sort.dispatch({
+            this._dispatchSignal(this.signals.sort, {
                 collection: this
             });
 
@@ -156,10 +168,16 @@ module Headlight {
         public shift(): IModel<Schema> {
             let model = Array.prototype.shift.call(this);
 
-            this.signals.remove.dispatch({
-                collection: this,
-                models: new Collection.SimpleCollection<Schema>([model], this.model())
-            });
+            if (model) {
+                let models = [model];
+
+                this._stopReceivingModelsChangeSignals(models);
+
+                this._dispatchSignal(this.signals.remove, {
+                    collection: this,
+                    models: new Collection.SimpleCollection<Schema>(models, this.model())
+                });
+            }
 
             return model;
         }
@@ -172,7 +190,7 @@ module Headlight {
                                  b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema> {
             Array.prototype.sort.call(this, compareFn);
 
-            this.signals.sort.dispatch({
+            this._dispatchSignal(this.signals.sort, {
                 collection: this
             });
 
@@ -188,12 +206,16 @@ module Headlight {
                     [start, end].concat(models)
                 ), M);
 
-            this.signals.remove.dispatch({
+            this._stopReceivingModelsChangeSignals(removed);
+
+            this._dispatchSignal(this.signals.remove, {
                 collection: this,
                 models: removed
             });
 
-            this.signals.add.dispatch({
+            this._receiveModelsChangeSignals(models);
+
+            this._dispatchSignal(this.signals.add, {
                 collection: this,
                 models: new Collection.SimpleCollection<Schema>(models, M)
             });
@@ -204,9 +226,13 @@ module Headlight {
         public unshift(...items: Array<Model.TModelOrSchema<Schema>>): number {
             Array.prototype.unshift.apply(this, Collection._convertToModels(this, items));
 
-            this.signals.add.dispatch({
+            let models = this.slice(0, items.length);
+
+            this._receiveModelsChangeSignals(models);
+
+            this._dispatchSignal(this.signals.add, {
                 collection: this,
-                models: this.slice(0, items.length)
+                models: models
             });
 
             return this.length;
@@ -217,8 +243,7 @@ module Headlight {
                                    collection: ICollection<Schema>) => boolean,
                       thisArg?: any): ICollection<Schema> {
             return new Collection.SimpleCollection<Schema>(
-                Array.prototype.filter.call(this, callbackfn, thisArg),
-                this.model()
+                Array.prototype.filter.call(this, callbackfn, thisArg), this.model()
             );
         };
 
@@ -302,6 +327,54 @@ module Headlight {
             Array.prototype.push.apply(this, Collection._convertToModels(this, items));
         }
 
+        private _dispatchSignal(signal: ISignal<any>, param: Collection.TCollectionSignalParam<Schema>): void {
+            if (this._state !== Collection.STATE.SILENT) {
+                signal.dispatch(param);
+            }
+        }
+
+        private _receiveModelsChangeSignals(models: Array<IModel<Schema>>): void {
+            for (let i = models.length; i--;) {
+                let model = models[i];
+
+                if (!this._modelChangeCallbacks[model.cid]) {
+                    let c = ((m: IModel<Schema>) => {
+                        return (param: Model.IChangeParam<Schema>) => {
+                            let values: IHash<Schema> = {},
+                                previous: IHash<Schema> = {};
+
+                            values[m.cid] = param.values;
+                            previous[m.cid] = param.previous;
+
+                            this._dispatchSignal(this.signals.change, {
+                                collection: this,
+                                models: new Collection.SimpleCollection<Schema>([m], this.model()),
+                                values: values,
+                                previous: previous
+                            });
+                        };
+                    })(model);
+
+                    this._modelChangeCallbacks[model.cid] =
+                        <Signal.ISignalCallback<Model.IChangeParam<Schema>>>c;
+
+                    this.receive(model.signals.change, c);
+                }
+            }
+        }
+
+        private _stopReceivingModelsChangeSignals(models: Array<IModel<Schema>>): void {
+            for (let i = models.length; i--;) {
+                let model = models[i];
+
+                this.stopReceiving(model.signals.change, this._modelChangeCallbacks[model.cid]);
+            }
+        }
+
+        private _enableSignals(): void {
+            this._state = Collection.STATE.NORMAL;
+        }
+
         private static _convertToModels(collection: Collection<any>,
                                         items: Array<IModel<any> | any>): Array<IModel<any>> {
             if (!items || !items.length) {
@@ -353,6 +426,8 @@ module Headlight {
 
     export module Collection {
         export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | ICollection<Schema>;
+        export type TCollectionSignalParam<Schema> = ISignalCallbackParam<Schema> | ISignalCallbackModelsParam<Schema> |
+            ISignalCallbackChangeParam<Schema>
 
         export interface ISignalCallbackParam<Schema> {
             collection: ICollection<Schema>;
@@ -400,6 +475,11 @@ module Headlight {
 
                 return items;
             }
+        }
+
+        export const enum STATE {
+            NORMAL,
+            SILENT
         }
     }
 }
