@@ -8,6 +8,8 @@ interface Promise<T> {
 }
 /* tslint:enable */
 
+declare let require: (str: string) => any;
+
 module Perform {
     'use strict';
 

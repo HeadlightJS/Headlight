@@ -16,13 +16,14 @@
     "phantomjs": "^1.9.18",
     "phantomjs-polyfill": "0.0.1",
     "tslint": "^3.2.1",
-    "typescript": "^1.6.2"
+    "typescript": "^1.6.2",
+    "uglify-js": "^2.6.1"
   },
   "scripts": {
     "compile": "sh scripts/compile.sh",
     "pretest": "sh scripts/pretest.sh",
     "test": "karma start",
-    "performance": "tsc -p ./tests/performance/ && node tests/performance/performance.test.js"
+    "performance": "sh scripts/performance.sh"
   },
   "repository": {
     "type": "git",
