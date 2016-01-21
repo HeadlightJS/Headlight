@@ -6,7 +6,7 @@
 module Headlight {
     'use strict';
 
-    export interface ICollection<Schema> extends IReceiver, IBase, Array<IModel<Schema>> {
+    export interface ICollection<Schema> extends IReceiver, IBase, Array<Model.TModelOrSchema<Schema>> {
         on: Collection.ISignalListeners<Schema>;
         once: Collection.ISignalListeners<Schema>;
         signals: Collection.ISignalHash<Schema>;
@@ -15,12 +15,12 @@ module Headlight {
         toJSON(): Array<Schema>;
         toLocaleString(): string;
         push(...items: Array<Model.TModelOrSchema<Schema>>): number;
-        pop(): IModel<Schema>;
+        pop(): Model.TModelOrSchema<Schema>;
         concat(...items: Array<Collection.TArrayOrCollection<Schema> |
             Model.TModelOrSchema<Schema>>): ICollection<Schema>;
         join(separator?: string): string;
         reverse(): ICollection<Schema>;
-        shift(): IModel<Schema>;
+        shift(): Model.TModelOrSchema<Schema>;
         slice(start?: number, end?: number): ICollection<Schema>;
         sort(compareFn?: (a: Model.TModelOrSchema<Schema>,
                           b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema>;
@@ -29,43 +29,45 @@ module Headlight {
                deleteCount: number,
                ...items: Array<Model.TModelOrSchema<Schema>>): ICollection<Schema>;
         unshift(...items: Array<Model.TModelOrSchema<Schema>>): number;
-        indexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
-        lastIndexOf(searchElement: IModel<Schema>, fromIndex?: number): number;
-        every(callbackfn: (value: IModel<Schema>,
+        indexOf(searchElement: Model.TModelOrSchema<Schema>, fromIndex?: number): number;
+        lastIndexOf(searchElement: Model.TModelOrSchema<Schema>, fromIndex?: number): number;
+        every(callbackfn: (value: Model.TModelOrSchema<Schema>,
                            index: number,
-                           array: Array<IModel<Schema>>) => boolean,
+                           array: Array<Model.TModelOrSchema<Schema>>) => boolean,
               thisArg?: any): boolean;
-        some(callbackfn: (value: IModel<Schema>,
+        some(callbackfn: (value: Model.TModelOrSchema<Schema>,
                           index: number,
-                          array: Array<IModel<Schema>>) => boolean,
+                          array: Array<Model.TModelOrSchema<Schema>>) => boolean,
              thisArg?: any): boolean;
-        forEach(callbackfn: (value: IModel<Schema>,
+        forEach(callbackfn: (value: Model.TModelOrSchema<Schema>,
                              index: number,
-                             array: Array<IModel<Schema>>) => void,
+                             array: Array<Model.TModelOrSchema<Schema>>) => void,
                 thisArg?: any): void;
-        map<T>(callbackfn: (value: IModel<Schema>,
+        map<T>(callbackfn: (value: Model.TModelOrSchema<Schema>,
                             index: number,
-                            array: Array<IModel<Schema>>) => ICollection<Schema>,
+                            array: Array<Model.TModelOrSchema<Schema>>) => ICollection<Schema>,
                thisArg?: any): Array<T>;
-        filter(callbackfn: (value: IModel<Schema>,
+        filter(callbackfn: (value: Model.TModelOrSchema<Schema>,
                             index: number,
                             collection: ICollection<Schema>) => boolean,
                thisArg?: any): ICollection<Schema>;
-        reduce<T>(callbackfn: (previousValue: IModel<Schema>,
-                               currentValue: IModel<Schema>,
+        reduce<T>(callbackfn: (previousValue: Model.TModelOrSchema<Schema>,
+                               currentValue: Model.TModelOrSchema<Schema>,
                                currentIndex: number,
-                               collection: ICollection<Schema>) => IModel<Schema>,
-                  initialValue?: IModel<Schema>): T;
-        reduceRight<T>(callbackfn: (previousValue: IModel<Schema>,
-                                    currentValue: IModel<Schema>,
+                               collection: ICollection<Schema>) => Model.TModelOrSchema<Schema>,
+                  initialValue?: Model.TModelOrSchema<Schema>): T;
+        reduceRight<T>(callbackfn: (previousValue: Model.TModelOrSchema<Schema>,
+                                    currentValue: Model.TModelOrSchema<Schema>,
                                     currentIndex: number,
-                                    collection: ICollection<Schema>) => IModel<Schema>,
-                       initialValue?: IModel<Schema>): T;
+                                    collection: ICollection<Schema>) => Model.TModelOrSchema<Schema>,
+                       initialValue?: Model.TModelOrSchema<Schema>): T;
 
-        [index: number]: IModel<Schema>;
+        [index: number]: Model.TModelOrSchema<Schema>;
     }
 
-    export abstract class Collection<Schema> extends Array<IModel<Schema>> implements ICollection<Schema> {
+    export abstract class Collection<Schema> extends Array<Model.TModelOrSchema<Schema>> implements
+        ICollection<Schema> {
+
         public cid: string;
         public on: Collection.ISignalListeners<Schema>;
         public once: Collection.ISignalListeners<Schema>;
@@ -75,7 +77,7 @@ module Headlight {
         private _state: Collection.STATE = Collection.STATE.SILENT;
         private _modelChangeCallbacks: IHash<Signal.ISignalCallback<Model.IChangeParam<Schema>>> = {};
 
-        constructor(items?: Array<IModel<Schema>> | Array<Schema>) {
+        constructor(items?: Array<Model.TModelOrSchema<Schema>>) {
             super();
 
             this.cid = Base.generateCid(this.cidPrefix());
@@ -86,8 +88,8 @@ module Headlight {
         }
 
         public toJSON(): Array<Schema> {
-            return Array.prototype.map.call(this, (model: IModel<Schema>) => {
-                return model.toJSON();
+            return Array.prototype.map.call(this, (model: Model.TModelOrSchema<Schema>) => {
+                return (<IModel<Schema>>model).toJSON();
             });
         }
 
@@ -111,7 +113,7 @@ module Headlight {
             return this.length;
         }
 
-        public pop(): IModel<Schema> {
+        public pop(): Model.TModelOrSchema<Schema> {
             let model = Array.prototype.pop.call(this);
 
             if (model) {
@@ -145,7 +147,7 @@ module Headlight {
             let string = '';
 
             for (let i = 0; i < this.length; i++) {
-                string += JSON.stringify(this[i].toJSON());
+                string += JSON.stringify((<IModel<Schema>>this[i]).toJSON());
 
                 if (i !== this.length - 1) {
                     string += separator;
@@ -165,7 +167,7 @@ module Headlight {
             return this;
         }
 
-        public shift(): IModel<Schema> {
+        public shift(): Model.TModelOrSchema<Schema> {
             let model = Array.prototype.shift.call(this);
 
             if (model) {
@@ -238,7 +240,7 @@ module Headlight {
             return this.length;
         };
 
-        public filter(callbackfn: (value: IModel<Schema>,
+        public filter(callbackfn: (value: Model.TModelOrSchema<Schema>,
                                    index: number,
                                    collection: ICollection<Schema>) => boolean,
                       thisArg?: any): ICollection<Schema> {
@@ -323,8 +325,12 @@ module Headlight {
             };
         }
 
-        private _initItems(items: Array<IModel<Schema>> | Array<Schema>): void {
-            Array.prototype.push.apply(this, Collection._convertToModels(this, items));
+        private _initItems(items: Array<Model.TModelOrSchema<Schema>>): void {
+            let models = Collection._convertToModels(this, items);
+
+            Array.prototype.push.apply(this, models);
+
+            this._receiveModelsChangeSignals(models);
         }
 
         private _dispatchSignal(signal: ISignal<any>, param: Collection.TCollectionSignalParam<Schema>): void {
@@ -333,9 +339,9 @@ module Headlight {
             }
         }
 
-        private _receiveModelsChangeSignals(models: Array<IModel<Schema>>): void {
+        private _receiveModelsChangeSignals(models: Array<Model.TModelOrSchema<Schema>>): void {
             for (let i = models.length; i--;) {
-                let model = models[i];
+                let model = <IModel<Schema>>models[i];
 
                 if (!this._modelChangeCallbacks[model.cid]) {
                     let c = ((m: IModel<Schema>) => {
@@ -363,11 +369,13 @@ module Headlight {
             }
         }
 
-        private _stopReceivingModelsChangeSignals(models: Array<IModel<Schema>>): void {
+        private _stopReceivingModelsChangeSignals(models: Array<Model.TModelOrSchema<Schema>>): void {
             for (let i = models.length; i--;) {
-                let model = models[i];
+                let model = <IModel<Schema>>models[i];
 
                 this.stopReceiving(model.signals.change, this._modelChangeCallbacks[model.cid]);
+
+                delete this._modelChangeCallbacks[model.cid];
             }
         }
 
@@ -375,8 +383,10 @@ module Headlight {
             this._state = Collection.STATE.NORMAL;
         }
 
-        private static _convertToModels(collection: Collection<any>,
-                                        items: Array<IModel<any> | any>): Array<IModel<any>> {
+        private static _convertToModels(
+            collection: Collection<any>,
+            items: Array<Model.TModelOrSchema<any> | any>): Array<Model.TModelOrSchema<any>> {
+
             if (!items || !items.length) {
                 return [];
             }
@@ -460,7 +470,7 @@ module Headlight {
         export class SimpleCollection<Schema> extends Collection<Schema> implements ICollection<Schema> {
             private _M: typeof Model;
 
-            constructor(items: Array<IModel<Schema>> | Array<Schema>, M: typeof Model) {
+            constructor(items: Array<Model.TModelOrSchema<Schema>>, M: typeof Model) {
                 super(this._initProps(items, M));
             }
 
@@ -468,8 +478,8 @@ module Headlight {
                 return this._M;
             };
 
-            private _initProps(items: Array<IModel<Schema>> | Array<Schema>,
-                               M: typeof Model): Array<IModel<Schema>> | Array<Schema> {
+            private _initProps(items: Array<Model.TModelOrSchema<Schema>>,
+                               M: typeof Model): Array<Model.TModelOrSchema<Schema>> {
 
                 this._M = M;
 

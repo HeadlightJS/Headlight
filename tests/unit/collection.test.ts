@@ -2,6 +2,7 @@
 ///<reference path="../../dist/headlight.d.ts"/>
 ///<reference path="./common/receiver.methods.test.ts"/>
 
+import IModel = Headlight.IModel;
 describe('Collection.', () => {
     let assert = chai.assert;
 
@@ -9,6 +10,8 @@ describe('Collection.', () => {
         name: string;
         surname: string;
         age: number;
+
+        fullname?: string;
     }
 
     class Person extends Headlight.Model<IPerson> implements Headlight.IModel<IPerson>, IPerson {
@@ -24,6 +27,23 @@ describe('Collection.', () => {
 
         @Headlight.dProperty
         age: number;
+
+        @Headlight.dProperty((): Array<string> => {
+            return [
+                this.PROPS.name,
+                this.PROPS.surname
+            ];
+        })
+        get fullname(): string {
+            return this.name + ' ' + this.surname;
+        }
+
+        set fullname(fullname: string) {
+            let arr = fullname.split(' ');
+
+            this.name = arr[0];
+            this.surname = arr[1];
+        }
     }
 
     class Family extends Headlight.Collection<IPerson> {
@@ -36,22 +56,26 @@ describe('Collection.', () => {
         anna: IPerson = {
             name: 'Anna',
             surname: 'Ivanova',
-            age: 38
+            age: 38,
+            fullname: 'Anna Ivanova'
         },
         oleg: IPerson = {
             name: 'Oleg',
             surname: 'Ivanov',
-            age: 41
+            age: 41,
+            fullname: 'Oleg Ivanov'
         },
         boris: IPerson = {
             name: 'Boris',
             surname: 'Ivanov',
-            age: 13
+            age: 13,
+            fullname: 'Boris Ivanov'
         },
         helen: IPerson = {
             name: 'Helen',
             surname: 'Ivanova',
-            age: 11
+            age: 11,
+            fullname: 'Helen Ivanova'
         };
 
     beforeEach(() => {
@@ -184,11 +208,11 @@ describe('Collection.', () => {
             it('works', () => {
                 let p = family.pop();
 
-                assert.deepEqual(p.toJSON(), oleg);
+                assert.deepEqual((<Headlight.IModel<IPerson>>p).toJSON(), oleg);
 
                 p = family.pop();
 
-                assert.deepEqual(p.toJSON(), anna);
+                assert.deepEqual((<Headlight.IModel<IPerson>>p).toJSON(), anna);
                 assert.equal(family.length, 0);
 
                 p = family.pop();
@@ -220,7 +244,7 @@ describe('Collection.', () => {
                 let string = '';
 
                 for (let i = 0; i < family.length; i++) {
-                    string += JSON.stringify(family[i].toJSON());
+                    string += JSON.stringify((<Headlight.IModel<IPerson>>family[i]).toJSON());
 
                     if (i !== family.length - 1) {
                         string += SEPARATOR;
@@ -255,16 +279,16 @@ describe('Collection.', () => {
 
         describe('#shift()', () => {
             it('works', () => {
-                let p = family.shift();
+                let p = <Headlight.IModel<IPerson>>family.shift();
 
                 assert.deepEqual(p.toJSON(), anna);
 
-                p = family.shift();
+                p = <Headlight.IModel<IPerson>>family.shift();
 
                 assert.deepEqual(p.toJSON(), oleg);
                 assert.equal(family.length, 0);
 
-                p = family.shift();
+                p = <Headlight.IModel<IPerson>>family.shift();
 
                 assert.isUndefined(p);
             });
@@ -448,15 +472,63 @@ describe('Collection.', () => {
     });
 
     describe('Dispatches signals', () => {
-        /*describe('change', () => {
+        describe('change', () => {
             it('on', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>;
 
+                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                    evtObject = param;
+                });
+
+                (<IPerson>family[0]).name = 'olo';
+
+                let newValues = {};
+                let newPrevious = {};
+
+                newValues[(<IModel<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[(<IModel<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+                assert.instanceOf(evtObject.models, Headlight.Collection);
+                assert.deepEqual(evtObject.values, newValues);
+                assert.deepEqual(evtObject.previous, newPrevious);
+
+                evtObject = undefined;
+
+                (<IPerson>family[0]).name = 'aza';
+
+                assert.isObject(evtObject);
             });
 
             it('once', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>;
 
+                family.once.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                    evtObject = param;
+                });
+
+                (<IPerson>family[0]).name = 'olo';
+
+                let newValues = {};
+                let newPrevious = {};
+
+                newValues[(<IModel<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[(<IModel<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+                assert.instanceOf(evtObject.models, Headlight.Collection);
+                assert.deepEqual(evtObject.values, newValues);
+                assert.deepEqual(evtObject.previous, newPrevious);
+
+                evtObject = undefined;
+
+                (<IPerson>family[0]).name = 'aza';
+
+                assert.isUndefined(evtObject);
             });
-        });*/
+        });
 
         describe('add', () => {
             it('on', () => {
