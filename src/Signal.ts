@@ -178,7 +178,9 @@ module Headlight {
             let length = eventGroups.length;
 
             for (let i = length; i--; ) {
-                if (eventGroups[i].callback === callback) {
+                let c = eventGroups[i].callback;
+
+                if (c === callback || c.originalCallback === callback) {
                     eventGroups.splice(i, 1);
 
                     removedCount++;
@@ -193,6 +195,7 @@ module Headlight {
         export interface ISignalCallback<CallbackParam> extends Function {
             (param?: CallbackParam): void;
             once?: boolean;
+            originalCallback?: ISignalCallback<CallbackParam>;
         }
 
         export interface ISignalCache {

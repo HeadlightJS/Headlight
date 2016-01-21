@@ -559,28 +559,30 @@ describe('Collection.', () => {
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
 
-                //todo
+                evtObject = undefined;
+
+                family.sort();
+
+                assert.isObject(evtObject);
             });
 
             it('once', () => {
-                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
 
-                family.once.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
-                    removeObject = args;
+                family.once.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    evtObject = args;
                 });
 
-                family.pop();
+                family.sort();
 
-                assert.isObject(removeObject);
-                assert.equal(removeObject.collection, family);
-                assert.instanceOf(removeObject.models, Headlight.Collection);
-                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
 
-                removeObject = undefined;
+                evtObject = undefined;
 
-                family.pop();
+                family.sort();
 
-                assert.isUndefined(removeObject);
+                assert.isUndefined(evtObject);
             });
         });
     });

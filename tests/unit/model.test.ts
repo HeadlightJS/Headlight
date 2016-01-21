@@ -452,6 +452,43 @@ describe('Model.', () => {
                     assert.isObject(changeObj3);
                     assert.isObject(changeObj4);
                 });
+
+                it('Filtered handler', () => {
+                    let person2 = new Person(MAIN_PERSON);
+
+                    let count = 0,
+                        newHandler = () => {
+                            count++;
+                        };
+
+                    person.on.change(Headlight.Model.filter<IPerson>(person.PROPS.name, newHandler), person);
+                    person.on.change(Headlight.Model.filter<IPerson>(person.PROPS.name, newHandler), person2);
+                    person.on.change(handler2, person2);
+                    person.on.change(handler3, person2);
+                    person.on.change(newHandler);
+                    person.on.change(Headlight.Model.filter<IPerson>(person.PROPS.name, handler1));
+
+                    person.name = NEW_NAME;
+
+                    assert.equal(count, 3);
+                    assert.isObject(changeObj);
+                    assert.isObject(changeObj2);
+                    assert.isObject(changeObj3);
+
+                    person.off.change(newHandler);
+
+                    count = 0;
+                    changeObj = undefined;
+                    changeObj2 = undefined;
+                    changeObj3 = undefined;
+
+                    person.name = PERSON_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isObject(changeObj2);
+                    assert.isObject(changeObj3);
+                    assert.equal(count, 0);
+                });
             });
 
         });
