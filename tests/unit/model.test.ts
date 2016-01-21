@@ -1,5 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 ///<reference path="../../dist/headlight.d.ts"/>
+///<reference path="./common/receiver.methods.test.ts"/>
 
 describe('Model.', () => {
     let assert = chai.assert;
@@ -93,6 +94,7 @@ describe('Model.', () => {
 
     it('Creates properly', () => {
         assert.instanceOf(person, Headlight.Receiver);
+        assert.instanceOf(person.signals.change, Headlight.Signal);
         assert.equal('m', person.cid[0]);
     });
 
@@ -160,169 +162,296 @@ describe('Model.', () => {
                 }, 'Setting new value to a field should provoke change signal.');
             }
 
-            it ('Listen to signals via .on().', () => {
-                person.on.change((args: TChangePersonParam): void => {
-                    changeObj = args;
-                });
-
-                checkDispatching();
-
-                person.name = PERSON_NAME;
-
-                changeObj = undefined;
-
-                checkDispatching();
-            });
-
-            it ('Listen to signals via .once().', () => {
-                person.once.change((args: TChangePersonParam): void => {
-                    changeObj = args;
-                });
-
-                checkDispatching();
-
-                changeObj = undefined;
-
-                person.name = PERSON_NAME;
-
-                assert.isUndefined(changeObj, 'Handler should be called only once.');
-            });
-
-            it ('Listen to filtered signals.', () => {
-                let arg,
-                    arg2;
-
-                person.on.change(
-                    Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+            describe('Start listeting to signals', () => {
+                it ('Listen to signals via .on().', () => {
+                    person.on.change((args: TChangePersonParam): void => {
                         changeObj = args;
-                    })
-                );
+                    });
 
-                person.on.change(
-                    Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
-                        arg = args;
-                    })
-                );
+                    checkDispatching();
 
-                person.on.change(
-                    Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
-                        (args: TChangePersonParam): void => {
+                    person.name = PERSON_NAME;
 
-                        arg2 = args;
-                    })
-                );
+                    changeObj = undefined;
 
-                person.surname = PERSON_NAME;
-
-                assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
-                assert.isObject(arg);
-                assert.equal(arg.model, person);
-                assert.deepEqual(arg.values, {
-                    fullname: person.fullname
+                    checkDispatching();
                 });
 
-                assert.isObject(arg2);
-                assert.equal(arg2.model, person);
-                assert.deepEqual(arg2.values, {
-                    surname: person.surname,
-                    fullname: person.fullname
-                });
-            });
-
-            it ('Listen to filtered signals via .once().', () => {
-                let arg,
-                    arg2;
-
-                person.once.change(
-                    Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                it ('Listen to signals via .once().', () => {
+                    person.once.change((args: TChangePersonParam): void => {
                         changeObj = args;
-                    })
-                );
+                    });
 
-                person.once.change(
-                    Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
-                        arg = args;
-                    })
-                );
+                    checkDispatching();
 
-                person.once.change(
-                    Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
-                        (args: TChangePersonParam): void => {
+                    changeObj = undefined;
 
-                            arg2 = args;
+                    person.name = PERSON_NAME;
+
+                    assert.isUndefined(changeObj, 'Handler should be called only once.');
+                });
+
+                it ('Listen to filtered signals.', () => {
+                    let arg,
+                        arg2;
+
+                    person.on.change(
+                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                            changeObj = args;
                         })
-                );
+                    );
 
-                person.surname = PERSON_NAME;
+                    person.on.change(
+                        Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
+                            arg = args;
+                        })
+                    );
 
-                assert.isUndefined(changeObj, 'Handler should be called only once for change of `name` prop.');
-                assert.isObject(arg);
-                assert.equal(arg.model, person);
-                assert.deepEqual(arg.values, {
-                    fullname: person.fullname
-                });
+                    person.on.change(
+                        Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
+                            (args: TChangePersonParam): void => {
 
-                assert.isObject(arg2);
-                assert.equal(arg2.model, person);
-                assert.deepEqual(arg2.values, {
-                    surname: person.surname,
-                    fullname: person.fullname
-                });
-            });
+                                arg2 = args;
+                            })
+                    );
 
-            it ('Listen to signals via Receiver#receive().', () => {
-                person.receive<TChangePersonParam>(
-                    person.signals.change, (args: TChangePersonParam): void => {
-                        changeObj = args;
+                    person.surname = PERSON_NAME;
+
+                    assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
+                    assert.isObject(arg);
+                    assert.equal(arg.model, person);
+                    assert.deepEqual(arg.values, {
+                        fullname: person.fullname
                     });
 
-                checkDispatching();
+                    assert.isObject(arg2);
+                    assert.equal(arg2.model, person);
+                    assert.deepEqual(arg2.values, {
+                        surname: person.surname,
+                        fullname: person.fullname
+                    });
+                });
 
-                person.name = PERSON_NAME;
+                it ('Listen to filtered signals via .once().', () => {
+                    let arg,
+                        arg2;
 
-                changeObj = undefined;
+                    person.once.change(
+                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                            changeObj = args;
+                        })
+                    );
 
-                checkDispatching();
-            });
+                    person.once.change(
+                        Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
+                            arg = args;
+                        })
+                    );
 
-            it ('Listen to signals via Receiver#receiveOnce().', () => {
-                person.receiveOnce<TChangePersonParam>(
-                    person.signals.change, (args: TChangePersonParam): void => {
-                        changeObj = args;
+                    person.once.change(
+                        Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
+                            (args: TChangePersonParam): void => {
+
+                                arg2 = args;
+                            })
+                    );
+
+                    person.surname = PERSON_NAME;
+
+                    assert.isUndefined(changeObj, 'Handler should be called only once for change of `name` prop.');
+                    assert.isObject(arg);
+                    assert.equal(arg.model, person);
+                    assert.deepEqual(arg.values, {
+                        fullname: person.fullname
                     });
 
+                    assert.isObject(arg2);
+                    assert.equal(arg2.model, person);
+                    assert.deepEqual(arg2.values, {
+                        surname: person.surname,
+                        fullname: person.fullname
+                    });
+                });
 
-                checkDispatching();
+                it ('Listen to signals via Receiver#receive().', () => {
+                    person.receive<TChangePersonParam>(
+                        person.signals.change, (args: TChangePersonParam): void => {
+                            changeObj = args;
+                        });
 
-                changeObj = undefined;
+                    checkDispatching();
 
-                person.name = PERSON_NAME;
+                    person.name = PERSON_NAME;
 
-                assert.isUndefined(changeObj, 'Handler should be called only once.');
+                    changeObj = undefined;
+
+                    checkDispatching();
+                });
+
+                it ('Listen to signals via Receiver#receiveOnce().', () => {
+                    person.receiveOnce<TChangePersonParam>(
+                        person.signals.change, (args: TChangePersonParam): void => {
+                            changeObj = args;
+                        });
+
+
+                    checkDispatching();
+
+                    changeObj = undefined;
+
+                    person.name = PERSON_NAME;
+
+                    assert.isUndefined(changeObj, 'Handler should be called only once.');
+                });
+
+                it ('Listen to filtered signals via Receiver#receive().', () => {
+                    person.receive<TChangePersonParam>(person.signals.change,
+                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                            changeObj = args;
+                        })
+                    );
+
+                    person.surname = PERSON_NAME;
+
+                    assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
+                });
+
+                it ('Listen to filtered signals via Receiver#receiveOnce().', () => {
+                    person.receiveOnce<TChangePersonParam>(person.signals.change,
+                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                            changeObj = args;
+                        })
+                    );
+
+                    person.surname = PERSON_NAME;
+
+                    assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
+                });
             });
 
-            it ('Listen to filtered signals via Receiver#receive().', () => {
-                person.receive<TChangePersonParam>(person.signals.change,
-                    Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+            describe('Stop listeting to signals', () => {
+                let changeObj2: TChangePersonParam,
+                    changeObj3: TChangePersonParam,
+                    changeObj4: TChangePersonParam,
+                    handler1 = (args: TChangePersonParam): void => {
                         changeObj = args;
-                    })
-                );
+                    },
+                    handler2 = (args: TChangePersonParam): void => {
+                        changeObj2 = args;
+                    },
+                    handler3 = (args: TChangePersonParam): void => {
+                        changeObj3 = args;
+                    },
+                    handler4 = (args: TChangePersonParam): void => {
+                        changeObj4 = args;
+                    };
 
-                person.surname = PERSON_NAME;
 
-                assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
-            });
+                beforeEach(() => {
+                    changeObj2 = undefined;
+                    changeObj3 = undefined;
+                    changeObj4 = undefined;
+                });
 
-            it ('Listen to filtered signals via Receiver#receiveOnce().', () => {
-                person.receiveOnce<TChangePersonParam>(person.signals.change,
-                    Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
-                        changeObj = args;
-                    })
-                );
+                it('All handlers', () => {
+                    person.on.change(handler1);
+                    person.on.change(handler2);
 
-                person.surname = PERSON_NAME;
+                    person.name = NEW_NAME;
 
-                assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
+                    assert.isObject(changeObj);
+                    assert.isObject(changeObj2);
+
+                    person.off.change();
+
+                    changeObj = undefined;
+                    changeObj2 = undefined;
+
+                    person.name = PERSON_NAME;
+
+                    assert.isUndefined(changeObj);
+                    assert.isUndefined(changeObj2);
+                });
+
+                it('The very handler', () => {
+                    person.on.change(handler1);
+                    person.on.change(handler2);
+
+                    person.name = NEW_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isObject(changeObj2);
+
+                    person.off.change(handler2);
+
+                    changeObj = undefined;
+                    changeObj2 = undefined;
+
+                    person.name = PERSON_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isUndefined(changeObj2);
+                });
+
+                it('Handlers of the very receiver', () => {
+                    let person2 = new Person(MAIN_PERSON);
+
+                    person.on.change(handler1, person);
+                    person.on.change(handler2, person2);
+                    person.on.change(handler3, person2);
+                    person.on.change(handler4);
+
+                    person.name = NEW_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isObject(changeObj2);
+                    assert.isObject(changeObj3);
+                    assert.isObject(changeObj4);
+
+                    person.off.change(person2);
+
+                    changeObj = undefined;
+                    changeObj2 = undefined;
+                    changeObj3 = undefined;
+                    changeObj4 = undefined;
+
+                    person.name = PERSON_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isUndefined(changeObj2);
+                    assert.isUndefined(changeObj3);
+                    assert.isObject(changeObj4);
+                });
+
+                it('Very Handler of the very receiver', () => {
+                    let person2 = new Person(MAIN_PERSON);
+
+                    person.on.change(handler1, person);
+                    person.on.change(handler2, person2);
+                    person.on.change(handler3, person2);
+                    person.on.change(handler4);
+
+                    person.name = NEW_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isObject(changeObj2);
+                    assert.isObject(changeObj3);
+                    assert.isObject(changeObj4);
+
+                    person.off.change(handler2, person2);
+
+                    changeObj = undefined;
+                    changeObj2 = undefined;
+                    changeObj3 = undefined;
+                    changeObj4 = undefined;
+
+                    person.name = PERSON_NAME;
+
+                    assert.isObject(changeObj);
+                    assert.isUndefined(changeObj2);
+                    assert.isObject(changeObj3);
+                    assert.isObject(changeObj4);
+                });
             });
 
         });
@@ -400,5 +529,9 @@ describe('Model.', () => {
                 son: undefined
             }
         });
+    });
+
+    describe('Acts as Receiver', () => {
+        common.receiverTest(Person);
     });
 });

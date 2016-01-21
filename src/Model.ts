@@ -13,6 +13,8 @@ module Headlight {
     export interface IModel<Schema> extends IReceiver {
         on: Model.ISignalListeners<Schema>;
         once: Model.ISignalListeners<Schema>;
+        off: Model.ISignalListenerStoppers<Schema>;
+
         PROPS: Schema;
         signals: Model.ISignalHash<Schema>;
 
@@ -23,6 +25,8 @@ module Headlight {
     export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
         public on: Model.ISignalListeners<Schema>;
         public once: Model.ISignalListeners<Schema>;
+        public off: Model.ISignalListenerStoppers<Schema>;
+
         public PROPS: Schema;
         public signals: Model.ISignalHash<Schema>;
 
@@ -195,6 +199,12 @@ module Headlight {
                     this.signals.change.addOnce(callback, receiver);
                 }
             };
+            this.off = {
+                change: (callbackOrReceiver?: Model.TSignalCallbackOnChange<Schema> | IReceiver,
+                         receiver?: IReceiver): void => {
+                    this.signals.change.remove(<Model.TSignalCallbackOnChange<Schema>>callbackOrReceiver, receiver);
+                }
+            };
         }
 
         private _initProperties(args: Schema): void {
@@ -217,6 +227,13 @@ module Headlight {
 
         export interface ISignalListeners<Schema> {
             change(callback: TSignalCallbackOnChange<Schema>, receiver?: IReceiver): void;
+        }
+
+        export interface ISignalListenerStoppers<Schema> {
+            change(): void;
+            change(callback: TSignalCallbackOnChange<Schema>): void;
+            change(receiver: IReceiver): void;
+            change(callback: TSignalCallbackOnChange<Schema>, receiver: IReceiver): void;
         }
 
 

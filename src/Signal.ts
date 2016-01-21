@@ -179,7 +179,7 @@ module Headlight {
 
             for (let i = length; i--; ) {
                 if (eventGroups[i].callback === callback) {
-                    eventGroups.splice(i);
+                    eventGroups.splice(i, 1);
 
                     removedCount++;
                 }

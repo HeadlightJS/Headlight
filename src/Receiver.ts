@@ -6,18 +6,18 @@ module Headlight {
 
     export interface IReceiver extends IBase {
         receive<CallbackParam>(signal: ISignal<CallbackParam>,
-                               callback: Signal.ISignalCallback<CallbackParam>): IReceiver;
+                               callback: Signal.ISignalCallback<CallbackParam>): void;
         receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
-                                   callback: Signal.ISignalCallback<CallbackParam>): IReceiver;
+                                   callback: Signal.ISignalCallback<CallbackParam>): void;
 
-        stopReceiving(): IReceiver;
-        stopReceiving(signal: ISignal<any>): IReceiver;
-        stopReceiving(callback: Signal.ISignalCallback<any>): IReceiver;
+        stopReceiving(): void;
+        stopReceiving(signal: ISignal<any>): void;
+        stopReceiving(callback: Signal.ISignalCallback<any>): void;
         stopReceiving<CallbackParam>(signal: ISignal<CallbackParam>,
-                                     callback: Signal.ISignalCallback<CallbackParam>): IReceiver;
+                                     callback: Signal.ISignalCallback<CallbackParam>): void;
 
-        addSignal(signal: ISignal<any>): IReceiver;
-        removeSignal(signal: ISignal<any>): IReceiver;
+        addSignal(signal: ISignal<any>): void;
+        removeSignal(signal: ISignal<any>): void;
 
         getSignals(): Array<ISignal<any>>;
     }
@@ -26,25 +26,25 @@ module Headlight {
         private _signals: Signal.ISignalCache = {};
 
         public receive<CallbackParam>(signal: ISignal<CallbackParam>,
-                                      callback: Signal.ISignalCallback<CallbackParam>): IReceiver {
+                                      callback: Signal.ISignalCallback<CallbackParam>): void {
             signal.add(callback, this);
 
-            return this.addSignal(signal);
+            this.addSignal(signal);
         }
 
         public receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
-                                          callback: Signal.ISignalCallback<CallbackParam>): IReceiver {
+                                          callback: Signal.ISignalCallback<CallbackParam>): void {
             signal.addOnce(callback, this);
 
-            return this.addSignal(signal);
+            this.addSignal(signal);
         }
 
         public stopReceiving<CallbackParam>(
             signalOrCallback?: ISignal<CallbackParam> | Signal.ISignalCallback<CallbackParam>,
-            callback?: Signal.ISignalCallback<CallbackParam>): IReceiver {
+            callback?: Signal.ISignalCallback<CallbackParam>): void {
             
             if (signalOrCallback === undefined && callback === undefined) {
-                this._resetSignals();
+                this.resetSignals();
             } else if (callback === undefined) {
                 if (typeof signalOrCallback === BASE_TYPES.FUNCTION) {
                     let cids = Object.keys(this._signals),
@@ -63,24 +63,18 @@ module Headlight {
 
                 s.remove(callback, this);
             }
-
-            return this;
         }
 
-        public addSignal(signal: ISignal<any>): IReceiver {
+        public addSignal(signal: ISignal<any>): void {
             this._signals[signal.cid] = signal;
-
-            return this;
         }
 
-        public removeSignal(signal: ISignal<any>): IReceiver {
+        public removeSignal(signal: ISignal<any>): void {
             if (this.hasSignal(signal)) {
                 delete this._signals[signal.cid];
 
                 signal.remove(this);
             }
-
-            return this;
         }
 
         public hasSignal(signal: ISignal<any>): boolean {
@@ -98,11 +92,7 @@ module Headlight {
             return res;
         }
 
-        protected cidPrefix(): string {
-            return 'r';
-        }
-
-        private _resetSignals(): IReceiver {
+        public resetSignals(): void {
             let cids = Object.keys(this._signals);
 
             for (let i = cids.length; i--; ) {
@@ -110,8 +100,10 @@ module Headlight {
             }
 
             this._signals = {};
+        }
 
-            return this;
+        protected cidPrefix(): string {
+            return 'r';
         }
     }
 }

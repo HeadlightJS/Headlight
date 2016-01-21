@@ -1,5 +1,6 @@
 /// <reference path="../../typings/tsd.d.ts" />
 ///<reference path="../../dist/headlight.d.ts"/>
+///<reference path="./common/receiver.methods.test.ts"/>
 
 describe('Collection.', () => {
     let assert = chai.assert;
@@ -58,6 +59,8 @@ describe('Collection.', () => {
     });
 
     it('Creates properly.', () => {
+
+        assert.instanceOf(new Family(), Headlight.Collection);
         assert.instanceOf(family, Array);
         assert.equal('c', family.cid[0]);
         assert.equal(family.length, 2);
@@ -70,6 +73,11 @@ describe('Collection.', () => {
                 assert.instanceOf(collection[i], Person);
             }
         }
+
+        it('#toString()', () => {
+            assert.deepEqual(family.toString(), '[' + JSON.stringify((new Person(anna)).toJSON()) + ','
+            + JSON.stringify((new Person(oleg)).toJSON()) + ']');
+        });
         
         describe('#concat()', () => {
             function check(fam: Headlight.ICollection<IPerson>, newFamily: Headlight.ICollection<IPerson>): void {
@@ -437,6 +445,148 @@ describe('Collection.', () => {
             });
         });
 
+    });
+
+    describe('Dispatches signals', () => {
+        /*describe('change', () => {
+            it('on', () => {
+
+            });
+
+            it('once', () => {
+
+            });
+        });*/
+
+        describe('add', () => {
+            it('on', () => {
+                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    addObject = args;
+                });
+
+                family.push(boris);
+
+                assert.isObject(addObject);
+                assert.equal(addObject.collection, family);
+                assert.instanceOf(addObject.models, Headlight.Collection);
+                assert.deepEqual(addObject.models.toJSON(), [boris]);
+
+                addObject = undefined;
+
+                family.push(new Person(helen));
+
+                assert.deepEqual(addObject.models.toJSON(), [helen]);
+            });
+
+            it('once', () => {
+                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.once.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    addObject = args;
+                });
+
+                family.push(boris);
+
+                assert.isObject(addObject);
+                assert.equal(addObject.collection, family);
+                assert.instanceOf(addObject.models, Headlight.Collection);
+                assert.deepEqual(addObject.models.toJSON(), [boris]);
+
+                addObject = undefined;
+
+                family.push(new Person(helen));
+
+                assert.isUndefined(addObject);
+            });
+        });
+
+        describe('remove', () => {
+            it('on', () => {
+                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    removeObject = args;
+                });
+
+                family.pop();
+
+                assert.isObject(removeObject);
+                assert.equal(removeObject.collection, family);
+                assert.instanceOf(removeObject.models, Headlight.Collection);
+                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+
+                removeObject = undefined;
+
+                family.pop();
+
+                assert.deepEqual(removeObject.models.toJSON(), [anna]);
+            });
+
+            it('once', () => {
+                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.once.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    removeObject = args;
+                });
+
+                family.pop();
+
+                assert.isObject(removeObject);
+                assert.equal(removeObject.collection, family);
+                assert.instanceOf(removeObject.models, Headlight.Collection);
+                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+
+                removeObject = undefined;
+
+                family.pop();
+
+                assert.isUndefined(removeObject);
+            });
+        });
+
+        describe('sort', () => {
+            it('on', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.on.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    evtObject = args;
+                });
+
+                family.sort();
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+
+                //todo
+            });
+
+            it('once', () => {
+                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+
+                family.once.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                    removeObject = args;
+                });
+
+                family.pop();
+
+                assert.isObject(removeObject);
+                assert.equal(removeObject.collection, family);
+                assert.instanceOf(removeObject.models, Headlight.Collection);
+                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+
+                removeObject = undefined;
+
+                family.pop();
+
+                assert.isUndefined(removeObject);
+            });
+        });
+    });
+
+    describe('Acts as Receiver', () => {
+        common.receiverTest(Family);
     });
 
 });

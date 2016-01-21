@@ -115,6 +115,9 @@ module Perform {
                 j = 0;
 
             function iterate(): void {
+                process.stdout.write(
+                    `Testing in progress. Performing iteration ${j + 1} of ${MEADIAN_ITERATIONS_COUNT}...\r`);
+
                 if (arr.length === MEADIAN_ITERATIONS_COUNT) {
                     arr.sort();
 
@@ -134,14 +137,10 @@ module Perform {
                 arr.push(Date.now() - timeStart);
                 j++;
 
-                setTimeout(function (): void {
-                    iterate();
-                }, 10);
+                setTimeout(iterate, 10);
             }
 
-            setTimeout(function (): void {
-                iterate();
-            }, 10);
+            setTimeout(iterate, 10);
         });
     }
 
@@ -159,6 +158,8 @@ module Perform {
                 })
                 .then(function (timeReference: number): void {
                     index++;
+
+                    process.stdout.write('                                                         \r');
 
                     if (time <= timeReference) {
                         log.ok(index, test.testName, time, test.referenceTestName, timeReference);

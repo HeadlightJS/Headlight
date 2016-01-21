@@ -71,7 +71,9 @@ module Headlight {
         public once: Collection.ISignalListeners<Schema>;
         public signals: Collection.ISignalHash<Schema>;
 
-        constructor(items: Array<IModel<Schema>> | Array<Schema>) {
+        private _signals: Signal.ISignalCache = {};
+
+        constructor(items?: Array<IModel<Schema>> | Array<Schema>) {
             super();
 
             this.cid = Base.generateCid(this.cidPrefix());
@@ -224,37 +226,24 @@ module Headlight {
 
 
         public receive<CallbackParam>(signal: ISignal<CallbackParam>,
-                                      callback: Signal.ISignalCallback<CallbackParam>): IReceiver {
-            return Receiver.prototype.receive.call(this, signal, callback);
-        }
+                                      callback: Signal.ISignalCallback<CallbackParam>): void;
 
         public receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
-                                          callback: Signal.ISignalCallback<CallbackParam>): IReceiver {
-            return Receiver.prototype.receiveOnce.call(this, signal, callback);
-        }
+                                          callback: Signal.ISignalCallback<CallbackParam>): void;
 
         public stopReceiving<CallbackParam>(signalOrCallback?: ISignal<CallbackParam> |
             Signal.ISignalCallback<CallbackParam>,
-                                            callback?: Signal.ISignalCallback<CallbackParam>): IReceiver {
+                                            callback?: Signal.ISignalCallback<CallbackParam>): void;
 
-            return Receiver.prototype.stopReceiving.call(this, signalOrCallback, callback);
-        }
+        public addSignal(signal: ISignal<any>): void;
 
-        public addSignal(signal: ISignal<any>): IReceiver {
-            return Receiver.prototype.addSignal.call(this, signal);
-        }
+        public removeSignal(signal: ISignal<any>): void;
 
-        public removeSignal(signal: ISignal<any>): IReceiver {
-            return Receiver.prototype.removeSignal.call(this, signal);
-        }
+        public hasSignal(signal: ISignal<any>): boolean;
 
-        public hasSignal(signal: ISignal<any>): boolean {
-            return Receiver.prototype.hasSignal.call(this, signal);
-        }
+        public getSignals(): Array<ISignal<any>>;
 
-        public getSignals(): Array<ISignal<any>> {
-            return Receiver.prototype.getSignals.call(this);
-        }
+        public resetSignals(): void;
 
         protected cidPrefix(): string {
             return 'c';
@@ -288,6 +277,7 @@ module Headlight {
                     this.signals.sort.add(callback, receiver);
                 }
             };
+
             this.once = {
                 change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
                          receiver?: IReceiver): void => {
@@ -314,6 +304,9 @@ module Headlight {
 
         private static _convertToModels(collection: Collection<any>,
                                         items: Array<IModel<any> | any>): Array<IModel<any>> {
+            if (!items || !items.length) {
+                return [];
+            }
 
             let Model = collection.model(),
                 models: Array<IModel<any>> = [];
@@ -347,6 +340,16 @@ module Headlight {
             return models;
         }
     }
+
+    /* Receiver methods mixing */
+    Collection.prototype.receive = Receiver.prototype.receive;
+    Collection.prototype.receiveOnce = Receiver.prototype.receiveOnce;
+    Collection.prototype.stopReceiving = Receiver.prototype.stopReceiving;
+    Collection.prototype.addSignal = Receiver.prototype.addSignal;
+    Collection.prototype.removeSignal = Receiver.prototype.removeSignal;
+    Collection.prototype.hasSignal = Receiver.prototype.hasSignal;
+    Collection.prototype.getSignals = Receiver.prototype.getSignals;
+    Collection.prototype.resetSignals = Receiver.prototype.resetSignals;
 
     export module Collection {
         export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | ICollection<Schema>;
