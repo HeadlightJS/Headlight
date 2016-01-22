@@ -46,6 +46,12 @@ describe('Collection.', () => {
         }
     }
 
+    class M extends Headlight.Model<{}> implements Headlight.IModel<{}> {
+        constructor(args: {}) {
+            super(args);
+        }
+    }
+
     class Family extends Headlight.Collection<IPerson> {
         protected model(): typeof Person {
             return Person;
@@ -88,6 +94,10 @@ describe('Collection.', () => {
         assert.instanceOf(family, Array);
         assert.equal('c', family.cid[0]);
         assert.equal(family.length, 2);
+
+        assert.throws(() => {
+            family.push(<any>(new M({})));
+        });
     });
 
     describe('Array methods', () => {
@@ -474,10 +484,12 @@ describe('Collection.', () => {
     describe('Dispatches signals', () => {
         describe('change', () => {
             it('on', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>;
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                count = 0;
 
                 family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
                     evtObject = param;
+                    count++;
                 });
 
                 (<IPerson>family[0]).name = 'olo';
@@ -499,6 +511,15 @@ describe('Collection.', () => {
                 (<IPerson>family[0]).name = 'aza';
 
                 assert.isObject(evtObject);
+
+                evtObject = undefined;
+                count = 0;
+
+                family.push(family[0]);
+
+                (<IPerson>family[0]).name = 'olo';
+
+                assert.equal(count, 1, 'Dispatching change signal shoul be made only once.');
             });
 
             it('once', () => {

@@ -75,7 +75,7 @@ module Headlight {
 
         private _signals: Signal.ISignalCache = {};
         private _state: Collection.STATE = Collection.STATE.SILENT;
-        private _modelChangeCallbacks: IHash<Signal.ISignalCallback<Model.IChangeParam<Schema>>> = {};
+        private _modelsIdsHash: IHash<boolean> = {};
 
         constructor(items?: Array<Model.TModelOrSchema<Schema>>) {
             super();
@@ -334,37 +334,21 @@ module Headlight {
         }
 
         private _dispatchSignal(signal: ISignal<any>, param: Collection.TCollectionSignalParam<Schema>): void {
-            if (this._state !== Collection.STATE.SILENT) {
-                signal.dispatch(param);
-            }
+            //todo Раскомментировать после того, как реализуется транзакция для коллекции
+
+            //if (this._state !== Collection.STATE.SILENT) {
+            signal.dispatch(param);
+            //}
         }
 
         private _receiveModelsChangeSignals(models: Array<Model.TModelOrSchema<Schema>>): void {
             for (let i = models.length; i--;) {
                 let model = <IModel<Schema>>models[i];
 
-                if (!this._modelChangeCallbacks[model.cid]) {
-                    let c = ((m: IModel<Schema>) => {
-                        return (param: Model.IChangeParam<Schema>) => {
-                            let values: IHash<Schema> = {},
-                                previous: IHash<Schema> = {};
+                if (!this._modelsIdsHash[model.cid]) {
+                    this.receive(model.signals.change, this._onChangeModel);
 
-                            values[m.cid] = param.values;
-                            previous[m.cid] = param.previous;
-
-                            this._dispatchSignal(this.signals.change, {
-                                collection: this,
-                                models: new Collection.SimpleCollection<Schema>([m], this.model()),
-                                values: values,
-                                previous: previous
-                            });
-                        };
-                    })(model);
-
-                    this._modelChangeCallbacks[model.cid] =
-                        <Signal.ISignalCallback<Model.IChangeParam<Schema>>>c;
-
-                    this.receive(model.signals.change, c);
+                    this._modelsIdsHash[model.cid] = true;
                 }
             }
         }
@@ -373,10 +357,26 @@ module Headlight {
             for (let i = models.length; i--;) {
                 let model = <IModel<Schema>>models[i];
 
-                this.stopReceiving(model.signals.change, this._modelChangeCallbacks[model.cid]);
+                this.stopReceiving(model.signals.change, this._onChangeModel);
 
-                delete this._modelChangeCallbacks[model.cid];
+                delete this._modelsIdsHash[model.cid];
             }
+        }
+
+        private _onChangeModel(param: Model.IChangeParam<Schema>): void {
+            let values: IHash<Schema> = {},
+                previous: IHash<Schema> = {},
+                model = param.model;
+
+            values[model.cid] = param.values;
+            previous[model.cid] = param.previous;
+
+            this._dispatchSignal(this.signals.change, {
+                collection: this,
+                models: new Collection.SimpleCollection<Schema>([model], this.model()),
+                values: values,
+                previous: previous
+            });
         }
 
         private _enableSignals(): void {
@@ -397,6 +397,7 @@ module Headlight {
             function add(item: IModel<any> | any): void {
                 if (!(item instanceof Model)) {
                     if (item instanceof Headlight.Model) {
+                        //todo написать вывод ошибки
                         throw new Error('');
                     } else {
                         models.unshift(new (<any>Model)(item));
@@ -488,8 +489,8 @@ module Headlight {
         }
 
         export const enum STATE {
-            NORMAL,
-            SILENT
+            SILENT,
+            NORMAL
         }
     }
 }

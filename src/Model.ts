@@ -99,7 +99,7 @@ module Headlight {
 
         public static performSilentTransaction<S>(model: Model<S>,
                                                   callback: (model: Model<S>) => void): void {
-            model._state = Model.STATE.IN_SILENT_TRANSACTION;
+            model._state = Model.STATE.SILENT;
 
             callback(model);
 
@@ -128,15 +128,9 @@ module Headlight {
                     });
 
                     break;
-                case Model.STATE.IN_SILENT_TRANSACTION:
-
-                    break;
                 case Model.STATE.SILENT:
 
                     break;
-                default:
-                    break;
-
             }
         }
 
@@ -251,10 +245,9 @@ module Headlight {
         }
 
         export const enum STATE {
+            SILENT,
             NORMAL,
-            IN_TRANSACTION,
-            IN_SILENT_TRANSACTION,
-            SILENT
+            IN_TRANSACTION
         }
     }
 }

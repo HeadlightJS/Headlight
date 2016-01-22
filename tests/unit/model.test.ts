@@ -69,6 +69,17 @@ describe('Model.', () => {
 
     }
 
+    class M extends Headlight.Model<{}> implements Headlight.IModel<{}> {
+        constructor(args: {}) {
+            super(args);
+        }
+
+        @Headlight.dProperty()
+        get CID(): string {
+            return this.cid;
+        }
+    }
+
     let person: Person;
 
     const PERSON_NAME = 'Anna',
@@ -566,6 +577,11 @@ describe('Model.', () => {
                 son: undefined
             }
         });
+    });
+
+    it('#keys()', () => {
+        assert.deepEqual(person.keys(),
+            ['name', 'surname', 'age', 'patronymic', 'son', 'fullname', 'nameUpperCase', 'fullnameUpperCase']);
     });
 
     describe('Acts as Receiver', () => {

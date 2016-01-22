@@ -72,22 +72,12 @@ module Headlight {
                             Array.isArray(ConstructorOrDeps) ? ConstructorOrDeps : ConstructorOrDeps.call(target);
 
                         for (let i = deps.length; i--;) {
-                            let d = target._depsMap[deps[i]];
-
-                            if (d && d.indexOf(k) === -1) {
-                                d.push(k);
-                            }
+                            target._depsMap[deps[i]].push(k);
                         }
                     }
 
                     let originalGet = descriptor.get,
                         originalSet = descriptor.set;
-
-                    if (!originalGet) {
-                        //TODO native template 13.01.16 11:08
-                        throw Error('`get` accessor for property `' + k +
-                            '` of class `' + target.name + '` should be specified.');
-                    }
 
                     descriptor.get = function (): any {
                         return this._properties[k] = originalGet.call(this);
