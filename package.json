@@ -5,6 +5,8 @@
   "main": "",
   "dependencies": {},
   "devDependencies": {
+    "backbone": "^1.2.3",
+    "backbone.ribs": "^1.0.1",
     "karma": "^0.13.14",
     "karma-chai-plugins": "^0.6.0",
     "karma-coverage": "^0.5.3",
@@ -17,8 +19,10 @@
     "typescript": "^1.6.2"
   },
   "scripts": {
-    "pretest": "sh pretest.sh",
-    "test": "find ./src -name '*.ts' -print0 | xargs -0 node_modules/tslint/bin/tslint -c ./tslint.json && karma start"
+    "compile": "sh scripts/compile.sh",
+    "pretest": "sh scripts/pretest.sh",
+    "test": "karma start",
+    "performance": "tsc -p ./tests/performance/ && node tests/performance/performance.test.js"
   },
   "repository": {
     "type": "git",

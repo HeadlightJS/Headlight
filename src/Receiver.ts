@@ -44,7 +44,7 @@ module Headlight {
             callback?: Signal.ISignalCallback<CallbackParam>): IReceiver {
             
             if (signalOrCallback === undefined && callback === undefined) {
-                this.resetSignals();
+                this._resetSignals();
             } else if (callback === undefined) {
                 if (typeof signalOrCallback === BASE_TYPES.FUNCTION) {
                     let cids = Object.keys(this._signals),
@@ -102,7 +102,7 @@ module Headlight {
             return 'r';
         }
 
-        private resetSignals(): IReceiver {
+        private _resetSignals(): IReceiver {
             let cids = Object.keys(this._signals);
 
             for (let i = cids.length; i--; ) {

@@ -1,6 +1,5 @@
-/// <reference path="../typings/tsd.d.ts" />
-///<reference path="../src/Base.ts"/>
-///<reference path="../src/Model.ts"/>
+/// <reference path="../../typings/tsd.d.ts" />
+///<reference path="../../dist/headlight.d.ts"/>
 
 describe('Model.', () => {
     let assert = chai.assert;
@@ -275,6 +274,107 @@ describe('Model.', () => {
                 assert.isUndefined(changeObj, 'Handler should be called only once.');
                 assert.isUndefined(computedChangeObj, 'Handler should be called only once.');
             });
+        });
+    });
+
+    describe('Transactions.', () => {
+        let mainChangeObj: TChangePersonParam,
+            changeObj: TChangePersonPropParam<string>,
+            changeObj2: TChangePersonPropParam<string>,
+            computedChangeObj: TChangePersonPropParam<string>,
+            tmainChangeObj: TChangePersonParam,
+            tchangeObj: TChangePersonPropParam<string>,
+            tchangeObj2: TChangePersonPropParam<string>,
+            tcomputedChangeObj: TChangePersonPropParam<string>,
+            computedCallbackCount = 0,
+            mainCallbackCount = 0,
+            handlersOrderArray = [];
+
+        const NEW_NAME = 'Helen';
+        const NEW_SURNAME = 'Petrova';
+
+        beforeEach(() => {
+            mainChangeObj = undefined;
+            changeObj = undefined;
+            changeObj2 = undefined;
+            computedChangeObj = undefined;
+            tmainChangeObj = undefined;
+            tchangeObj = undefined;
+            tchangeObj2 = undefined;
+            tcomputedChangeObj = undefined;
+            computedCallbackCount = 0;
+            mainCallbackCount = 0;
+            handlersOrderArray = [];
+        });
+
+        it('Performing transaction.', () => {
+            person.on.change((args: TChangePersonParam): void => {
+                mainChangeObj = args;
+                mainCallbackCount++;
+                handlersOrderArray.push('change');
+            });
+            person.on[person.PROPS.name]((args: TChangePersonPropParam<string>): void => {
+                changeObj = args;
+                handlersOrderArray.push(person.PROPS.name);
+            });
+            person.on[person.PROPS.surname]((args: TChangePersonPropParam<string>): void => {
+                changeObj2 = args;
+                handlersOrderArray.push(person.PROPS.surname);
+            });
+            person.on[person.PROPS.fullname]((args: TChangePersonPropParam<string>): void => {
+                computedChangeObj = args;
+                computedCallbackCount++;
+                handlersOrderArray.push(person.PROPS.fullname);
+            });
+
+            person.performTransaction((pers: Person) => {
+                pers.name = NEW_NAME;
+                pers.surname = NEW_SURNAME;
+
+                tmainChangeObj = mainChangeObj;
+                tchangeObj = changeObj;
+                tchangeObj2 = changeObj2;
+                tcomputedChangeObj = computedChangeObj;
+            });
+
+
+            assert.isUndefined(tmainChangeObj, 'Main handler shouldn`t be called in transaction.');
+            assert.isUndefined(tchangeObj, 'Prop handler shouldn`t be called in transaction.');
+            assert.isUndefined(tchangeObj2, 'Prop2 Handler shouldn`t be called in transaction.');
+            assert.isUndefined(tcomputedChangeObj, 'Computed handler shouldn`t be called in transaction.');
+
+            assert.isObject(mainChangeObj, 'Main handler should be called after transaction');
+            assert.isObject(changeObj, 'Prop handler should be called after transaction');
+            assert.isObject(changeObj2, 'Prop2 handler should be called after transaction');
+            assert.isObject(computedChangeObj, 'Computed handler should be called after transaction');
+
+            assert.equal(mainCallbackCount, 1, 'Main handler should be called after transaction');
+            assert.equal(computedCallbackCount, 1, 'Computed handler should be called after transaction');
+
+            assert.deepEqual(handlersOrderArray,
+                [person.PROPS.name, person.PROPS.surname, person.PROPS.fullname, 'change']);
+        });
+
+        it('Performing silent transaction.', () => {
+            person.on.change((args: TChangePersonParam): void => {
+                mainChangeObj = args;
+            });
+            person.on[person.PROPS.name]((args: TChangePersonPropParam<string>): void => {
+                changeObj = args;
+            });
+            person.on[person.PROPS.fullname]((args: TChangePersonPropParam<string>): void => {
+                computedChangeObj = args;
+            });
+
+            person.performSilentTransaction((pers: Person) => {
+                pers.name = NEW_NAME;
+                pers.surname = NEW_SURNAME;
+            });
+
+            assert.isUndefined(mainChangeObj, 'Handler shouldn`t be called in silent transaction.');
+            assert.isUndefined(changeObj, 'Handler shouldn`t be called in silent transaction.');
+            assert.isUndefined(changeObj2, 'Handler shouldn`t be called in silent transaction.');
+            assert.isUndefined(computedChangeObj, 'Handler shouldn`t be called in silent transaction.');
         });
     });
 

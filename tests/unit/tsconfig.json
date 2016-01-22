@@ -5,7 +5,6 @@
     "preserveConstEnums": true,
     "sourceMap": false,
     "target": "es5",
-    "module": "commonjs",
     "experimentalDecorators": true
   },
   "exclude": [
