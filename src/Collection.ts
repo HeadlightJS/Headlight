@@ -75,6 +75,8 @@ module Headlight {
 
         private _signals: Signal.ISignalCache = {};
         private _state: Collection.STATE = Collection.STATE.SILENT;
+        private _receiveChangeSignalsState: Collection.RECEIVE_CHANGE_SIGNALS_STATE =
+            Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO;
         private _modelsIdsHash: IHash<boolean> = {};
 
         constructor(items?: Array<Model.TModelOrSchema<Schema>>) {
@@ -289,6 +291,12 @@ module Headlight {
             this.on = {
                 change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
                          receiver?: IReceiver): void => {
+                    if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
+                        this._receiveChangeSignalsState = Collection.RECEIVE_CHANGE_SIGNALS_STATE.INITIALIZING;
+                        this._receiveModelsChangeSignals(this);
+                        this._receiveChangeSignalsState = Collection.RECEIVE_CHANGE_SIGNALS_STATE.YES;
+                    }
+
                     this.signals.change.add(callback, receiver);
                 },
                 add: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
@@ -308,6 +316,12 @@ module Headlight {
             this.once = {
                 change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
                          receiver?: IReceiver): void => {
+                    if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
+                        this._receiveChangeSignalsState = Collection.RECEIVE_CHANGE_SIGNALS_STATE.INITIALIZING;
+                        this._receiveModelsChangeSignals(this);
+                        this._receiveChangeSignalsState = Collection.RECEIVE_CHANGE_SIGNALS_STATE.YES;
+                    }
+
                     this.signals.change.addOnce(callback, receiver);
                 },
                 add: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
@@ -326,11 +340,7 @@ module Headlight {
         }
 
         private _initItems(items: Array<Model.TModelOrSchema<Schema>>): void {
-            let models = Collection._convertToModels(this, items);
-
-            Array.prototype.push.apply(this, models);
-
-            this._receiveModelsChangeSignals(models);
+            Array.prototype.push.apply(this, Collection._convertToModels(this, items));
         }
 
         private _dispatchSignal(signal: ISignal<any>, param: Collection.TCollectionSignalParam<Schema>): void {
@@ -341,7 +351,11 @@ module Headlight {
             //}
         }
 
-        private _receiveModelsChangeSignals(models: Array<Model.TModelOrSchema<Schema>>): void {
+        private _receiveModelsChangeSignals(models: Array<IModel<Schema>> | ICollection<Schema>): void {
+            if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
+                return;
+            }
+
             for (let i = models.length; i--;) {
                 let model = <IModel<Schema>>models[i];
 
@@ -354,6 +368,10 @@ module Headlight {
         }
 
         private _stopReceivingModelsChangeSignals(models: Array<Model.TModelOrSchema<Schema>>): void {
+            if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
+                return;
+            }
+
             for (let i = models.length; i--;) {
                 let model = <IModel<Schema>>models[i];
 
@@ -491,6 +509,12 @@ module Headlight {
         export const enum STATE {
             SILENT,
             NORMAL
+        }
+
+        export const enum RECEIVE_CHANGE_SIGNALS_STATE {
+            NO,
+            INITIALIZING,
+            YES
         }
     }
 }

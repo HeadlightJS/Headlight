@@ -492,6 +492,10 @@ describe('Collection.', () => {
                     count++;
                 });
 
+                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                    return;
+                });
+
                 (<IPerson>family[0]).name = 'olo';
 
                 let newValues = {};
@@ -519,7 +523,7 @@ describe('Collection.', () => {
 
                 (<IPerson>family[0]).name = 'olo';
 
-                assert.equal(count, 1, 'Dispatching change signal shoul be made only once.');
+                assert.equal(count, 1, 'Dispatching change signal should be made only once.');
             });
 
             it('once', () => {
@@ -527,6 +531,10 @@ describe('Collection.', () => {
 
                 family.once.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
                     evtObject = param;
+                });
+
+                family.once.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                    return;
                 });
 
                 (<IPerson>family[0]).name = 'olo';
@@ -546,6 +554,27 @@ describe('Collection.', () => {
                 evtObject = undefined;
 
                 (<IPerson>family[0]).name = 'aza';
+
+                assert.isUndefined(evtObject);
+            });
+
+            it('Stops dispatching after removing from collection.', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                    m = <IPerson>family[0];
+
+                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                    evtObject = param;
+                });
+
+                m.name = 'olo';
+
+                assert.isObject(evtObject);
+
+                evtObject = undefined;
+
+                family.shift();
+
+                m.name = 'aza';
 
                 assert.isUndefined(evtObject);
             });
