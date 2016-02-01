@@ -3,7 +3,7 @@
 module Headlight {
     'use strict';
 
-    export interface IView {
+    export interface IView extends IBase {
     }
 
     export interface IDomHandler {
@@ -21,15 +21,22 @@ module Headlight {
         $placeholder: HTMLElement;
     }
 
-    export abstract class View implements IView {
+    export abstract class BaseView extends Base {
 
         protected el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
 
         constructor(options: IViewOptions) {
+            super();
             this.__createElement();
             this.initProps(options);
             this.__initEvents();
+        }
+
+        protected abstract initProps(options?: IViewOptions): this
+
+        protected cidPrefix(): string {
+            return 'v';
         }
 
         protected tagName(): string {
@@ -51,8 +58,6 @@ module Headlight {
         protected $(selector: string): HTMLElement[] {
             return Array.prototype.slice.call(this.el.querySelectorAll(selector));
         }
-
-        protected abstract initProps(options: IViewOptions): this;
 
         protected setElement(element: HTMLElement): this {
             let parent = this.el.parentNode;
@@ -160,6 +165,14 @@ module Headlight {
                 node = node.parentNode;
             }
             return false;
+        }
+
+    }
+
+    export class View extends BaseView implements IView {
+
+        protected initProps(): this {
+            return this;
         }
 
     }
