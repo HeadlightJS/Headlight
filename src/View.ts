@@ -4,6 +4,11 @@ module Headlight {
     'use strict';
 
     export interface IView extends IBase {
+        el: HTMLElement;
+        cidPrefix(): string;
+        tagName(): string;
+        className(): string;
+        id(): string;
     }
 
     export interface IDomHandler {
@@ -18,12 +23,12 @@ module Headlight {
     }
 
     export interface IViewOptions {
-        $placeholder: HTMLElement;
+
     }
 
     export abstract class BaseView extends Base {
 
-        protected el: HTMLElement;
+        public el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
 
         constructor(options: IViewOptions) {
@@ -33,21 +38,21 @@ module Headlight {
             this.__initEvents();
         }
 
-        protected abstract initProps(options?: IViewOptions): this
+        protected abstract initProps(options?: IViewOptions): BaseView
 
-        protected cidPrefix(): string {
+        public cidPrefix(): string {
             return 'v';
         }
 
-        protected tagName(): string {
+        public tagName(): string {
             return 'DIV';
         }
 
-        protected className(): string {
+        public className(): string {
             return '';
         }
 
-        protected id(): string {
+        public id(): string {
             return '';
         }
 
@@ -59,7 +64,7 @@ module Headlight {
             return Array.prototype.slice.call(this.el.querySelectorAll(selector));
         }
 
-        protected setElement(element: HTMLElement): this {
+        protected setElement(element: HTMLElement): BaseView {
             let parent = this.el.parentNode;
             this.el = element;
             if (parent) {
@@ -68,7 +73,7 @@ module Headlight {
             return this;
         }
 
-        protected on(eventName: string, selector: string|void, handler: IDomHandler, context?: any): this {
+        protected on(eventName: string, selector: string|void, handler: IDomHandler, context?: any): BaseView {
 
             if (!this.__listeningEvents[eventName]) {
                 this.__addTypeHandler(eventName);
@@ -83,7 +88,7 @@ module Headlight {
             return this;
         }
 
-        protected off(eventName?: string, handler?: IDomHandler): this {
+        protected off(eventName?: string, handler?: IDomHandler): BaseView {
 
             if (!eventName) {
                 Object.keys(this.__listeningEvents).forEach((localEventName: string) => {
@@ -130,7 +135,7 @@ module Headlight {
             this.__listeningEvents[eventName].listeners.forEach((listenerData: IListener) => {
                 if (!listenerData.selector) {
                     listenerData.handler.call(listenerData.context, event, this.el);
-                }  else {
+                } else {
                     this.$(<string>listenerData.selector).some((element: HTMLElement): boolean => {
                         if (event.target === element || View.__hasInElement(this.el, element, event.target)) {
                             listenerData.handler.call(listenerData.context, event, element);
@@ -142,11 +147,15 @@ module Headlight {
         }
 
         private __createElement(): void {
-            this.el = document.createElement(this.tagName());
+            this.el = document.createElement(this.tagName() || 'DIV');
             let className = this.className();
             let id = this.id();
-            this.el.classList.add(className);
-            this.el.id = id;
+            if (className) {
+                this.el.classList.add(className);
+            }
+            if (id) {
+                this.el.id = id;
+            }
         }
 
         private __initEvents(): void {
