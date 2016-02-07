@@ -31,7 +31,7 @@ module Headlight {
         public el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
 
-        constructor(options: IViewOptions) {
+        constructor(options?: IViewOptions) {
             super();
             this.__createElement();
             this.initProps(options);
@@ -65,11 +65,13 @@ module Headlight {
         }
 
         protected setElement(element: HTMLElement): BaseView {
-            let parent = this.el.parentNode;
+            //let parent = this.el.parentNode;
+            let oldEl = this.el;
             this.el = element;
-            if (parent) {
-                parent.appendChild(this.el);
-            }
+            this.__resetHandlers(oldEl);
+            //if (parent) {
+            //    parent.appendChild(this.el);
+            //}
             return this;
         }
 
@@ -129,6 +131,13 @@ module Headlight {
                     this.__startEvent(event, eventName);
                 }
             };
+        }
+
+        private __resetHandlers(oldElem: HTMLElement): void {
+            Object.keys(this.__listeningEvents).forEach((name: string): void => {
+                oldElem.removeEventListener(name, this.__listeningEvents[name].handler);
+                this.el.addEventListener(name, this.__listeningEvents[name].handler, false);
+            });
         }
 
         private __startEvent(event: any, eventName: string): void {
