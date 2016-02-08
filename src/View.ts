@@ -26,7 +26,7 @@ module Headlight {
 
     }
 
-    export abstract class BaseView extends Base {
+    export class View extends Base {
 
         public el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
@@ -38,7 +38,9 @@ module Headlight {
             this.__initEvents();
         }
 
-        protected abstract initProps(options?: IViewOptions): BaseView
+        protected initProps(options?: IViewOptions): View {
+            return this;
+        }
 
         public cidPrefix(): string {
             return 'v';
@@ -56,6 +58,13 @@ module Headlight {
             return '';
         }
 
+        public remove(): void {
+            this.off();
+            if (this.el.parentNode) {
+                this.el.parentNode.removeChild(this.el);
+            }
+        }
+
         protected events(): Array<IEventHash> {
             return [];
         }
@@ -64,7 +73,7 @@ module Headlight {
             return Array.prototype.slice.call(this.el.querySelectorAll(selector));
         }
 
-        protected setElement(element: HTMLElement): BaseView {
+        protected setElement(element: HTMLElement): View {
             //let parent = this.el.parentNode;
             let oldEl = this.el;
             this.el = element;
@@ -75,7 +84,7 @@ module Headlight {
             return this;
         }
 
-        protected on(eventName: string, selector: string|void, handler: IDomHandler, context?: any): BaseView {
+        protected on(eventName: string, selector: string|void, handler: IDomHandler, context?: any): View {
 
             if (!this.__listeningEvents[eventName]) {
                 this.__addTypeHandler(eventName);
@@ -90,7 +99,7 @@ module Headlight {
             return this;
         }
 
-        protected off(eventName?: string, handler?: IDomHandler): BaseView {
+        protected off(eventName?: string, handler?: IDomHandler): View {
 
             if (!eventName) {
                 Object.keys(this.__listeningEvents).forEach((localEventName: string) => {
@@ -111,7 +120,7 @@ module Headlight {
                 }
 
                 listData.listeners = listData.listeners.filter((listenerData: IListener): boolean => {
-                    return listenerData.handler === handler;
+                    return listenerData.handler !== handler;
                 });
 
                 if (!listData.listeners.length) {
@@ -156,7 +165,7 @@ module Headlight {
         }
 
         private __createElement(): void {
-            this.el = document.createElement(this.tagName() || 'DIV');
+            this.el = document.createElement(this.tagName());
             let className = this.className();
             let id = this.id();
             if (className) {
@@ -183,14 +192,6 @@ module Headlight {
                 node = node.parentNode;
             }
             return false;
-        }
-
-    }
-
-    export class View extends BaseView implements IView {
-
-        protected initProps(): this {
-            return this;
         }
 
     }

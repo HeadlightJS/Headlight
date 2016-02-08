@@ -82,6 +82,13 @@ module.exports = function(config: any): void {
           branches: 95
         }
       }
+    },
+
+    client: {
+      mocha: {
+        reporter: 'html', // change Karma's debug.html to the mocha web reporter
+        ui: 'bdd'
+      }
     }
   });
 };
