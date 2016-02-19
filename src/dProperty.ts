@@ -19,7 +19,6 @@ module Headlight {
                     values[prop] = newVal;
                     previous[prop] = prev;
 
-                    //todo итерация через зависимости зависимостей
                     (function iterateThroughDeps(deps:  Array<string>): void {
                         for (let j = deps.length; j--;) {
                             d = deps[j];
