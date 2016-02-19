@@ -3,7 +3,7 @@
 
 describe('Signal.', () => {
     let assert = chai.assert;
-    let signal: Headlight.ISignal<string>;
+    let signal: Headlight.Signal<string>;
 
     class Handler {
         public count: number = 0;

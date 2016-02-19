@@ -4,35 +4,17 @@
 module Headlight {
     'use strict';
 
-    export interface IReceiver extends IBase {
-        receive<CallbackParam>(signal: ISignal<CallbackParam>,
-                               callback: Signal.ISignalCallback<CallbackParam>): void;
-        receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
-                                   callback: Signal.ISignalCallback<CallbackParam>): void;
-
-        stopReceiving(): void;
-        stopReceiving(signal: ISignal<any>): void;
-        stopReceiving(callback: Signal.ISignalCallback<any>): void;
-        stopReceiving<CallbackParam>(signal: ISignal<CallbackParam>,
-                                     callback: Signal.ISignalCallback<CallbackParam>): void;
-
-        addSignal(signal: ISignal<any>): void;
-        removeSignal(signal: ISignal<any>): void;
-
-        getSignals(): Array<ISignal<any>>;
-    }
-
-    export class Receiver extends Base implements IReceiver {
+    export class Receiver extends Base {
         private _signals: Signal.ISignalCache = {};
 
-        public receive<CallbackParam>(signal: ISignal<CallbackParam>,
+        public receive<CallbackParam>(signal: Signal<CallbackParam>,
                                       callback: Signal.ISignalCallback<CallbackParam>): void {
             signal.add(callback, this);
 
             this.addSignal(signal);
         }
 
-        public receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
+        public receiveOnce<CallbackParam>(signal: Signal<CallbackParam>,
                                           callback: Signal.ISignalCallback<CallbackParam>): void {
             signal.addOnce(callback, this);
 
@@ -40,7 +22,7 @@ module Headlight {
         }
 
         public stopReceiving<CallbackParam>(
-            signalOrCallback?: ISignal<CallbackParam> | Signal.ISignalCallback<CallbackParam>,
+            signalOrCallback?: Signal<CallbackParam> | Signal.ISignalCallback<CallbackParam>,
             callback?: Signal.ISignalCallback<CallbackParam>): void {
             
             if (signalOrCallback === undefined && callback === undefined) {
@@ -54,22 +36,22 @@ module Headlight {
                         this._signals[cids[i]].remove(c, this);
                     }
                 } else {
-                    let s = <ISignal<CallbackParam>>signalOrCallback;
+                    let s = <Signal<CallbackParam>>signalOrCallback;
 
                     s.remove(this);
                 }
             } else {
-                let s = <ISignal<CallbackParam>>signalOrCallback;
+                let s = <Signal<CallbackParam>>signalOrCallback;
 
                 s.remove(callback, this);
             }
         }
 
-        public addSignal(signal: ISignal<any>): void {
+        public addSignal(signal: Signal<any>): void {
             this._signals[signal.cid] = signal;
         }
 
-        public removeSignal(signal: ISignal<any>): void {
+        public removeSignal(signal: Signal<any>): void {
             if (this.hasSignal(signal)) {
                 delete this._signals[signal.cid];
 
@@ -77,13 +59,13 @@ module Headlight {
             }
         }
 
-        public hasSignal(signal: ISignal<any>): boolean {
+        public hasSignal(signal: Signal<any>): boolean {
             return signal.cid in this._signals;
         }
 
-        public getSignals(): Array<ISignal<any>> {
+        public getSignals(): Array<Signal<any>> {
             let cids = Object.keys(this._signals),
-                res: Array<ISignal<any>> = [];
+                res: Array<Signal<any>> = [];
 
             for (let i = cids.length; i--; ) {
                 res.push(this._signals[cids[i]]);

@@ -6,68 +6,7 @@
 module Headlight {
     'use strict';
 
-    export interface ICollection<Schema> extends IReceiver, IBase, Array<Model.TModelOrSchema<Schema>> {
-        on: Collection.ISignalListeners<Schema>;
-        once: Collection.ISignalListeners<Schema>;
-        signals: Collection.ISignalHash<Schema>;
-
-        length: number;
-        toJSON(): Array<Schema>;
-        toLocaleString(): string;
-        push(...items: Array<Model.TModelOrSchema<Schema>>): number;
-        pop(): Model.TModelOrSchema<Schema>;
-        concat(...items: Array<Collection.TArrayOrCollection<Schema> |
-            Model.TModelOrSchema<Schema>>): ICollection<Schema>;
-        join(separator?: string): string;
-        reverse(): ICollection<Schema>;
-        shift(): Model.TModelOrSchema<Schema>;
-        slice(start?: number, end?: number): ICollection<Schema>;
-        sort(compareFn?: (a: Model.TModelOrSchema<Schema>,
-                          b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema>;
-        splice(start: number): ICollection<Schema>;
-        splice(start: number,
-               deleteCount: number,
-               ...items: Array<Model.TModelOrSchema<Schema>>): ICollection<Schema>;
-        unshift(...items: Array<Model.TModelOrSchema<Schema>>): number;
-        indexOf(searchElement: Model.TModelOrSchema<Schema>, fromIndex?: number): number;
-        lastIndexOf(searchElement: Model.TModelOrSchema<Schema>, fromIndex?: number): number;
-        every(callbackfn: (value: Model.TModelOrSchema<Schema>,
-                           index: number,
-                           array: Array<Model.TModelOrSchema<Schema>>) => boolean,
-              thisArg?: any): boolean;
-        some(callbackfn: (value: Model.TModelOrSchema<Schema>,
-                          index: number,
-                          array: Array<Model.TModelOrSchema<Schema>>) => boolean,
-             thisArg?: any): boolean;
-        forEach(callbackfn: (value: Model.TModelOrSchema<Schema>,
-                             index: number,
-                             array: Array<Model.TModelOrSchema<Schema>>) => void,
-                thisArg?: any): void;
-        map<T>(callbackfn: (value: Model.TModelOrSchema<Schema>,
-                            index: number,
-                            array: Array<Model.TModelOrSchema<Schema>>) => ICollection<Schema>,
-               thisArg?: any): Array<T>;
-        filter(callbackfn: (value: Model.TModelOrSchema<Schema>,
-                            index: number,
-                            collection: ICollection<Schema>) => boolean,
-               thisArg?: any): ICollection<Schema>;
-        reduce<T>(callbackfn: (previousValue: Model.TModelOrSchema<Schema>,
-                               currentValue: Model.TModelOrSchema<Schema>,
-                               currentIndex: number,
-                               collection: ICollection<Schema>) => Model.TModelOrSchema<Schema>,
-                  initialValue?: Model.TModelOrSchema<Schema>): T;
-        reduceRight<T>(callbackfn: (previousValue: Model.TModelOrSchema<Schema>,
-                                    currentValue: Model.TModelOrSchema<Schema>,
-                                    currentIndex: number,
-                                    collection: ICollection<Schema>) => Model.TModelOrSchema<Schema>,
-                       initialValue?: Model.TModelOrSchema<Schema>): T;
-
-        [index: number]: Model.TModelOrSchema<Schema>;
-    }
-
-    export abstract class Collection<Schema> extends Array<Model.TModelOrSchema<Schema>> implements
-        ICollection<Schema> {
-
+    export abstract class Collection<Schema> extends Array<Model.TModelOrSchema<Schema>> {
         public cid: string;
         public on: Collection.ISignalListeners<Schema>;
         public once: Collection.ISignalListeners<Schema>;
@@ -91,7 +30,7 @@ module Headlight {
 
         public toJSON(): Array<Schema> {
             return Array.prototype.map.call(this, (model: Model.TModelOrSchema<Schema>) => {
-                return (<IModel<Schema>>model).toJSON();
+                return (<Model<Schema>>model).toJSON();
             });
         }
 
@@ -133,7 +72,7 @@ module Headlight {
         }
 
         public concat(...items: Array<Collection.TArrayOrCollection<Schema> |
-            Model.TModelOrSchema<Schema>>): ICollection<Schema> {
+            Model.TModelOrSchema<Schema>>): Collection<Schema> {
 
             let models = [],
                 newModels = Collection._convertToModels(this, items);
@@ -149,7 +88,7 @@ module Headlight {
             let string = '';
 
             for (let i = 0; i < this.length; i++) {
-                string += JSON.stringify((<IModel<Schema>>this[i]).toJSON());
+                string += JSON.stringify((<Model<Schema>>this[i]).toJSON());
 
                 if (i !== this.length - 1) {
                     string += separator;
@@ -159,7 +98,7 @@ module Headlight {
             return string;
         }
 
-        public reverse(): ICollection<Schema> {
+        public reverse(): Collection<Schema> {
             Array.prototype.reverse.call(this);
 
             this._dispatchSignal(this.signals.sort, {
@@ -186,12 +125,12 @@ module Headlight {
             return model;
         }
 
-        public slice(start?: number, end?: number): ICollection<Schema> {
+        public slice(start?: number, end?: number): Collection<Schema> {
             return new Collection.SimpleCollection<Schema>(Array.prototype.slice.call(this, start, end), this.model());
         }
 
         public sort(compareFn?: (a: Model.TModelOrSchema<Schema>,
-                                 b: Model.TModelOrSchema<Schema>) => number): ICollection<Schema> {
+                                 b: Model.TModelOrSchema<Schema>) => number): Collection<Schema> {
             Array.prototype.sort.call(this, compareFn);
 
             this._dispatchSignal(this.signals.sort, {
@@ -202,7 +141,7 @@ module Headlight {
         };
 
         public splice(start: number,
-                      ...items: Array<number | Model.TModelOrSchema<Schema>>): ICollection<Schema> {
+                      ...items: Array<number | Model.TModelOrSchema<Schema>>): Collection<Schema> {
             let M = this.model(),
                 end = items.shift(),
                 models = Collection._convertToModels(this, items),
@@ -244,33 +183,30 @@ module Headlight {
 
         public filter(callbackfn: (value: Model.TModelOrSchema<Schema>,
                                    index: number,
-                                   collection: ICollection<Schema>) => boolean,
-                      thisArg?: any): ICollection<Schema> {
+                                   collection: Collection<Schema>) => boolean,
+                      thisArg?: any): Collection<Schema> {
             return new Collection.SimpleCollection<Schema>(
                 Array.prototype.filter.call(this, callbackfn, thisArg), this.model()
             );
         };
 
-
-
-
-        public receive<CallbackParam>(signal: ISignal<CallbackParam>,
+        public receive<CallbackParam>(signal: Signal<CallbackParam>,
                                       callback: Signal.ISignalCallback<CallbackParam>): void;
 
-        public receiveOnce<CallbackParam>(signal: ISignal<CallbackParam>,
+        public receiveOnce<CallbackParam>(signal: Signal<CallbackParam>,
                                           callback: Signal.ISignalCallback<CallbackParam>): void;
 
-        public stopReceiving<CallbackParam>(signalOrCallback?: ISignal<CallbackParam> |
+        public stopReceiving<CallbackParam>(signalOrCallback?: Signal<CallbackParam> |
             Signal.ISignalCallback<CallbackParam>,
                                             callback?: Signal.ISignalCallback<CallbackParam>): void;
 
-        public addSignal(signal: ISignal<any>): void;
+        public addSignal(signal: Signal<any>): void;
 
-        public removeSignal(signal: ISignal<any>): void;
+        public removeSignal(signal: Signal<any>): void;
 
-        public hasSignal(signal: ISignal<any>): boolean;
+        public hasSignal(signal: Signal<any>): boolean;
 
-        public getSignals(): Array<ISignal<any>>;
+        public getSignals(): Array<Signal<any>>;
 
         public resetSignals(): void;
 
@@ -290,7 +226,7 @@ module Headlight {
 
             this.on = {
                 change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
                         this._receiveChangeSignalsState = Collection.RECEIVE_CHANGE_SIGNALS_STATE.INITIALIZING;
                         this._receiveModelsChangeSignals(this);
@@ -300,22 +236,22 @@ module Headlight {
                     this.signals.change.add(callback, receiver);
                 },
                 add: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     this.signals.add.add(callback, receiver);
                 },
                 remove: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     this.signals.remove.add(callback, receiver);
                 },
                 sort: (callback: Signal.ISignalCallback<Collection.ISignalCallbackParam<Schema>>,
-                       receiver?: IReceiver): void => {
+                       receiver?: Receiver): void => {
                     this.signals.sort.add(callback, receiver);
                 }
             };
 
             this.once = {
                 change: (callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<Schema>>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
                         this._receiveChangeSignalsState = Collection.RECEIVE_CHANGE_SIGNALS_STATE.INITIALIZING;
                         this._receiveModelsChangeSignals(this);
@@ -325,15 +261,15 @@ module Headlight {
                     this.signals.change.addOnce(callback, receiver);
                 },
                 add: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
-                      receiver?: IReceiver): void => {
+                      receiver?: Receiver): void => {
                     this.signals.add.addOnce(callback, receiver);
                 },
                 remove: (callback: Signal.ISignalCallback<Collection.ISignalCallbackModelsParam<Schema>>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     this.signals.remove.addOnce(callback, receiver);
                 },
                 sort: (callback: Signal.ISignalCallback<Collection.ISignalCallbackParam<Schema>>,
-                       receiver?: IReceiver): void => {
+                       receiver?: Receiver): void => {
                     this.signals.sort.addOnce(callback, receiver);
                 }
             };
@@ -343,7 +279,7 @@ module Headlight {
             Array.prototype.push.apply(this, Collection._convertToModels(this, items));
         }
 
-        private _dispatchSignal(signal: ISignal<any>, param: Collection.TCollectionSignalParam<Schema>): void {
+        private _dispatchSignal(signal: Signal<any>, param: Collection.TCollectionSignalParam<Schema>): void {
             //todo Раскомментировать после того, как реализуется транзакция для коллекции
 
             //if (this._state !== Collection.STATE.SILENT) {
@@ -351,13 +287,13 @@ module Headlight {
             //}
         }
 
-        private _receiveModelsChangeSignals(models: Array<IModel<Schema>> | ICollection<Schema>): void {
+        private _receiveModelsChangeSignals(models: Array<Model<Schema>> | Collection<Schema>): void {
             if (this._receiveChangeSignalsState === Collection.RECEIVE_CHANGE_SIGNALS_STATE.NO) {
                 return;
             }
 
             for (let i = models.length; i--;) {
-                let model = <IModel<Schema>>models[i];
+                let model = <Model<Schema>>models[i];
 
                 if (!this._modelsIdsHash[model.cid]) {
                     this.receive(model.signals.change, this._onChangeModel);
@@ -373,7 +309,7 @@ module Headlight {
             }
 
             for (let i = models.length; i--;) {
-                let model = <IModel<Schema>>models[i];
+                let model = <Model<Schema>>models[i];
 
                 this.stopReceiving(model.signals.change, this._onChangeModel);
 
@@ -410,9 +346,9 @@ module Headlight {
             }
 
             let Model = collection.model(),
-                models: Array<IModel<any>> = [];
+                models: Array<Model<any>> = [];
 
-            function add(item: IModel<any> | any): void {
+            function add(item: Model<any> | any): void {
                 if (!(item instanceof Model)) {
                     if (item instanceof Headlight.Model) {
                         //todo написать вывод ошибки
@@ -454,16 +390,16 @@ module Headlight {
     Collection.prototype.resetSignals = Receiver.prototype.resetSignals;
 
     export module Collection {
-        export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | ICollection<Schema>;
+        export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | Collection<Schema>;
         export type TCollectionSignalParam<Schema> = ISignalCallbackParam<Schema> | ISignalCallbackModelsParam<Schema> |
             ISignalCallbackChangeParam<Schema>
 
         export interface ISignalCallbackParam<Schema> {
-            collection: ICollection<Schema>;
+            collection: Collection<Schema>;
         }
 
         export interface ISignalCallbackModelsParam<Schema> extends ISignalCallbackParam<Schema> {
-            models: ICollection<Schema>;
+            models: Collection<Schema>;
         }
 
         export interface ISignalCallbackChangeParam<Schema> extends ISignalCallbackModelsParam<Schema> {
@@ -472,21 +408,21 @@ module Headlight {
         }
 
         export interface ISignalHash<Schema> {
-            change: ISignal<ISignalCallbackChangeParam<Schema>>;
-            add: ISignal<ISignalCallbackModelsParam<Schema>>;
-            remove: ISignal<ISignalCallbackModelsParam<Schema>>;
-            sort: ISignal<ISignalCallbackParam<Schema>>;
+            change: Signal<ISignalCallbackChangeParam<Schema>>;
+            add: Signal<ISignalCallbackModelsParam<Schema>>;
+            remove: Signal<ISignalCallbackModelsParam<Schema>>;
+            sort: Signal<ISignalCallbackParam<Schema>>;
         }
 
         export interface ISignalListeners<Schema> {
             change(callback: Signal.ISignalCallback<ISignalCallbackChangeParam<Schema>>,
-                   receiver?: IReceiver): void;
-            add(callback: Signal.ISignalCallback<ISignalCallbackModelsParam<Schema>>, receiver?: IReceiver): void;
-            remove(callback: Signal.ISignalCallback<ISignalCallbackModelsParam<Schema>>, receiver?: IReceiver): void;
-            sort(callback: Signal.ISignalCallback<ISignalCallbackParam<Schema>>, receiver?: IReceiver): void;
+                   receiver?: Receiver): void;
+            add(callback: Signal.ISignalCallback<ISignalCallbackModelsParam<Schema>>, receiver?: Receiver): void;
+            remove(callback: Signal.ISignalCallback<ISignalCallbackModelsParam<Schema>>, receiver?: Receiver): void;
+            sort(callback: Signal.ISignalCallback<ISignalCallbackParam<Schema>>, receiver?: Receiver): void;
         }
 
-        export class SimpleCollection<Schema> extends Collection<Schema> implements ICollection<Schema> {
+        export class SimpleCollection<Schema> extends Collection<Schema> implements Collection<Schema> {
             private _M: typeof Model;
 
             constructor(items: Array<Model.TModelOrSchema<Schema>>, M: typeof Model) {

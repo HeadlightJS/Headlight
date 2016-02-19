@@ -69,7 +69,7 @@ describe('Model.', () => {
 
     }
 
-    class M extends Headlight.Model<{}> implements Headlight.IModel<{}> {
+    class M extends Headlight.Model<{}> implements Headlight.Model<{}> {
         constructor(args: {}) {
             super(args);
         }

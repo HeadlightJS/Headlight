@@ -5,7 +5,7 @@ module common {
     'use strict';
     
     let assert = chai.assert;
-    let receiver: Headlight.IReceiver,
+    let receiver: Headlight.Receiver,
         count: number,
         callback = () => {
             count++;

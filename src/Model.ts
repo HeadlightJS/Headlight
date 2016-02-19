@@ -6,23 +6,7 @@
 module Headlight {
     'use strict';
 
-    interface ITransactionArtifact<Schema> {
-        signal: Model.TSignalOnChange<Schema>;
-        attr: Model.IChangeParam<Schema>;
-    }
-    export interface IModel<Schema> extends IReceiver {
-        on: Model.ISignalListeners<Schema>;
-        once: Model.ISignalListeners<Schema>;
-        off: Model.ISignalListenerStoppers<Schema>;
-
-        PROPS: Schema;
-        signals: Model.ISignalHash<Schema>;
-
-        keys(): Array<string>;
-        toJSON(): Schema;
-    }
-
-    export abstract class Model<Schema> extends Receiver implements IModel<Schema> {
+    export abstract class Model<Schema> extends Receiver {
         public on: Model.ISignalListeners<Schema>;
         public once: Model.ISignalListeners<Schema>;
         public off: Model.ISignalListenerStoppers<Schema>;
@@ -186,19 +170,19 @@ module Headlight {
 
             this.on = {
                 change: (callback: Model.TSignalCallbackOnChange<Schema>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     this.signals.change.add(callback, receiver);
                 }
             };
             this.once = {
                 change: (callback: Model.TSignalCallbackOnChange<Schema>,
-                         receiver?: IReceiver): void => {
+                         receiver?: Receiver): void => {
                     this.signals.change.addOnce(callback, receiver);
                 }
             };
             this.off = {
-                change: (callbackOrReceiver?: Model.TSignalCallbackOnChange<Schema> | IReceiver,
-                         receiver?: IReceiver): void => {
+                change: (callbackOrReceiver?: Model.TSignalCallbackOnChange<Schema> | Receiver,
+                         receiver?: Receiver): void => {
                     this.signals.change.remove(<Model.TSignalCallbackOnChange<Schema>>callbackOrReceiver, receiver);
                 }
             };
@@ -218,19 +202,19 @@ module Headlight {
     }
 
     export module Model {
-        export type TModelOrSchema<Schema> = IModel<Schema> | Schema;
-        export type TSignalOnChange<S> = ISignal<Model.IChangeParam<S>>;
+        export type TModelOrSchema<Schema> = Model<Schema> | Schema;
+        export type TSignalOnChange<S> = Signal<Model.IChangeParam<S>>;
         export type TSignalCallbackOnChange<S> = Signal.ISignalCallback<Model.IChangeParam<S>>;
 
         export interface ISignalListeners<Schema> {
-            change(callback: TSignalCallbackOnChange<Schema>, receiver?: IReceiver): void;
+            change(callback: TSignalCallbackOnChange<Schema>, receiver?: Receiver): void;
         }
 
         export interface ISignalListenerStoppers<Schema> {
             change(): void;
             change(callback: TSignalCallbackOnChange<Schema>): void;
-            change(receiver: IReceiver): void;
-            change(callback: TSignalCallbackOnChange<Schema>, receiver: IReceiver): void;
+            change(receiver: Receiver): void;
+            change(callback: TSignalCallbackOnChange<Schema>, receiver: Receiver): void;
         }
 
 
@@ -239,7 +223,7 @@ module Headlight {
         }
 
         export interface IChangeParam<Schema> {
-            model: IModel<Schema>;
+            model: Model<Schema>;
             values: Schema;
             previous: Schema;
         }
@@ -249,5 +233,10 @@ module Headlight {
             NORMAL,
             IN_TRANSACTION
         }
+    }
+    
+    interface ITransactionArtifact<Schema> {
+        signal: Model.TSignalOnChange<Schema>;
+        attr: Model.IChangeParam<Schema>;
     }
 }

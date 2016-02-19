@@ -2,7 +2,7 @@
 ///<reference path="../../dist/headlight.d.ts"/>
 ///<reference path="./common/receiver.methods.test.ts"/>
 
-import IModel = Headlight.IModel;
+import Model = Headlight.Model;
 describe('Collection.', () => {
     let assert = chai.assert;
 
@@ -14,7 +14,7 @@ describe('Collection.', () => {
         fullname?: string;
     }
 
-    class Person extends Headlight.Model<IPerson> implements Headlight.IModel<IPerson>, IPerson {
+    class Person extends Headlight.Model<IPerson> implements Headlight.Model<IPerson>, IPerson {
         constructor(args: IPerson) {
             super(args);
         }
@@ -46,7 +46,7 @@ describe('Collection.', () => {
         }
     }
 
-    class M extends Headlight.Model<{}> implements Headlight.IModel<{}> {
+    class M extends Headlight.Model<{}> implements Headlight.Model<{}> {
         constructor(args: {}) {
             super(args);
         }
@@ -101,7 +101,7 @@ describe('Collection.', () => {
     });
 
     describe('Array methods', () => {
-        function checkForInstanceOfModel(collection: Headlight.ICollection<any>): void {
+        function checkForInstanceOfModel(collection: Headlight.Collection<any>): void {
             for (let i = 0; i < collection.length; i++) {
                 assert.instanceOf(collection[i], Headlight.Model);
                 assert.instanceOf(collection[i], Person);
@@ -114,7 +114,7 @@ describe('Collection.', () => {
         });
         
         describe('#concat()', () => {
-            function check(fam: Headlight.ICollection<IPerson>, newFamily: Headlight.ICollection<IPerson>): void {
+            function check(fam: Headlight.Collection<IPerson>, newFamily: Headlight.Collection<IPerson>): void {
                 assert.notEqual(fam, newFamily);
 
                 assert.equal(fam.length, 2);
@@ -218,11 +218,11 @@ describe('Collection.', () => {
             it('works', () => {
                 let p = family.pop();
 
-                assert.deepEqual((<Headlight.IModel<IPerson>>p).toJSON(), oleg);
+                assert.deepEqual((<Headlight.Model<IPerson>>p).toJSON(), oleg);
 
                 p = family.pop();
 
-                assert.deepEqual((<Headlight.IModel<IPerson>>p).toJSON(), anna);
+                assert.deepEqual((<Headlight.Model<IPerson>>p).toJSON(), anna);
                 assert.equal(family.length, 0);
 
                 p = family.pop();
@@ -254,7 +254,7 @@ describe('Collection.', () => {
                 let string = '';
 
                 for (let i = 0; i < family.length; i++) {
-                    string += JSON.stringify((<Headlight.IModel<IPerson>>family[i]).toJSON());
+                    string += JSON.stringify((<Headlight.Model<IPerson>>family[i]).toJSON());
 
                     if (i !== family.length - 1) {
                         string += SEPARATOR;
@@ -289,16 +289,16 @@ describe('Collection.', () => {
 
         describe('#shift()', () => {
             it('works', () => {
-                let p = <Headlight.IModel<IPerson>>family.shift();
+                let p = <Headlight.Model<IPerson>>family.shift();
 
                 assert.deepEqual(p.toJSON(), anna);
 
-                p = <Headlight.IModel<IPerson>>family.shift();
+                p = <Headlight.Model<IPerson>>family.shift();
 
                 assert.deepEqual(p.toJSON(), oleg);
                 assert.equal(family.length, 0);
 
-                p = <Headlight.IModel<IPerson>>family.shift();
+                p = <Headlight.Model<IPerson>>family.shift();
 
                 assert.isUndefined(p);
             });
@@ -501,8 +501,8 @@ describe('Collection.', () => {
                 let newValues = {};
                 let newPrevious = {};
 
-                newValues[(<IModel<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                newPrevious[(<IModel<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+                newValues[(<Model<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[(<Model<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
@@ -542,8 +542,8 @@ describe('Collection.', () => {
                 let newValues = {};
                 let newPrevious = {};
 
-                newValues[(<IModel<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                newPrevious[(<IModel<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+                newValues[(<Model<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[(<Model<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
