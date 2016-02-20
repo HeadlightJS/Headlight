@@ -5,25 +5,14 @@ module Headlight {
     'use strict';
 
     export interface IEventStorage<CallbackParam> {
-        common: Array<IEventGroup<CallbackParam>>;
-        [key: string]: Array<IEventGroup<CallbackParam>>;
-    }
-
-    export interface ISignal<CallbackParam> extends IBase {
-        add(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver): void;
-        addOnce(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver): void;
-        remove(): void;
-        remove(receiver: IReceiver): void;
-        remove(callback: Signal.ISignalCallback<CallbackParam>): void;
-        remove(callback: Signal.ISignalCallback<CallbackParam>, receiver: IReceiver): void;
-        dispatch(param?: CallbackParam): void;
-        getReceivers(): Array<IReceiver>;
+        common: Array<EventGroup<CallbackParam>>;
+        [key: string]: Array<EventGroup<CallbackParam>>;
     }
 
     /**
      * Signal is special class for creating events in your app.
      */
-    export class Signal<CallbackParam> extends Base implements ISignal<CallbackParam> {
+    export class Signal<CallbackParam> extends Base  {
         private eventStorage: IEventStorage<CallbackParam>;
 
         constructor() {
@@ -32,7 +21,7 @@ module Headlight {
             this._resetEventStorage();
         }
 
-        public add(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver, once?: boolean): string {
+        public add(callback: Signal.ISignalCallback<CallbackParam>, receiver?: Receiver, once?: boolean): string {
             let eventGroup = Signal.createEventGroup<CallbackParam>(callback, receiver, once);
 
             this._getEventGroups(receiver).push(eventGroup);
@@ -44,12 +33,12 @@ module Headlight {
             return eventGroup.cid;
         }
 
-        public addOnce(callback: Signal.ISignalCallback<CallbackParam>, receiver?: IReceiver): string {
+        public addOnce(callback: Signal.ISignalCallback<CallbackParam>, receiver?: Receiver): string {
             return this.add(callback, receiver, true);
         }
 
-        public remove(callbackOrReceiver?: Signal.ISignalCallback<CallbackParam> | IReceiver,
-                      receiver?: IReceiver): void {
+        public remove(callbackOrReceiver?: Signal.ISignalCallback<CallbackParam> | Receiver,
+                      receiver?: Receiver): void {
 
             if (callbackOrReceiver === undefined && receiver === undefined) {
                 this._resetEventStorage();
@@ -59,7 +48,7 @@ module Headlight {
 
                     for (let i = cids.length; i--; ) {
                         let groups = this._getEventGroups(cids[i]),
-                            r: IReceiver;
+                            r: Receiver;
 
                         if (groups.length) {
                             r = groups[0].receiver;
@@ -71,7 +60,7 @@ module Headlight {
                         }
                     }
                 } else {
-                    let r = <IReceiver>callbackOrReceiver;
+                    let r = <Receiver>callbackOrReceiver;
 
                     delete this.eventStorage[r.cid];
 
@@ -103,8 +92,8 @@ module Headlight {
             }
         }
 
-        public getReceivers(): Array<IReceiver> {
-            let receivers: Array<IReceiver> = [];
+        public getReceivers(): Array<Receiver> {
+            let receivers: Array<Receiver> = [];
             let cids = Object.keys(this.eventStorage);
 
             for (let i = cids.length; i--; ) {
@@ -122,7 +111,7 @@ module Headlight {
             return 's';
         }
 
-        private _resetEventStorage(): ISignal<CallbackParam> {
+        private _resetEventStorage(): Signal<CallbackParam> {
             if (this.eventStorage) {
                 let cids = Object.keys(this.eventStorage);
 
@@ -142,14 +131,14 @@ module Headlight {
             return this;
         }
 
-        private _getEventGroups(receiverOrCid?: IReceiver | string): Array<IEventGroup<CallbackParam>> {
+        private _getEventGroups(receiverOrCid?: Receiver | string): Array<EventGroup<CallbackParam>> {
             let cid = 'common';
 
             if (receiverOrCid !== undefined) {
                 if (typeof receiverOrCid === BASE_TYPES.STRING) {
                     cid = <string>receiverOrCid;
                 } else {
-                    cid = (<IReceiver>receiverOrCid).cid;
+                    cid = (<Receiver>receiverOrCid).cid;
                 }
             }
 
@@ -161,9 +150,9 @@ module Headlight {
         }
 
         private static createEventGroup<CallbackParam>(callback: Signal.ISignalCallback<CallbackParam>,
-                                        receiver?: IReceiver,
-                                        once?: boolean): IEventGroup<CallbackParam> {
-            let res: IEventGroup<CallbackParam> = new EventGroup(callback, once);
+                                        receiver?: Receiver,
+                                        once?: boolean): EventGroup<CallbackParam> {
+            let res: EventGroup<CallbackParam> = new EventGroup(callback, once);
 
             if (receiver) {
                 res.receiver = receiver;
@@ -172,14 +161,16 @@ module Headlight {
             return res;
         }
 
-        private static removeCallbackFromEventGroups<CallbackParam>(eventGroups: Array<IEventGroup<CallbackParam>>,
+        private static removeCallbackFromEventGroups<CallbackParam>(eventGroups: Array<EventGroup<CallbackParam>>,
                                                      callback: Signal.ISignalCallback<CallbackParam>): boolean {
             let removedCount = 0;
             let length = eventGroups.length;
 
             for (let i = length; i--; ) {
-                if (eventGroups[i].callback === callback) {
-                    eventGroups.splice(i);
+                let c = eventGroups[i].callback;
+
+                if (c === callback || c.originalCallback === callback) {
+                    eventGroups.splice(i, 1);
 
                     removedCount++;
                 }
@@ -193,10 +184,11 @@ module Headlight {
         export interface ISignalCallback<CallbackParam> extends Function {
             (param?: CallbackParam): void;
             once?: boolean;
+            originalCallback?: ISignalCallback<CallbackParam>;
         }
 
         export interface ISignalCache {
-            [signalCid: string]: ISignal<any>;
+            [signalCid: string]: Signal<any>;
         }
     }
 }

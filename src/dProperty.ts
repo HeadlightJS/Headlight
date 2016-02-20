@@ -7,35 +7,37 @@ module Headlight {
                                          key: string,
                                          descriptor?: TypedPropertyDescriptor<any>): any {
 
-            function dispatchSignals(prop: any, newVal: any, prev: any): void {
+            function dispatchSignals(prop: string, newVal: any, prev: any): void {
                 if (newVal !== prev) {
-                    Model.dispatch(this, prop, {
-                        model: this,
-                        value: newVal,
-                        previous: prev
-                    });
-
-                    let deps = this._depsMap[prop],
+                    let values = {},
+                        previous = {},
                         d: string,
                         prevValue: any,
-                        currValue: any;
+                        currValue: any,
+                        self = this;
 
-                    for (let j = deps.length; j--;) {
-                        d = deps[j];
-                        prevValue = this._properties[d];
-                        currValue = this[d];
+                    values[prop] = newVal;
+                    previous[prop] = prev;
 
-                        if (currValue !== prevValue) {
-                            Model.dispatch(this, d, {
-                                model: this,
-                                value: currValue,
-                                previous: prevValue
-                            });
+                    (function iterateThroughDeps(deps:  Array<string>): void {
+                        for (let j = deps.length; j--;) {
+                            d = deps[j];
+                            prevValue = self._properties[d];
+                            currValue = self[d];
+
+                            if (currValue !== prevValue) {
+                                values[d] = currValue;
+                                previous[d] = prevValue;
+
+                                iterateThroughDeps(self._depsMap[d]);
+                            }
                         }
-                    }
+                    })(this._depsMap[prop]);
 
                     Model.dispatch(this, 'change', {
-                        model: this
+                        model: this,
+                        values: values,
+                        previous: previous
                     });
                 }
             }
@@ -69,22 +71,12 @@ module Headlight {
                             Array.isArray(ConstructorOrDeps) ? ConstructorOrDeps : ConstructorOrDeps.call(target);
 
                         for (let i = deps.length; i--;) {
-                            let d = target._depsMap[deps[i]];
-
-                            if (d && d.indexOf(k) === -1) {
-                                d.push(k);
-                            }
+                            target._depsMap[deps[i]].push(k);
                         }
                     }
 
                     let originalGet = descriptor.get,
                         originalSet = descriptor.set;
-
-                    if (!originalGet) {
-                        //TODO native template 13.01.16 11:08
-                        throw Error('`get` accessor for property `' + k +
-                            '` of class `' + target.name + '` should be specified.');
-                    }
 
                     descriptor.get = function (): any {
                         return this._properties[k] = originalGet.call(this);

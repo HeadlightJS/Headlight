@@ -3,7 +3,7 @@
 
 describe('Signal.', () => {
     let assert = chai.assert;
-    let signal: Headlight.ISignal<string>;
+    let signal: Headlight.Signal<string>;
 
     class Handler {
         public count: number = 0;
@@ -82,21 +82,27 @@ describe('Signal.', () => {
     it('Remove callback function by receiver.', () => {
         let h = new Handler(),
             h2 = new Handler(),
+            h3 = new Handler(),
             r = new Headlight.Receiver();
 
         signal.add(Handler.gc(h.callback, h), r);
+        signal.add(Handler.gc(h2.callback, h2), r);
 
         assert.equal(signal.getReceivers().length, 1);
 
         signal.add(Handler.gc(h2.callback, h2));
         signal.dispatch();
+
+        signal.add(Handler.gc(h3.callback, h3), r);
+
         signal.remove(r);
         signal.dispatch();
 
         assert.equal(signal.getReceivers().length, 0);
 
         assert.equal(h.count, 1, 'Callback function should be called 1 time.');
-        assert.equal(h2.count, 2, 'Callback2 function should be called 2 time.');
+        assert.equal(h2.count, 3, 'Callback2 function should be called 2 time.');
+        assert.equal(h3.count, 0, 'Callback0 function should be called 0 time.');
     });
 
     it('Remove very callback function of very receiver.', () => {
@@ -111,14 +117,21 @@ describe('Signal.', () => {
             r = new Headlight.Receiver(),
             r2 = new Headlight.Receiver();
 
-        signal.add(callback, r);
         signal.add(callback2, r);
+        signal.add(callback, r);
+        signal.add(callback2);
         signal.add(callback3);
         signal.add(callback4, r2);
 
         assert.equal(signal.getReceivers().length, 2);
 
         signal.dispatch();
+
+        assert.equal(h.count, 1, 'Callback function should be called 1 time.');
+        assert.equal(h2.count, 2, 'Callback2 function should be called 2 time.');
+        assert.equal(h3.count, 1, 'Callback3 function should be called 1 time.');
+        assert.equal(h4.count, 1, 'Callback4 function should be called 1 time.');
+
         signal.remove(callback2, r);
         signal.remove(callback4);
         signal.dispatch();
@@ -126,8 +139,9 @@ describe('Signal.', () => {
         assert.equal(signal.getReceivers().length, 1);
 
         assert.equal(h.count, 2, 'Callback function should be called 2 time.');
-        assert.equal(h2.count, 1, 'Callback2 function should be called 1 time.');
+        assert.equal(h2.count, 3, 'Callback2 function should be called 1 time.');
         assert.equal(h3.count, 2, 'Callback3 function should be called 2 time.');
+
         assert.equal(h4.count, 1, 'Callback4 function should be called 1 time.');
     });
 
