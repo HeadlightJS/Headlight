@@ -426,7 +426,11 @@ module Headlight {
             private _M: typeof Model;
 
             constructor(items: Array<Model.TModelOrSchema<Schema>>, M: typeof Model) {
-                super(this._initProps(items, M));
+                (() => {
+                    this._initProps(items, M);
+                })();
+                
+                super(items);
             }
 
             protected model(): typeof Model {

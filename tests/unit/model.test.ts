@@ -40,7 +40,7 @@ describe('Model.', () => {
         @Headlight.dProperty(Person)
         son: Person;
 
-        @Headlight.dProperty((): Array<string> => {
+        @Headlight.dProperty(function (): Array<string> {
             return [
                 this.PROPS.name,
                 this.PROPS.surname

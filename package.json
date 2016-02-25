@@ -1,5 +1,5 @@
 {
-  "name": "Headlight",
+  "name": "headlight",
   "version": "0.0.1",
   "description": "",
   "main": "",
@@ -16,7 +16,7 @@
     "phantomjs": "^1.9.18",
     "phantomjs-polyfill": "0.0.1",
     "tslint": "^3.4.0",
-    "typescript": "^1.7.5",
+    "typescript": "^1.8.2",
     "uglify-js": "^2.6.1"
   },
   "scripts": {

@@ -28,7 +28,7 @@ describe('Collection.', () => {
         @Headlight.dProperty
         age: number;
 
-        @Headlight.dProperty((): Array<string> => {
+        @Headlight.dProperty(function (): Array<string> {
             return [
                 this.PROPS.name,
                 this.PROPS.surname
