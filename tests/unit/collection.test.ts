@@ -2,11 +2,11 @@
 ///<reference path="../../dist/headlight.d.ts"/>
 ///<reference path="./common/receiver.methods.test.ts"/>
 
-import Model = Headlight.Model;
 describe('Collection.', () => {
     let assert = chai.assert;
 
     interface IPerson {
+        id?: number;
         name: string;
         surname: string;
         age: number;
@@ -14,7 +14,9 @@ describe('Collection.', () => {
         fullname?: string;
     }
 
-    class Person extends Headlight.Model<IPerson> implements Headlight.Model<IPerson>, IPerson {
+    class Person extends Headlight.Model<IPerson> implements IPerson {
+        public idAttribute: string = 'name';
+        
         constructor(args: IPerson) {
             super(args);
         }
@@ -52,7 +54,7 @@ describe('Collection.', () => {
         }
     }
 
-    class Family extends Headlight.Collection<IPerson> {
+    class Family extends Headlight.Collection<Person> {
         protected model(): typeof Person {
             return Person;
         }
@@ -65,6 +67,7 @@ describe('Collection.', () => {
             age: 38,
             fullname: 'Anna Ivanova'
         },
+        annaModel: Person,
         oleg: IPerson = {
             name: 'Oleg',
             surname: 'Ivanov',
@@ -85,7 +88,8 @@ describe('Collection.', () => {
         };
 
     beforeEach(() => {
-        family = new Family([anna, oleg]);
+        annaModel = new Person(anna);
+        family = new Family([annaModel, oleg]);
     });
 
     it('Creates properly.', () => {
@@ -114,7 +118,7 @@ describe('Collection.', () => {
         });
         
         describe('#concat()', () => {
-            function check(fam: Headlight.Collection<IPerson>, newFamily: Headlight.Collection<IPerson>): void {
+            function check(fam: Headlight.Collection<Person>, newFamily: Headlight.Collection<Person>): void {
                 assert.notEqual(fam, newFamily);
 
                 assert.equal(fam.length, 2);
@@ -478,6 +482,20 @@ describe('Collection.', () => {
                 assert.deepEqual(col.toJSON(), [anna]);
             });
         });
+        
+        describe('#get()', () => {
+            it('gets by id', () => {
+                assert.equal(family.get('Anna'), annaModel);   
+            });
+            
+            it('gets by cid', () => {
+                assert.equal(family.get(annaModel.cid), annaModel);   
+            });
+            
+            it('returns undefined if model was not found', () => {
+                assert.isUndefined(family.get('dssfdf'));   
+            });    
+        });
 
     });
 
@@ -496,13 +514,13 @@ describe('Collection.', () => {
                     return;
                 });
 
-                (<IPerson>family[0]).name = 'olo';
+                family[0].name = 'olo';
 
                 let newValues = {};
                 let newPrevious = {};
 
-                newValues[(<Model<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                newPrevious[(<Model<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+                newValues[family[0].cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[family[0].cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
@@ -512,7 +530,7 @@ describe('Collection.', () => {
 
                 evtObject = undefined;
 
-                (<IPerson>family[0]).name = 'aza';
+                family[0].name = 'aza';
 
                 assert.isObject(evtObject);
 
@@ -521,7 +539,7 @@ describe('Collection.', () => {
 
                 family.push(family[0]);
 
-                (<IPerson>family[0]).name = 'olo';
+                family[0].name = 'olo';
 
                 assert.equal(count, 1, 'Dispatching change signal should be made only once.');
             });
@@ -537,13 +555,13 @@ describe('Collection.', () => {
                     return;
                 });
 
-                (<IPerson>family[0]).name = 'olo';
+                family[0].name = 'olo';
 
                 let newValues = {};
                 let newPrevious = {};
 
-                newValues[(<Model<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                newPrevious[(<Model<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+                newValues[family[0].cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[family[0].cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
@@ -577,6 +595,81 @@ describe('Collection.', () => {
                 m.name = 'aza';
 
                 assert.isUndefined(evtObject);
+            });
+            
+            it ('Dispatches filtered signals.', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                    evtObject2: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                    count = 0;
+
+                family.on.change(Headlight.Collection.filter(
+                    'name',
+                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                        evtObject = param;
+                        count++;
+                    }
+                ));
+                
+                family.on.change(Headlight.Collection.filter(
+                    ['surname'],
+                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                        evtObject2 = param;
+                    }
+                ));
+
+                family[0].name = 'olo';
+                family[0].surname = 'aaa';
+
+                let newValues = {};
+                let newPrevious = {};
+
+                newValues[family[0].cid] = {name: 'olo'};
+                newPrevious[family[0].cid] = {name: 'Anna'};
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+                assert.instanceOf(evtObject.models, Headlight.Collection);
+                assert.deepEqual(evtObject.values, newValues);
+                assert.deepEqual(evtObject.previous, newPrevious);
+                assert.equal(count, 1);
+                assert.isObject(evtObject2);
+                
+                evtObject = undefined;
+
+                family[0].name = 'aza';
+
+                assert.isObject(evtObject);
+            });
+            
+            it ('Dispatches filtered signals once.', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                    count = 0;
+
+                family.once.change(Headlight.Collection.filter(
+                    'name',
+                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                        evtObject = param;
+                        count++;
+                    }
+                ));
+
+                family[0].name = 'olo';
+
+                let newValues = {};
+                let newPrevious = {};
+
+                newValues[family[0].cid] = {name: 'olo'};
+                newPrevious[family[0].cid] = {name: 'Anna'};
+
+                assert.isObject(evtObject);
+                assert.equal(count, 1);
+                
+                evtObject = undefined;
+
+                family[0].name = 'aza';
+
+                assert.isUndefined(evtObject);
+                assert.equal(count, 1);
             });
         });
 
