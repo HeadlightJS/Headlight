@@ -150,13 +150,14 @@ module Headlight {
                 models = Collection._convertToModels(this, items),
                 removed = Array.prototype.splice.apply(this,
                     [start, end].concat(models)
-                );
+                ),
+                removedCollection = new Collection.SimpleCollection<Model>(removed, M);
 
             this._stopReceivingModelsChangeSignals(removed);
 
             this._dispatchSignal(this.signals.remove, {
                 collection: this,
-                models: removed
+                models: removedCollection
             });
 
             this._receiveModelsChangeSignals(models);
@@ -166,7 +167,7 @@ module Headlight {
                 models: new Collection.SimpleCollection<Model>(models, M)
             });
 
-            return new Collection.SimpleCollection<Model>(removed, M);
+            return removedCollection;
         };
 
         public unshift(...items: Array<Model.TModelOrSchema<typeof Model.prototype.PROPS>>): number {
@@ -195,8 +196,8 @@ module Headlight {
         
         public get(idOrCid: string): Model | void {
             for (let model of this) {
-                if (model.id === idOrCid || model.cid === idOrCid) {
-                    return <Model>model;
+                if (model[model.idAttribute] === idOrCid || model.cid === idOrCid) {
+                    return model;
                 }
             }
         }
@@ -238,21 +239,22 @@ module Headlight {
                         for (let i = names.length; i--;) {
                             n = names[i];
                             
-                            for (let modelCid in param.values) {
-                                if (param.values.hasOwnProperty(modelCid)) {
-                                    let modelValues = param.values[modelCid];
+                            let modelCids = Object.keys(param.values);
+                            
+                            for (let j = modelCids.length; j--;) {
+                                let modelCid = modelCids[j],
+                                    modelValues = param.values[modelCid];
                                     
-                                    values[modelCid] = <S>{};
-                                    previous[modelCid] = <S>{};
+                                values[modelCid] = <S>{};
+                                previous[modelCid] = <S>{};
+                                
+                                if (n in modelValues) {
+                                    models.push(<Headlight.Model<S>>param.collection.get(modelCid));
                                     
-                                    if (n in modelValues) {
-                                        models.push(<Headlight.Model<S>>param.collection.get(modelCid));
-                                        
-                                        values[modelCid][n] = modelValues[n];
-                                        previous[modelCid][n] = param.previous[modelCid][n];
+                                    values[modelCid][n] = modelValues[n];
+                                    previous[modelCid][n] = param.previous[modelCid][n];
 
-                                        flag = true;
-                                    }
+                                    flag = true;
                                 }
                             }
                         }    

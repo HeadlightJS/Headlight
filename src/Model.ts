@@ -7,7 +7,7 @@ module Headlight {
     'use strict';
 
     export abstract class Model<Schema> extends Receiver {
-        public id: string;
+        public idAttribute: string;
         
         public on: Model.ISignalListeners<Schema>;
         public once: Model.ISignalListeners<Schema>;
@@ -32,9 +32,11 @@ module Headlight {
             this._createSignals();
             this._initProperties(args);
             this._enableSignals();
+            
+            this.idAttribute = this.idAttribute || 'id';
         }
 
-        public toJSON(): Schema {
+        public toJSON<T>(): T | Schema {
             let o: Schema = <Schema>{},
                 props: Array<string> = Model.keys(this),
                 prop: string,
