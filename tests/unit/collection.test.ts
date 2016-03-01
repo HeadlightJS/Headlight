@@ -52,7 +52,7 @@ describe('Collection.', () => {
         }
     }
 
-    class Family extends Headlight.Collection<IPerson> {
+    class Family extends Headlight.Collection<Person> {
         protected model(): typeof Person {
             return Person;
         }
@@ -114,7 +114,7 @@ describe('Collection.', () => {
         });
         
         describe('#concat()', () => {
-            function check(fam: Headlight.Collection<IPerson>, newFamily: Headlight.Collection<IPerson>): void {
+            function check(fam: Headlight.Collection<Person>, newFamily: Headlight.Collection<Person>): void {
                 assert.notEqual(fam, newFamily);
 
                 assert.equal(fam.length, 2);
