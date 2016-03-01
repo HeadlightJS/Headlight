@@ -7,6 +7,8 @@ module Headlight {
     'use strict';
 
     export abstract class Model<Schema> extends Receiver {
+        public id: string;
+        
         public on: Model.ISignalListeners<Schema>;
         public once: Model.ISignalListeners<Schema>;
         public off: Model.ISignalListenerStoppers<Schema>;

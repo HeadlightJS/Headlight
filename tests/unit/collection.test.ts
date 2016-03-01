@@ -578,6 +578,51 @@ describe('Collection.', () => {
 
                 assert.isUndefined(evtObject);
             });
+            
+            it ('Dispatches filtered signals.', () => {
+                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                    count = 0;
+
+                family.on.change(Headlight.Collection.filter(
+                    'name',
+                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                        
+                    }
+                ));
+
+                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                    return;
+                });
+
+                (<IPerson>family[0]).name = 'olo';
+
+                let newValues = {};
+                let newPrevious = {};
+
+                newValues[(<Model<IPerson>>family[0]).cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                newPrevious[(<Model<IPerson>>family[0]).cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+
+                assert.isObject(evtObject);
+                assert.equal(evtObject.collection, family);
+                assert.instanceOf(evtObject.models, Headlight.Collection);
+                assert.deepEqual(evtObject.values, newValues);
+                assert.deepEqual(evtObject.previous, newPrevious);
+
+                evtObject = undefined;
+
+                (<IPerson>family[0]).name = 'aza';
+
+                assert.isObject(evtObject);
+
+                evtObject = undefined;
+                count = 0;
+
+                family.push(family[0]);
+
+                (<IPerson>family[0]).name = 'olo';
+
+                assert.equal(count, 1, 'Dispatching change signal should be made only once.');
+            });
         });
 
         describe('add', () => {

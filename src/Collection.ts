@@ -189,6 +189,14 @@ module Headlight {
                 Array.prototype.filter.call(this, callbackfn, thisArg), this.model()
             );
         };
+        
+        public get(idOrCid: string): Model<Schema> | void {
+            for (let model of this) {
+                if ((<Model<Schema>>model).id === idOrCid || (<Model<Schema>>model).cid === idOrCid) {
+                    return <Model<Schema>>model;
+                }
+            }
+        }
 
         public receive<CallbackParam>(signal: Signal<CallbackParam>,
                                       callback: Signal.ISignalCallback<CallbackParam>): void;
@@ -209,6 +217,57 @@ module Headlight {
         public getSignals(): Array<Signal<any>>;
 
         public resetSignals(): void;
+        
+        public static filter<S>(propName: string | Array<string>,
+                             callback: Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<S>>):
+            Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<S>> {
+                
+            let names = Array.isArray(propName) ? <Array<string>>propName : [<string>propName],
+                fn = <Signal.ISignalCallback<Collection.ISignalCallbackChangeParam<S>>>
+                    ((param: Collection.ISignalCallbackChangeParam<S>) => {
+                        
+                        let values = <IHash<S>>{},
+                            previous = <IHash<S>>{},
+                            models = new Collection.SimpleCollection<S>([], param.collection.model()),
+                            n: string,
+                            flag = false;
+                            
+                        for (let i = names.length; i--;) {
+                            n = names[i];
+                            
+                            for (let modelCid in param.values) {
+                                if (param.values.hasOwnProperty(modelCid)) {
+                                    let modelValues = param.values[modelCid];
+                                    
+                                    values[modelCid] = <S>{};
+                                    previous[modelCid] = <S>{};
+                                    
+                                    if (n in modelValues) {
+                                        models.push(<Model<S>>param.collection.get(modelCid));
+                                        
+                                        values[modelCid][n] = modelValues[n];
+                                        previous[modelCid][n] = param.previous[modelCid][n];
+
+                                        flag = true;
+                                    }
+                                }
+                            }
+                        }    
+                            
+                        if (flag) {
+                            callback({
+                                collection: param.collection,
+                                models: models,
+                                values: values,
+                                previous: previous
+                            });
+                        }    
+                    });
+
+            fn.originalCallback = callback;
+
+            return fn;
+        }
 
         protected cidPrefix(): string {
             return 'c';
