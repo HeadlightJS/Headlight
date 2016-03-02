@@ -18,6 +18,8 @@ module.exports = function(config: any): void {
     files: [
       './node_modules/phantomjs-polyfill/bind-polyfill.js',
       'dist/headlight.processed.js',
+      'tests/unit/ClassList.js',
+      'tests/unit/FakeElement.js',
       'tests/unit/*.test.js'
     ],
 

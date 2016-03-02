@@ -1,7 +1,9 @@
+/// <reference path='FakeElement.ts' />
 /// <reference path="../../typings/tsd.d.ts" />
 ///<reference path="../../dist/headlight.d.ts"/>
 
 describe('View.', () => {
+    let FakeElement: typeof fakeElement.FakeElement = fakeElement.FakeElement;
     let assert = chai.assert;
 
     it('create', () => {
@@ -120,13 +122,13 @@ describe('View.', () => {
     it('events', (): void => {
 
         let className = 'test';
-        let el = document.createElement('DIV');
-        let wrap = document.createElement('DIV');
-        let child = document.createElement('span');
-        let clickTarget = document.createElement('I');
+        let el = new FakeElement('DIV');
+        let wrap = new FakeElement('DIV');
+        let child = new FakeElement('span');
+        let clickTarget = new FakeElement('I');
         child.appendChild(wrap);
         child.appendChild((() => {
-            let elem = document.createElement('span');
+            let elem = new FakeElement('span');
             elem.classList.add(className);
             return elem;
         })());
@@ -167,7 +169,7 @@ describe('View.', () => {
 
             private _onClickChild(localEvent: MouseEvent, element: HTMLElement): void {
                 if (localEvent && localEvent.type === 'click' &&
-                    element && element === child) {
+                    element && element === <any>child) {
                     this.clickedChild = true;
                 }
             }
@@ -178,7 +180,7 @@ describe('View.', () => {
         el.appendChild(child);
 
         let view = new MyView({
-            element: el
+            element: <any>el
         });
 
         clickTarget.dispatchEvent(event);
@@ -388,45 +390,7 @@ describe('View.', () => {
 
         }
 
-        class FakeElement {
-
-            public eventsData: {[event: string]: Array<Function>} = {};
-            public removed: boolean = false;
-            public childerns: Array<any> = [];
-
-            public get parentNode(): {removeChild: Function, appendChild: Function} {
-                return {
-                    removeChild: (): void => {
-                        this.removed = true;
-                    },
-                    appendChild: (element: any): void => {
-                        this.childerns.push(element);
-                    }
-                };
-            }
-
-            public addEventListener(eventName: string, handler: Function): void {
-
-                if (!this.eventsData[eventName]) {
-                    this.eventsData[eventName] = [];
-                }
-
-                this.eventsData[eventName].push(handler);
-            }
-
-            public removeEventListener(eventName: string, handler: Function): void {
-
-                if (!this.eventsData[eventName]) {
-                    return null;
-                }
-
-                this.eventsData[eventName] = this.eventsData[eventName]
-                    .filter((myHandler: Function): boolean => myHandler !== handler);
-            }
-
-        }
-
-        let element: FakeElement = new FakeElement();
+        let element = new FakeElement('DIV');
 
         it('remove stop handlers', (): void => {
 
@@ -443,7 +407,7 @@ describe('View.', () => {
 
             assert.equal(element.eventsData[events.click].length, 0);
             assert.equal(element.eventsData[events.mousedown].length, 0);
-            assert.equal(element.removed, true);
+            assert.equal(element.parentNode, null);
 
         });
 
