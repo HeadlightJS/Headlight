@@ -41,7 +41,7 @@ module fakeElement {
         }
 
         private static _splitClasses(classes: string): Array<string> {
-            return classes.split(/\s+/);
+            return classes.split(/\s+/).filter((name: string) => !!name);
         }
 
     }

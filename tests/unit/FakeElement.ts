@@ -15,6 +15,10 @@ module fakeElement {
             this.tagName = tagName.toUpperCase();
         }
 
+        public querySelector(selector: string): FakeElement {
+            return this.querySelectorAll(selector)[0] || null;
+        }
+
         public querySelectorAll(selector: string): Array<FakeElement> {
             let selectors = FakeElement._parseSelector(selector);
             return this._find(selectors);
@@ -25,6 +29,7 @@ module fakeElement {
             if (nodeParent) {
                 nodeParent.removeChild(node);
             }
+            node.parentNode = this;
             this.childs.push(node);
         }
 
@@ -32,6 +37,7 @@ module fakeElement {
             let index = this.childs.indexOf(node);
             if (index !== -1) {
                 this.childs.splice(index, 1);
+                node.parentNode = null;
             }
         }
 
@@ -81,6 +87,17 @@ module fakeElement {
             find(this);
             return result;
         }
+
+        /* tslint:disable **/
+        public static createEvent(): any {
+            return {
+                target: null,
+                initEvent: function (type: string) {
+                    this.type = type;
+                }
+            };
+        }
+        /* tslint:enable **/
 
         private static _isTrueSelectors(selectors: Array<ISelector>, element: FakeElement): boolean {
             return selectors.every((selector: ISelector) => {

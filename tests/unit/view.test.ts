@@ -126,17 +126,25 @@ describe('View.', () => {
         let wrap = new FakeElement('DIV');
         let child = new FakeElement('span');
         let clickTarget = new FakeElement('I');
-        child.appendChild(wrap);
+        wrap.appendChild(child);
         child.appendChild((() => {
             let elem = new FakeElement('span');
             elem.classList.add(className);
             return elem;
         })());
-        wrap.appendChild(clickTarget);
+        wrap.appendChild((() => {
+            let elem = new FakeElement('img');
+            elem.classList.add(className);
+            return elem;
+        })());
+        child.classList.add(className);
+        child.appendChild(clickTarget);
+        el.appendChild(wrap);
 
-        let event = document.createEvent('Event');
-        event.initEvent('click', true, true);
-
+        let event: any = {
+            type: 'click',
+            target: null
+        };
 
         class MyView extends Headlight.View {
 
@@ -176,14 +184,12 @@ describe('View.', () => {
 
         }
 
-        child.classList.add(className);
-        el.appendChild(child);
-
         let view = new MyView({
             element: <any>el
         });
 
         clickTarget.dispatchEvent(event);
+        wrap.querySelector('img').dispatchEvent(event);
 
         assert.equal(view.clickedChild, true);
         assert.equal(view.rootClicked, true);
@@ -233,6 +239,10 @@ describe('View.', () => {
                 this.off('mousedown', this._onMouseDown);
             }
 
+            public offCustom(): void {
+                this.off('some');
+            }
+
             private _onClickRoot(): void {
                 this.clickRootCount++;
             }
@@ -247,7 +257,7 @@ describe('View.', () => {
 
         }
 
-        let elements: HTMLElement;
+        let elements: fakeElement.FakeElement;
         let events = {
             click: null,
             mousedown: null
@@ -255,17 +265,17 @@ describe('View.', () => {
 
         let beforeEach = () => {
 
-            elements = document.createElement('DIV');
-            let child = document.createElement('span');
-            let clickTarget = document.createElement('I');
+            elements = new FakeElement('DIV');
+            let child = new FakeElement('span');
+            let clickTarget = new FakeElement('I');
             child.appendChild(clickTarget);
             elements.appendChild(child);
             child.classList.add(className);
 
-            events.click = document.createEvent('Event');
+            events.click = FakeElement.createEvent();
             events.click.initEvent('click', true, true);
 
-            events.mousedown = document.createEvent('Event');
+            events.mousedown = FakeElement.createEvent();
             events.mousedown.initEvent('mousedown', true, true);
 
         };
@@ -274,7 +284,7 @@ describe('View.', () => {
 
             beforeEach();
             let view = new MyView({
-                element: elements
+                element: <any>elements
             });
 
             elements.querySelector('i').dispatchEvent(events.click);
@@ -295,7 +305,7 @@ describe('View.', () => {
 
             beforeEach();
             let view = new MyView({
-                element: elements
+                element: <any>elements
             });
 
             elements.querySelector('i').dispatchEvent(events.click);
@@ -316,7 +326,7 @@ describe('View.', () => {
 
             beforeEach();
             let view = new MyView({
-                element: elements
+                element: <any>elements
             });
 
             elements.querySelector('i').dispatchEvent(events.click);
@@ -329,6 +339,24 @@ describe('View.', () => {
 
             assert.equal(view.clickChildCount, 1);
             assert.equal(view.clickRootCount, 2);
+            assert.equal(view.mouseDownCount, 1);
+
+        });
+
+        it('off some event', () => {
+
+            beforeEach();
+            let view = new MyView({
+                element: <any>elements
+            });
+
+            view.offCustom();
+
+            elements.querySelector('i').dispatchEvent(events.click);
+            elements.querySelector('i').dispatchEvent(events.mousedown);
+
+            assert.equal(view.clickChildCount, 1);
+            assert.equal(view.clickRootCount, 1);
             assert.equal(view.mouseDownCount, 1);
 
         });
@@ -390,9 +418,31 @@ describe('View.', () => {
 
         }
 
+        let elParent = new FakeElement('DIV');
         let element = new FakeElement('DIV');
 
         it('remove stop handlers', (): void => {
+
+            let view = new MyView({
+                element: <any>element
+            });
+
+            view.remove();
+
+            let events = {
+                'click': 'click',
+                'mousedown': 'mousedown'
+            };
+
+            assert.equal(element.eventsData[events.click].length, 0);
+            assert.equal(element.eventsData[events.mousedown].length, 0);
+            assert.equal(element.parentNode, null);
+
+        });
+
+        it('remove with parent', () => {
+
+            elParent.appendChild(element);
 
             let view = new MyView({
                 element: <any>element
