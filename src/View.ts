@@ -3,43 +3,39 @@
 module Headlight {
     'use strict';
 
-    export class View extends Base {
+    export class View extends Receiver {
 
-        public el: HTMLElement;
+        protected el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
 
         constructor(options: View.IOptions) {
             super();
             this.__createElement();
-            this.initProps(options);
             this.__initEvents();
-        }
-
-        protected initProps(options: View.IOptions): View {
-            return this;
         }
 
         public cidPrefix(): string {
             return 'v';
         }
 
-        public tagName(): string {
-            return 'DIV';
-        }
-
-        public className(): string {
-            return '';
-        }
-
-        public id(): string {
-            return '';
-        }
-
         public remove(): void {
+            this.stopReceiving();
             this.off();
             if (this.el.parentNode) {
                 this.el.parentNode.removeChild(this.el);
             }
+        }
+
+        protected tagName(): string {
+            return 'DIV';
+        }
+
+        protected className(): string {
+            return '';
+        }
+
+        protected id(): string {
+            return '';
         }
 
         protected events(): Array<View.IEventHash> {
@@ -51,13 +47,9 @@ module Headlight {
         }
 
         protected setElement(element: HTMLElement): View {
-            //let parent = this.el.parentNode;
             let oldEl = this.el;
             this.el = element;
             this.__resetHandlers(oldEl);
-            //if (parent) {
-            //    parent.appendChild(this.el);
-            //}
             return this;
         }
 

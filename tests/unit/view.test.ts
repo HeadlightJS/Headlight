@@ -15,6 +15,8 @@ describe('View.', () => {
 
         class MyView extends Headlight.View {
 
+            public el: HTMLElement;
+
             public tagName(): string {
                 return 'SPAN';
             }
@@ -30,6 +32,8 @@ describe('View.', () => {
 
         class MyView extends Headlight.View {
 
+            public el: HTMLElement;
+
             public className(): string {
                 return 'test-class';
             }
@@ -44,6 +48,8 @@ describe('View.', () => {
     it('id', () => {
 
         class MyView extends Headlight.View {
+
+            public el: HTMLElement;
 
             public id(): string {
                 return 'test-id';
@@ -74,6 +80,8 @@ describe('View.', () => {
     it('setElement', () => {
 
         class MyView extends Headlight.View {
+
+            public el: HTMLElement;
 
             constructor(options: {element: HTMLElement}) {
                 super(options);
@@ -461,6 +469,10 @@ describe('View.', () => {
 
         });
 
+    });
+
+    describe('Acts as Receiver', () => {
+        common.receiverTest(Headlight.View);
     });
 
 });
