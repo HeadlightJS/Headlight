@@ -1,15 +1,13 @@
 ///<reference path="../../src/Model.ts"/>
 ///<reference path="performance.test.ts"/>
 
-declare let require: (str: string) => any;
-
-/* tslint:disable */
-let Backbone = require('backbone');
-Backbone.Ribs = require('backbone.ribs');
-/* tslint:enable */
-
 module Perform {
     'use strict';
+
+    /* tslint:disable */
+    let Backbone = require('backbone');
+    Backbone.Ribs = require('backbone.ribs');
+    /* tslint:enable */
 
     interface ISampleModel {
         propString: string;
@@ -174,7 +172,4 @@ module Perform {
             });
         }
     );
-
-
-    start();
 }

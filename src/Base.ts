@@ -1,15 +1,7 @@
 module Headlight {
     'use strict';
 
-    interface ICidMap {
-        [cidPrefix: string]: number;
-    }
-
-    export interface IBase {
-        cid: string;
-    }
-
-    export abstract class Base implements IBase {
+    export abstract class Base {
         public cid: string;
         private static cidMap: ICidMap = {};
 
@@ -40,8 +32,12 @@ module Headlight {
     export const EVENTS = {
         CHANGE: 'change'
     };
+    
+    interface ICidMap {
+        [cidPrefix: string]: number;
+    }
 
-    export interface IHash {
-        [key: string]: string;
+    export interface IHash<T> {
+        [key: string]: T;
     }
 }

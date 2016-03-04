@@ -4,15 +4,9 @@
 module Headlight {
     'use strict';
 
-    export interface IEventGroup<CallbackParam> extends IBase {
-        callback: Signal.ISignalCallback<CallbackParam>;
-        receiver?: IReceiver;
-        once?: boolean;
-    }
-
-    export class EventGroup<CallbackParam> extends Base implements IEventGroup<CallbackParam> {
+    export class EventGroup<CallbackParam> extends Base {
         public callback: Signal.ISignalCallback<CallbackParam>;
-        public receiver: IReceiver;
+        public receiver: Receiver;
         public once: boolean;
 
         constructor(callback: Signal.ISignalCallback<CallbackParam>, once?: boolean) {
