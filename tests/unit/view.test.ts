@@ -157,7 +157,9 @@ describe('View.', () => {
         class MyView extends Headlight.View {
 
             public clickedChild: number = 0;
+            public okChildArgs: boolean = false;
             public rootClicked: number = 0;
+            public okRootArgs: boolean = false;
 
             constructor(options: {element: HTMLElement}) {
                 super(options);
@@ -168,26 +170,29 @@ describe('View.', () => {
                 return [
                     {
                         event: 'click',
-                        selector: `.${className}`,
+                        selector: `span.${className}`,
                         handler: this._onClickChild
                     },
                     {
                         event: 'click',
-                        handler: this._onClickRoot,
-                        selector: ''
+                        handler: this._onClickRoot
                     }
                 ];
             }
 
-            private _onClickRoot(): void {
+            private _onClickRoot(localEvent: MouseEvent, element: HTMLElement): void {
+                this.okRootArgs = localEvent && localEvent.type === 'click' && element === <any>el;
                 this.rootClicked++;
             }
 
             private _onClickChild(localEvent: MouseEvent, element: HTMLElement): void {
-                if (localEvent && localEvent.type === 'click' &&
-                    element && element === <any>child) {
-                    this.clickedChild++;
+                if (!this.clickedChild) {
+                    this.okChildArgs = localEvent && localEvent.type === 'click' && element && element === <any>child;
+                } else {
+                    this.okChildArgs = this.okChildArgs
+                        && localEvent && localEvent.type === 'click' && element && element === <any>child;
                 }
+                this.clickedChild++;
             }
 
         }
@@ -199,7 +204,9 @@ describe('View.', () => {
         clickTarget.dispatchEvent(event);
         wrap.querySelector('img').dispatchEvent(event);
 
+        assert.equal(view.okRootArgs, true);
         assert.equal(view.clickedChild, 1);
+        assert.equal(view.okChildArgs, true);
         assert.equal(view.rootClicked, 2);
     });
 

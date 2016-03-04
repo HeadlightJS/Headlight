@@ -7,6 +7,7 @@ module Headlight {
 
         protected el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
+        private __bindingManager: BindingsManager;
 
         constructor(options: View.IOptions) {
             super();
@@ -53,17 +54,22 @@ module Headlight {
             return this;
         }
 
-        protected on(eventName: string, selector: string|void, handler: View.IDomHandler, context?: any): View {
+        protected on(options: View.IEventHash): View {
 
-            if (!this.__listeningEvents[eventName]) {
-                this.__addTypeHandler(eventName);
+            if (!this.__listeningEvents[options.event]) {
+                this.__addTypeHandler(options.event);
             }
 
-            this.__listeningEvents[eventName].listeners.push({
-                selector: selector,
-                context: context,
-                handler: handler
+            this.__listeningEvents[options.event].listeners.push({
+                selector: options.selector,
+                context: options.context || this,
+                handler: options.handler
             });
+
+            return this;
+        }
+
+        protected addBindings(bindings: BindingsManager.IBinding|Array<BindingsManager.IBinding>): View {
 
             return this;
         }
@@ -148,7 +154,7 @@ module Headlight {
         private __initEvents(): void {
             let events = this.events();
             events.forEach((eventData: View.IEventHash): void => {
-                this.on(eventData.event, eventData.selector, eventData.handler, eventData.context || this);
+                this.on(eventData);
             });
         }
 
@@ -168,13 +174,13 @@ module Headlight {
     export module View {
         'use strict';
 
-        export interface IDomHandler {
+        export interface IDomHandler extends Function {
             (event?: MouseEvent|KeyboardEvent|Event|TouchEvent, target?: HTMLElement): void;
         }
 
         export interface IEventHash {
             event: string;
-            selector: string;
+            selector?: string;
             handler: IDomHandler;
             context?: any;
         }

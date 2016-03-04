@@ -102,10 +102,10 @@ module fakeElement {
         private static _isTrueSelectors(selectors: Array<ISelector>, element: FakeElement): boolean {
             return selectors.every((selector: ISelector) => {
                 let state = true;
-                if (selector.tagName) {
+                if (state && selector.tagName) {
                     state = selector.tagName.toLowerCase() === element.tagName.toLowerCase();
                 }
-                if (selector.classList.length) {
+                if (state && selector.classList.length) {
                     let elementClasses = element.className.split(/\s+/);
                     state = selector.classList.every((className: string) => {
                         return elementClasses.indexOf(className) !== -1;
@@ -132,7 +132,7 @@ module fakeElement {
                     };
                 } else {
                     return {
-                        tagName: selector.substr(0, dotIndex - 1),
+                        tagName: selector.substr(0, dotIndex),
                         classList: selector.substr(dotIndex, selector.length)
                             .split('.').filter((name: string) => !!name)
                     };
