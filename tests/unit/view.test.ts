@@ -7,7 +7,7 @@ describe('View.', () => {
     let assert = chai.assert;
 
     it('create', () => {
-        let view = new Headlight.View();
+        let view = new Headlight.View({});
         assert.instanceOf(view, Headlight.View);
     });
 
@@ -21,7 +21,7 @@ describe('View.', () => {
 
         }
 
-        let view = new MyView();
+        let view = new MyView({});
         assert.equal(view.tagName(), view.el.tagName);
 
     });
@@ -156,7 +156,7 @@ describe('View.', () => {
                 this.setElement(options.element);
             }
 
-            public events(): Array<Headlight.IEventHash> {
+            public events(): Array<Headlight.View.IEventHash> {
                 return [
                     {
                         event: 'click',
@@ -210,7 +210,7 @@ describe('View.', () => {
                 this.setElement(options.element);
             }
 
-            public events(): Array<Headlight.IEventHash> {
+            public events(): Array<Headlight.View.IEventHash> {
                 return [
                     {
                         event: 'click',
@@ -376,7 +376,7 @@ describe('View.', () => {
                 this.setElement(options.element);
             }
 
-            public events(): Array<Headlight.IEventHash> {
+            public events(): Array<Headlight.View.IEventHash> {
                 return [
                     {
                         event: 'click',

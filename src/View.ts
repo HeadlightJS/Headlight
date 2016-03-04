@@ -3,42 +3,19 @@
 module Headlight {
     'use strict';
 
-    export interface IView extends IBase {
-        el: HTMLElement;
-        cidPrefix(): string;
-        tagName(): string;
-        className(): string;
-        id(): string;
-    }
-
-    export interface IDomHandler {
-        (event?: MouseEvent|KeyboardEvent|Event|TouchEvent, target?: HTMLElement): void;
-    }
-
-    export interface IEventHash {
-        event: string;
-        selector: string;
-        handler: IDomHandler;
-        context?: any;
-    }
-
-    export interface IViewOptions {
-
-    }
-
     export class View extends Base {
 
         public el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
 
-        constructor(options?: IViewOptions) {
+        constructor(options: View.IOptions) {
             super();
             this.__createElement();
             this.initProps(options);
             this.__initEvents();
         }
 
-        protected initProps(options?: IViewOptions): View {
+        protected initProps(options: View.IOptions): View {
             return this;
         }
 
@@ -65,7 +42,7 @@ module Headlight {
             }
         }
 
-        protected events(): Array<IEventHash> {
+        protected events(): Array<View.IEventHash> {
             return [];
         }
 
@@ -84,7 +61,7 @@ module Headlight {
             return this;
         }
 
-        protected on(eventName: string, selector: string|void, handler: IDomHandler, context?: any): View {
+        protected on(eventName: string, selector: string|void, handler: View.IDomHandler, context?: any): View {
 
             if (!this.__listeningEvents[eventName]) {
                 this.__addTypeHandler(eventName);
@@ -99,7 +76,7 @@ module Headlight {
             return this;
         }
 
-        protected off(eventName?: string, handler?: IDomHandler): View {
+        protected off(eventName?: string, handler?: View.IDomHandler): View {
 
             if (!eventName) {
                 Object.keys(this.__listeningEvents).forEach((localEventName: string) => {
@@ -178,7 +155,7 @@ module Headlight {
 
         private __initEvents(): void {
             let events = this.events();
-            events.forEach((eventData: IEventHash): void => {
+            events.forEach((eventData: View.IEventHash): void => {
                 this.on(eventData.event, eventData.selector, eventData.handler, eventData.context || this);
             });
         }
@@ -196,6 +173,25 @@ module Headlight {
 
     }
 
+    export module View {
+        'use strict';
+
+        export interface IDomHandler {
+            (event?: MouseEvent|KeyboardEvent|Event|TouchEvent, target?: HTMLElement): void;
+        }
+
+        export interface IEventHash {
+            event: string;
+            selector: string;
+            handler: IDomHandler;
+            context?: any;
+        }
+
+        export interface IOptions {
+
+        }
+    }
+
     interface IListeningHash {
         [event: string]: {
             listeners: Array<IListener>;
@@ -206,7 +202,7 @@ module Headlight {
     interface IListener {
         selector: string|void;
         context: any;
-        handler: IDomHandler;
+        handler: View.IDomHandler;
     }
 
 }
