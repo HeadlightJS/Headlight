@@ -156,8 +156,8 @@ describe('View.', () => {
 
         class MyView extends Headlight.View {
 
-            public clickedChild: boolean;
-            public rootClicked: boolean;
+            public clickedChild: number = 0;
+            public rootClicked: number = 0;
 
             constructor(options: {element: HTMLElement}) {
                 super(options);
@@ -180,13 +180,13 @@ describe('View.', () => {
             }
 
             private _onClickRoot(): void {
-                this.rootClicked = true;
+                this.rootClicked++;
             }
 
             private _onClickChild(localEvent: MouseEvent, element: HTMLElement): void {
                 if (localEvent && localEvent.type === 'click' &&
                     element && element === <any>child) {
-                    this.clickedChild = true;
+                    this.clickedChild++;
                 }
             }
 
@@ -199,8 +199,8 @@ describe('View.', () => {
         clickTarget.dispatchEvent(event);
         wrap.querySelector('img').dispatchEvent(event);
 
-        assert.equal(view.clickedChild, true);
-        assert.equal(view.rootClicked, true);
+        assert.equal(view.clickedChild, 1);
+        assert.equal(view.rootClicked, 2);
     });
 
     describe('off', () => {
