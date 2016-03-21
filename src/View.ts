@@ -7,7 +7,6 @@ module Headlight {
 
         protected el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
-        private __bindingManager: BindingsManager;
 
         constructor(options: View.IOptions) {
             super();
@@ -48,28 +47,42 @@ module Headlight {
         }
 
         protected setElement(element: HTMLElement): View {
-            let oldEl = this.el;
+            let eventData = this.__getEventsData();
+            this.off();
             this.el = element;
-            this.__resetHandlers(oldEl);
+            eventData.forEach(this.on, this);
             return this;
         }
 
         protected on(options: View.IEventHash): View {
 
             if (!this.__listeningEvents[options.event]) {
-                this.__addTypeHandler(options.event);
+                this.__listeningEvents[options.event] = [];
             }
-
-            this.__listeningEvents[options.event].listeners.push({
-                selector: options.selector,
-                context: options.context || this,
-                handler: options.handler
+            
+            let elements;
+            let self = this;
+            let originHandler = function (event: Event): any {
+                return options.handler.call(options.context || self, event, this);
+            };
+            
+            if (options.selector) {
+                elements = this.$(options.selector);
+            } else {
+                elements = [this.el];
+            }
+            
+            elements.forEach((element: HTMLElement) => {
+                element.addEventListener(options.event, originHandler, false);
             });
-
-            return this;
-        }
-
-        protected addBindings(bindings: BindingsManager.IBinding|Array<BindingsManager.IBinding>): View {
+            
+            this.__listeningEvents[options.event].push({
+                selector: options.selector,
+                context: options.context,
+                handler: options.handler,
+                elements: elements,
+                originHandler: originHandler
+            });
 
             return this;
         }
@@ -77,66 +90,55 @@ module Headlight {
         protected off(eventName?: string, handler?: View.IDomHandler): View {
 
             if (!eventName) {
-                Object.keys(this.__listeningEvents).forEach((localEventName: string) => {
-                    this.el.removeEventListener(localEventName, this.__listeningEvents[localEventName].handler);
-                    delete this.__listeningEvents[localEventName];
+                Object.keys(this.__listeningEvents).forEach((event: string) => {
+                    this.off(event);
                 });
-                return this;
             }
-
-            if (eventName in this.__listeningEvents) {
-
-                let listData = this.__listeningEvents[eventName];
-
-                if (!handler) {
-                    this.el.removeEventListener(eventName, listData.handler);
-                    delete this.__listeningEvents[eventName];
-                    return this;
-                }
-
-                listData.listeners = listData.listeners.filter((listenerData: IListener): boolean => {
-                    return listenerData.handler !== handler;
-                });
-
-                if (!listData.listeners.length) {
-                    this.el.removeEventListener(eventName, listData.handler);
-                    delete this.__listeningEvents[eventName];
-                }
-
-            }
-
-            return this;
-        }
-
-        private __addTypeHandler(eventName: string): void {
-            this.__listeningEvents[eventName] = {
-                listeners: [],
-                handler: (event: any): void => {
-                    this.__startEvent(event, eventName);
-                }
-            };
-        }
-
-        private __resetHandlers(oldElem: HTMLElement): void {
-            Object.keys(this.__listeningEvents).forEach((name: string): void => {
-                oldElem.removeEventListener(name, this.__listeningEvents[name].handler);
-                this.el.addEventListener(name, this.__listeningEvents[name].handler, false);
-            });
-        }
-
-        private __startEvent(event: any, eventName: string): void {
-            this.__listeningEvents[eventName].listeners.forEach((listenerData: IListener) => {
-                if (!listenerData.selector) {
-                    listenerData.handler.call(listenerData.context, event, this.el);
-                } else {
-                    this.$(<string>listenerData.selector).some((element: HTMLElement): boolean => {
-                        if (event.target === element || View.__hasInElement(this.el, element, event.target)) {
-                            listenerData.handler.call(listenerData.context, event, element);
+            
+            let _events = this.__listeningEvents;
+            
+            if (_events[eventName]) {
+                
+                if (handler) {
+                    this.__listeningEvents[eventName] = _events[eventName].filter((listener: IListener) => {
+                        if (handler === listener.handler) {
+                            listener.elements.forEach((element: HTMLElement) => {
+                                element.removeEventListener(eventName, (<any>listener).originHandler);
+                            });
+                            return false;
+                        } else {
                             return true;
                         }
                     });
+                    if (!this.__listeningEvents[eventName].length) {
+                        delete this.__listeningEvents[eventName];
+                    }
+                } else {
+                    this.__listeningEvents[eventName].forEach((listener: IListener) => {
+                        listener.elements.forEach((element: HTMLElement) => {
+                            element.removeEventListener(eventName, (<any>listener).originHandler);
+                        });
+                    });
+                    delete this.__listeningEvents[eventName];
                 }
+            }
+            
+            return this;            
+        }
+        
+        private __getEventsData(): Array<View.IEventHash> {
+            let events = [];
+            Object.keys(this.__listeningEvents).forEach((eventName: string) => {
+                this.__listeningEvents[eventName].forEach((listener: IListener) => {
+                    events.push({
+                        event: eventName,
+                        selector: listener.selector,
+                        handler: listener.handler,
+                        context: listener.context
+                    });
+                });
             });
+            return events;
         }
 
         private __createElement(): void {
@@ -153,20 +155,7 @@ module Headlight {
 
         private __initEvents(): void {
             let events = this.events();
-            events.forEach((eventData: View.IEventHash): void => {
-                this.on(eventData);
-            });
-        }
-
-        private static __hasInElement(searchRoot: HTMLElement, parent: HTMLElement, child: HTMLElement): boolean {
-            let node = child.parentNode;
-            while (node !== searchRoot) {
-                if (node === parent) {
-                    return true;
-                }
-                node = node.parentNode;
-            }
-            return false;
+            events.forEach(this.on, this);
         }
 
     }
@@ -191,16 +180,15 @@ module Headlight {
     }
 
     interface IListeningHash {
-        [event: string]: {
-            listeners: Array<IListener>;
-            handler: (event: any) => void;
-        };
+        [event: string]: Array<IListener>;
     }
 
     interface IListener {
         selector: string|void;
         context: any;
         handler: View.IDomHandler;
+        elements: Array<HTMLElement>;
+        originHandler: Function;
     }
 
 }
