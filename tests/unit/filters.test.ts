@@ -3,7 +3,7 @@
 
 describe('filters.', () => {
     let assert = chai.assert;
-    
+
     describe('not', () => {
 
         it('with processor', () => {
@@ -30,15 +30,15 @@ describe('filters.', () => {
             assert.equal(filter(0), true);
 
         });
-        
+
     });
-    
+
     it('json', () => {
-        
+
         let originStringify = JSON.stringify;
         let replacerOk = false;
         let spaceOk = false;
-        
+
         let myStringify = (value: any, replacer: any, space: any) => {
             if (replacer === null) {
                 replacerOk = true;
@@ -48,9 +48,9 @@ describe('filters.', () => {
             }
             return originStringify.call(JSON, value, replacer, space);
         };
-        
+
         JSON.stringify = <any>myStringify;
-        
+
         let filter = Headlight.filters.json({
             replacer: null,
             space: 4,
@@ -58,7 +58,7 @@ describe('filters.', () => {
         });
 
         let result = filter({id: 1});
-        
+
         assert.equal(typeof result, 'string');
         assert.equal(replacerOk, true);
         assert.equal(spaceOk, true);
@@ -73,11 +73,11 @@ describe('filters.', () => {
                 return '[my stringify]';
             }
         });
-        
+
         assert.equal(result, '[my stringify]');
-        
+
         JSON.stringify = originStringify;
-        
+
     });
 
     it('byObject', () => {
@@ -142,40 +142,70 @@ describe('filters.', () => {
         assert.equal(filter(new Date(timeStamp)), result);
 
     });
-    
+
     describe('empty', () => {
-        
+
         it('without options', () => {
-            
+
             let filter = Headlight.filters.empty();
-            
+
             assert.equal(filter(1), true);
             assert.equal(filter(0), false);
-            
+
         });
-        
+
         let forTest = [
             {key: 'notNull', trueValue: null, falseValue: undefined},
             {key: 'notString', trueValue: '', falseValue: null},
             {key: 'notUndefined', trueValue: undefined, falseValue: 0},
             {key: 'notNumber', trueValue: 0, falseValue: ''}
         ];
-        
+
         forTest.forEach((testData: any) => {
-            
+
             it(testData.key, () => {
-                
+
                 let options = {};
                 options[testData.key] = true;
-                
+
                 let filter = Headlight.filters.empty(options);
                 assert.equal(filter(testData.trueValue), true);
                 assert.equal(filter(testData.falseValue), false);
-                
+
             });
-            
+
         });
+
+    });
+
+    it('not + byObject (example remove listener)', () => {
+
+        let handler = () => {
+            return 2;
+        };
+        let listeners = [
+            {
+                handler: (): any => {
+                    return 1;
+                },
+                context: 1
+            }, {
+                handler: handler,
+                context: 2
+            }, {
+                handler: (): any => {
+                    return 1;
+                },
+                context: 3
+            }
+        ];
+        
+        let filter = Headlight.filters.not(Headlight.filters.byObject({handler: handler}));
+        let result = listeners.filter(filter);
+        
+        assert.equal(result.length, 2);
+        assert.equal(result.some((data: any) => data.handler === handler), false);
         
     });
-    
+
 });
