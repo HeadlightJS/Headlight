@@ -33,54 +33,60 @@ describe('filters.', () => {
 
     });
 
-    it('json', () => {
+    describe('json', () => {
 
-        let originStringify = JSON.stringify;
-        let replacerOk = false;
-        let spaceOk = false;
+        it('with options', () => {
 
-        let myStringify = (value: any, replacer: any, space: any) => {
-            if (replacer === null) {
-                replacerOk = true;
-            }
-            if (space === 4) {
-                spaceOk = true;
-            }
-            return originStringify.call(JSON, value, replacer, space);
-        };
+            let originStringify = JSON.stringify;
+            let myStringify = (value: any, replacer: any, space: any) => {
+                if (replacer === null) {
+                    replacerOk = true;
+                }
+                if (space === 4) {
+                    spaceOk = true;
+                }
+                return originStringify.call(JSON, value, replacer, space);
+            };
+            JSON.stringify = <any>myStringify;
 
-        JSON.stringify = <any>myStringify;
+            let replacerOk = false;
+            let spaceOk = false;
 
-        let filter = Headlight.filters.json({
-            replacer: null,
-            space: 4,
-            noCatch: true
+            let filter = Headlight.filters.json({
+                replacer: null,
+                space: 4,
+                noCatch: true
+            });
+
+            let result = filter({id: 1});
+
+            assert.equal(typeof result, 'string');
+            assert.equal(replacerOk, true);
+            assert.equal(spaceOk, true);
+
+            JSON.stringify = originStringify;
         });
 
-        let result = filter({id: 1});
+        it('without options', () => {
 
-        assert.equal(typeof result, 'string');
-        assert.equal(replacerOk, true);
-        assert.equal(spaceOk, true);
+            let filter = Headlight.filters.json();
 
-        filter = Headlight.filters.json();
+            let result = filter({
+                toJSON: function (): any {
+                    throw new Error();
+                },
+                toString: function (): any {
+                    return '[my stringify]';
+                }
+            });
 
-        result = filter({
-            toJSON: function (): any {
-                throw new Error();
-            },
-            toString: function (): any {
-                return '[my stringify]';
-            }
+            assert.equal(result, '[my stringify]');
+
         });
-
-        assert.equal(result, '[my stringify]');
-
-        JSON.stringify = originStringify;
 
     });
 
-    it('byObject', () => {
+    describe('byObject', () => {
 
         let testArr = [
             {
@@ -103,16 +109,24 @@ describe('filters.', () => {
             }
         ];
 
-        let filtered = testArr.filter(Headlight.filters.byObject({checked: true}));
+        it('one key', () => {
 
-        assert.equal(filtered.length, 2);
-        assert.equal(filtered[0].id, 2);
-        assert.equal(filtered[1].id, 4);
+            let filtered = testArr.filter(Headlight.filters.byObject({checked: true}));
 
-        filtered = testArr.filter(Headlight.filters.byObject({checked: false, id: 1}));
+            assert.equal(filtered.length, 2);
+            assert.equal(filtered[0].id, 2);
+            assert.equal(filtered[1].id, 4);
 
-        assert.equal(filtered.length, 1);
-        assert.equal(filtered[0].id, 1);
+        });
+
+        it('two key', () => {
+
+            let filtered = testArr.filter(Headlight.filters.byObject({checked: false, id: 1}));
+
+            assert.equal(filtered.length, 1);
+            assert.equal(filtered[0].id, 1);
+
+        });
 
     });
 
@@ -199,13 +213,13 @@ describe('filters.', () => {
                 context: 3
             }
         ];
-        
+
         let filter = Headlight.filters.not(Headlight.filters.byObject({handler: handler}));
         let result = listeners.filter(filter);
-        
+
         assert.equal(result.length, 2);
         assert.equal(result.some((data: any) => data.handler === handler), false);
-        
+
     });
 
 });
