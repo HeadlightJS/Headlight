@@ -36,8 +36,11 @@ describe('filters.', () => {
     describe('json', () => {
 
         it('with options', () => {
-
+            
+            let replacerOk = false;
+            let spaceOk = false;
             let originStringify = JSON.stringify;
+            
             let myStringify = (value: any, replacer: any, space: any) => {
                 if (replacer === null) {
                     replacerOk = true;
@@ -48,9 +51,6 @@ describe('filters.', () => {
                 return originStringify.call(JSON, value, replacer, space);
             };
             JSON.stringify = <any>myStringify;
-
-            let replacerOk = false;
-            let spaceOk = false;
 
             let filter = Headlight.filters.json({
                 replacer: null,
