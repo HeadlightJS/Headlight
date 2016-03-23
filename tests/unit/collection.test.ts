@@ -205,8 +205,10 @@ describe('Collection.', () => {
             it('Dispatches `add` signal', () => {
                 let addObject: Headlight.Collection.IEventAddParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
-                    addObject = args;
+                family.on.add({
+                    callback: (args: Headlight.Collection.IEventAddParam<IPerson>) => {
+                        addObject = args;
+                    }
                 });
 
                 family.push(boris, new Person(helen));
@@ -237,8 +239,10 @@ describe('Collection.', () => {
             it('Dispatches `remove` signal', () => {
                 let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
-                    removeObject = args;
+                family.on.remove({
+                    callback: (args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
+                        removeObject = args;
+                    }
                 });
 
                 family.pop();
@@ -280,8 +284,10 @@ describe('Collection.', () => {
             it('Dispatches `sort` signal', () => {
                 let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.on.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
-                    evtObject = args;
+                family.on.sort({
+                    callback: (args: Headlight.Collection.IEventSortParam<IPerson>) => {
+                        evtObject = args;
+                    }
                 });
 
                 family.reverse();
@@ -311,8 +317,10 @@ describe('Collection.', () => {
             it('Dispatches `remove` signal', () => {
                 let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
-                    removeObject = args;
+                family.on.remove({
+                    callback: (args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
+                        removeObject = args;
+                    }
                 });
 
                 family.shift();
@@ -357,8 +365,10 @@ describe('Collection.', () => {
             it('Dispatches `sort` signal', () => {
                 let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.on.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
-                    evtObject = args;
+                family.on.sort({
+                    callback: (args: Headlight.Collection.IEventSortParam<IPerson>) => {
+                        evtObject = args;
+                    }
                 });
 
                 family.sort();
@@ -403,12 +413,16 @@ describe('Collection.', () => {
                 let addObject: Headlight.Collection.IEventAddParam<IPerson>,
                     removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
-                    addObject = args;
+                family.on.add({
+                    callback: (args: Headlight.Collection.IEventAddParam<IPerson>) => {
+                        addObject = args;
+                    }
                 });
 
-                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
-                    removeObject = args;
+                family.on.remove({
+                    callback: (args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
+                        removeObject = args;
+                    }
                 });
 
                 let col = family.splice(1, 1, boris);
@@ -451,8 +465,10 @@ describe('Collection.', () => {
             it('Dispatches `add` signal', () => {
                 let addObject: Headlight.Collection.IEventAddParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
-                    addObject = args;
+                family.on.add({
+                    callback: (args: Headlight.Collection.IEventAddParam<IPerson>) => {
+                        addObject = args;
+                    }
                 });
 
                 family.unshift(boris, new Person(helen));
@@ -507,9 +523,11 @@ describe('Collection.', () => {
                 let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
                     count = 0;
 
-                family.on.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
-                    evtObject = param;
-                    count++;
+                family.on.change({
+                    callback: (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                        evtObject = param;
+                        count++;
+                    }
                 });
 
                 family[0].name = 'olo';
@@ -557,9 +575,11 @@ describe('Collection.', () => {
                 let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
                     count = 0;
 
-                family.once.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
-                    evtObject = param;
-                    count++;
+                family.once.change({
+                    callback: (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                        evtObject = param;
+                        count++;
+                    }
                 });
 
                 family[0].name = 'olo';
@@ -628,9 +648,11 @@ describe('Collection.', () => {
                     m = family[0],
                     count = 0;
 
-                family.on.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
-                    evtObject = param;
-                    count++;
+                family.on.change({
+                    callback: (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                        evtObject = param;
+                        count++;
+                    }
                 });
 
                 m.name = 'olo';
@@ -653,26 +675,25 @@ describe('Collection.', () => {
                     evtObject2: Headlight.Collection.IEventChangeParam<IPerson>,
                     count = 0;
 
-                family.on.change(Headlight.Collection.filter({
-                        change: {
-                            name: true
-                        }
-                    },
-                    (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                family.on.change({
+                    callback: (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                         evtObject = param;
                         count++;
-                    }
-                ));
+                    }, 
+                    events: {
+                        name: true
+                    }  
+                });
                 
-                family.on.change(Headlight.Collection.filter({
+                family.on.change({
+                    callback: Headlight.Collection.filter({
                         change: {
                             surname: true
                         }
-                    },
-                    (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                    }, (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                         evtObject2 = param;
-                    }
-                ));
+                    })
+                });
                 
                 let prevName = family[0].name;
 
@@ -705,16 +726,15 @@ describe('Collection.', () => {
                 let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
                     count = 0;
 
-                family.once.change(Headlight.Collection.filter({
-                        change: {
-                            name: true
-                        }
-                    },
-                    (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                family.once.change({
+                    callback: (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                         evtObject = param;
                         count++;
-                    }
-                ));
+                    }, 
+                    events: {
+                        name: true
+                    }  
+                });
 
                 family[0].name = 'olo';
 
@@ -733,9 +753,11 @@ describe('Collection.', () => {
         describe('add', () => {
             it('on', () => {
                 let addObject: Headlight.Collection.IEventAddParam<IPerson>;
-
-                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
-                    addObject = args;
+                
+                family.on.add({
+                    callback: (args: Headlight.Collection.IEventAddParam<IPerson>) => {
+                        addObject = args;
+                    }
                 });
 
                 family.push(boris);
@@ -754,9 +776,11 @@ describe('Collection.', () => {
 
             it('once', () => {
                 let addObject: Headlight.Collection.IEventAddParam<IPerson>;
-
-                family.once.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
-                    addObject = args;
+                
+                family.once.add({
+                    callback: (args: Headlight.Collection.IEventAddParam<IPerson>) => {
+                        addObject = args;
+                    }
                 });
 
                 family.push(boris);
@@ -777,9 +801,11 @@ describe('Collection.', () => {
         describe('remove', () => {
             it('on', () => {
                 let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
-
-                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
-                    removeObject = args;
+                
+                family.on.remove({
+                    callback: (args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
+                        removeObject = args;
+                    }
                 });
 
                 family.pop();
@@ -799,8 +825,10 @@ describe('Collection.', () => {
             it('once', () => {
                 let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.once.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
-                    removeObject = args;
+                family.once.remove({
+                    callback: (args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
+                        removeObject = args;
+                    }
                 });
 
                 family.pop();
@@ -821,9 +849,11 @@ describe('Collection.', () => {
         describe('sort', () => {
             it('on', () => {
                 let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
-
-                family.on.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
-                    evtObject = args;
+                
+                family.on.sort({
+                    callback: (args: Headlight.Collection.IEventSortParam<IPerson>) => {
+                        evtObject = args;
+                    }
                 });
 
                 family.sort();
@@ -842,8 +872,10 @@ describe('Collection.', () => {
             it('once', () => {
                 let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.once.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
-                    evtObject = args;
+                family.once.sort({
+                    callback: (args: Headlight.Collection.IEventSortParam<IPerson>) => {
+                        evtObject = args;
+                    }
                 });
 
                 family.sort();
@@ -864,5 +896,57 @@ describe('Collection.', () => {
     describe('Acts as Receiver', () => {
         common.receiverTest(Family);
     });
+    
+    describe('Transactions.', () => {
+        let mainCallbackCount = 0,
+            evtObj: any;
+        
+        beforeEach(() => {
+            mainCallbackCount = 0;
+            evtObj = undefined;
+        });
+        
+        it('Performing transaction.', () => {
+            family.on.change({
+                callback: (arg: any) => {
+                    mainCallbackCount++;
+                    evtObj = arg;
+                }
+                
+            });
+            
+            family.performTransaction((col: any) => {
+                col[0].name = '1121';
+                
+                assert.equal(mainCallbackCount, 0);
+            });
+            
+            
+            assert.isObject(evtObj.change);
+            assert.isObject(evtObj.change.name);
+            assert.isObject(evtObj.change.fullname);
+            assert.equal(mainCallbackCount, 1);
+        });
+        
+        it('Performing silent transaction.', () => {
+            family.on.change({
+                callback: (arg: any) => {
+                    mainCallbackCount++;
+                    evtObj = arg;
+                }
+                
+            });
+            
+            family.performSilentTransaction((col: any) => {
+                col[0].name = '1121';
+                
+                assert.equal(mainCallbackCount, 0);
+            });
+            
+            assert.equal(mainCallbackCount, 0);
+        });
+    });
+    
+    
 
 });

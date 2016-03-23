@@ -226,19 +226,19 @@ module Headlight {
 
         private _createSignals(): void {
             this.on = {
-                change: (param: Model.IChangeSignalListenerParam<Schema>): void => {
+                change: (param: Model.ISignalListenerParam<Schema>): void => {
                     this.signal.add(
                         Model.filter<Schema>({
-                                change: param.props || true
+                                change: param.events || true
                             }, param.callback), 
                         param.receiver);         
                 }
             };
             this.once = {
-                change: (param: Model.IChangeSignalListenerParam<Schema>): void => {
+                change: (param: Model.ISignalListenerParam<Schema>): void => {
                     this.signal.addOnce(
                         Model.filter<Schema>({
-                                change: param.props || true
+                                change: param.events || true
                             }, param.callback), 
                         param.receiver);         
                 }
@@ -274,7 +274,7 @@ module Headlight {
             }>;
 
         export interface ISignalListeners<Schema> {
-            change(param: IChangeSignalListenerParam<Schema>): void;
+            change(param: ISignalListenerParam<Schema>): void;
         }
 
         export interface ISignalListenerStoppers<Schema> {
@@ -284,10 +284,10 @@ module Headlight {
             change(callback: TSignalCallback<Schema>, receiver: Receiver): void;
         }
         
-        export interface IChangeSignalListenerParam<Schema> {
+        export interface ISignalListenerParam<Schema> {
             callback: TSignalCallback<Schema>;
             receiver?: Receiver;
-            props?: IHash<boolean>;
+            events?: IHash<boolean>;
         }
 
         export interface ISignalHash<Schema> {

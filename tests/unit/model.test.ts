@@ -18,7 +18,7 @@ describe('Model.', () => {
     }
 
     type TEventsPersonParam = Headlight.Model.IEventParam<IPerson>;
-    type TChangePersonPropParam = Headlight.Model.IChangeSignalListenerParam<IPerson>;
+    type TChangePersonPropParam = Headlight.Model.ISignalListenerParam<IPerson>;
 
     class Person extends Headlight.Model<IPerson> implements IPerson {
         constructor(args: IPerson) {
@@ -73,7 +73,7 @@ describe('Model.', () => {
         constructor(args: {}) {
             super(args);
         }
-
+        
         @Headlight.dProperty()
         get CID(): string {
             return this.cid;
@@ -239,7 +239,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             changeObj = args;
                         },
-                        props: {
+                        events: {
                             name: true
                         }
                     });
@@ -248,7 +248,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             arg = args;
                         },
-                        props: {
+                        events: {
                             fullname: true
                         }
                     });
@@ -257,7 +257,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             arg2 = args;
                         },
-                        props: {
+                        events: {
                             surname: true,
                             fullname: true
                         }
@@ -267,7 +267,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             arg3 = args;
                         },
-                        props: {
+                        events: {
                             age: true,
                             fullname: true
                         }
@@ -321,7 +321,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             changeObj = args;
                         },
-                        props: {
+                        events: {
                             name: true
                         }
                     });
@@ -330,7 +330,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             arg = args;
                         },
-                        props: {
+                        events: {
                             fullname: true
                         }
                     });
@@ -339,7 +339,7 @@ describe('Model.', () => {
                         callback: (args: TEventsPersonParam): void => {
                             arg2 = args;
                         },
-                        props: {
+                        events: {
                             surname: true,
                             fullname: true
                         }

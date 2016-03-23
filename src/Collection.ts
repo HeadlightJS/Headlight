@@ -258,6 +258,14 @@ module Headlight {
 
         public resetSignals(): void;
         
+        public performTransaction(callback: (Collection: Collection<Model>) => void): void {
+            Collection.performTransaction<Model>(this, callback);
+        }
+        
+        public performSilentTransaction(callback: (Collection: Collection<Model>) => void): void {
+            Collection.performSilentTransaction<Model>(this, callback);
+        }
+        
         public static filter<M extends Headlight.Model<any>>(events: Collection.IEvents,
                              callback: Signal.ISignalCallback<Collection.IEventAnyParam<any>>):
             Signal.ISignalCallback<Collection.IEventParam<any>> {
@@ -280,6 +288,14 @@ module Headlight {
                         eventData = param[eventName]; 
                         
                     if (!eventData) {
+                        continue;
+                    }
+                    
+                    if (eventData === true) {
+                        flag = true;
+                        
+                        p[eventName] = true;
+                        
                         continue;
                     }
                         
@@ -308,152 +324,6 @@ module Headlight {
             return fn;
         }
         
-        /*public static filter<M extends Headlight.Model<any>>(events: Model.IEvents,
-                             callback: Signal.ISignalCallback<Collection.IEventParam<any>>):
-            Signal.ISignalCallback<Collection.IEventParam<any>> {
-                
-            let fn = <Signal.ISignalCallback<Collection.IEventParam<any>>>((param: Collection.IEventParam<any>) => {
-                let n: string,
-                    flag = false,
-                    names: Array<string>,
-                    p = <Collection.IEventParam<any>>{
-                        events: {},
-                        collection: param.collection,
-                    };
-                
-                let eventsNames = Object.keys(events);
-                
-                for (let i = eventsNames.length; i--;) {
-                    let eventName = eventsNames[i],
-                        eventData = param.events[eventName]; 
-                        
-                    if (Array.isArray(eventData)) {
-                        names = <Array<string>>eventData;
-                    } else if (eventData === true) {
-                        if (eventName === 'change') {
-                            names = Object.keys(param.values || {});    
-                        }
-                    }
-                    
-                    for (let i = names.length; i--;) {
-                        n = names[i];
-                        
-                        if (eventName === 'change') {
-                            p.values = p.values || <S>{};
-                            p.previous = p.previous || <S>{};
-
-                            if (events.change === true || (<Array<string>>events.change).indexOf(n) !== -1) {
-                                //flag = true;
-                                
-                                p.values[n] = param.values[n];
-                                p.previous[n] = param.previous[n];
-                            }    
-                        }
-                        
-                        if (events[eventName] === true || events[eventName].indexOf(n) !== -1) {
-                            flag = true;
-                            
-                            p.events[eventName] = p.events[eventName] || [];
-                            p.events[eventName].push(n);
-                        }
-                    }      
-                }
-                
-                if (flag) {
-                    callback(p);
-                }
-            });
-
-            fn.originalCallback = callback.originalCallback || callback;
-
-            return fn;
-        }*/
-        
-        public static filterSignal<M extends Headlight.Model<S>, S>(args: {
-                callback: Signal.ISignalCallback<Collection.IEventParam<S>>,
-                events: Collection.TCollectionEvents | Array<Collection.TCollectionEvents>,
-                propNames?: string | Array<string>,
-            }): Signal.ISignalCallback<Collection.IEventAnyParam<S>> {
-                
-            let events = Array.isArray(args.events) ? 
-                    <Array<Collection.TCollectionEvents>>args.events : [<Collection.TCollectionEvents>args.events],
-                names = Array.isArray(args.propNames) ? <Array<string>>args.propNames : [<string>args.propNames],
-                fn = <Signal.ISignalCallback<Collection.IEventParam<S>>>
-                    ((a: Collection.IEventParam<S>) => {
-                        /* tslint:disable */
-                        let flag = false,
-                            param = <any>{
-                                collection: this
-                            };
-                        
-                        
-                       
-                        
-                        //if (events.indexOf(Collection.EVENTS.CHANGE) !== -1 && a.events.indexOf(Collection.EVENTS.CHANGE) !== -1) {
-                        /* tslint:enable */
-                            // let param = <Collection.ISignalCallbackChangeParam<S>>a,
-                            //     values = <IHash<S>>{},
-                            //     previous = <IHash<S>>{},
-                            //     models = new Collection.SimpleCollection<M>([], param.collection.model()),
-                            //     n: string,
-                            //     flag = false;
-                                
-                            // for (let i = names.length; i--;) {
-                            //     n = names[i];
-                                
-                            //     let modelCids = Object.keys(param.values);
-                                
-                            //     for (let j = modelCids.length; j--;) {
-                            //         let modelCid = modelCids[j],
-                            //             modelValues = param.values[modelCid];
-                                        
-                            //         values[modelCid] = <S>{};
-                            //         previous[modelCid] = <S>{};
-                                    
-                            //         if (n in modelValues) {
-                            //             models.push(<Headlight.Model<S>>param.collection.get(modelCid));
-                                        
-                            //             values[modelCid][n] = modelValues[n];
-                            //             previous[modelCid][n] = param.previous[modelCid][n];
-
-                            //             flag = true;
-                            //         }
-                            //     }
-                            // }    
-                                
-                            // if (flag) {
-                            //     args.callback({
-                            //         events: events,
-                            //         collection: param.collection,
-                            //         changedModels: models,
-                            //         values: values,
-                            //         previous: previous
-                            //     });
-                            // }   
-                        /* tslint:disable */    
-                        // } else if (
-                        //         (events.indexOf('sort') !== -1 && a.events.indexOf('sort') !== -1) ||
-                        //         (events.indexOf('add') !== -1 && a.events.indexOf('add') !== -1) ||  
-                        //         (events.indexOf('remove') !== -1 && a.events.indexOf('remove') !== -1) ||  
-                        //         (events.indexOf('update') !== -1 && a.events.indexOf('update') !== -1) ||  
-                        //         (events.indexOf(Collection.EVENTS.ANY) !== -1 && a.events.indexOf(Collection.EVENTS.ANY) !== -1)
-                        //     ) {
-                        // /* tslint:enable */
-                        //     args.callback(a);
-                        // }
-
-                    
-                        
-                         
-                        
-                         
-                    });
-
-            fn.originalCallback = args.callback;
-
-            return fn;
-        }
-        
         public static performTransaction<M extends Headlight.Model<any>>(collection: Collection<M>,
             callback: (collection: Collection<M>) => void): void {
                 
@@ -463,11 +333,20 @@ module Headlight {
             
             let param: Collection.IEventParam<any>;
 
-            collection.signal.dispatch(collection._transactionArtifact)
+            collection.signal.dispatch(collection._transactionArtifact.param);
 
             collection._clearTransactionArtifact();
             collection._state = Collection.STATE.NORMAL;
 
+        }
+        
+        public static performSilentTransaction<M extends Headlight.Model<any>>(collection: Collection<M>,
+                                                  callback: (collection: Collection<M>) => void): void {
+            collection._state = Collection.STATE.SILENT;
+
+            callback(collection);
+
+            collection._state = Collection.STATE.NORMAL;
         }
 
         protected cidPrefix(): string {
@@ -491,114 +370,92 @@ module Headlight {
             /* tslint:enable */
 
             this.on = {
-                change: (callback: TSCWithChangeParam, receiver?: Receiver): void => {
+                change: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.add(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventChangeParam<typeof Model.prototype.PROPS>) => {
-                                if (param.change) {
-                                    callback.call(this, param);    
-                                }
-                            }, callback), 
-                        receiver);
+                        Collection.filter<Model>({
+                                change: param.events || true
+                            }, param.callback), 
+                        param.receiver); 
                 },
-                add: (callback: TSCWithAddParam, receiver?: Receiver): void => {
+                add: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.add(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventAddParam<typeof Model.prototype.PROPS>) => {
-                                if (param.update && param.update.add) {
-                                    callback.call(this, param);    
+                        Collection.filter<Model>({
+                                update: {
+                                    add: true
                                 }
-                            }, callback), 
-                        receiver);
+                            }, param.callback), 
+                        param.receiver);
                 },
-                remove: (callback: TSCWithRemoveParam, receiver?: Receiver): void => {
+                remove: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.add(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventRemoveParam<typeof Model.prototype.PROPS>) => {
-                                if (param.update && param.update.remove) {
-                                    callback.call(this, param);    
+                        Collection.filter<Model>({
+                                update: {
+                                    remove: true
                                 }
-                            }, callback), 
-                        receiver);
+                            }, param.callback), 
+                        param.receiver);
                 },
-                update: (callback: TSCWithAddParam, receiver?: Receiver): void => {
+                update: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.add(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventUpdateParam<typeof Model.prototype.PROPS>) => {
-                                if (param.update) {
-                                    callback.call(this, param);    
-                                }
-                            }, callback), 
-                        receiver);
+                        Collection.filter<Model>({
+                                update: param.events || true
+                            }, param.callback), 
+                        param.receiver);
                 },
-                sort: (callback: TSCWithParam, receiver?: Receiver): void => {
+                sort: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.add(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventSortParam<typeof Model.prototype.PROPS>) => {
-                                if (param.sort) {
-                                    callback.call(this, param);    
-                                }
-                            }, callback), 
-                        receiver);
+                        Collection.filter<Model>({
+                                sort: true
+                            }, param.callback), 
+                        param.receiver);
                 },
-                any: (callback: TSCWithParam, receiver?: Receiver): void => {
-                    this.signal.add(callback, receiver);
+                any: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
+                    this.signal.add(param.callback, param.receiver);
                 }
             };
-
+            
             this.once = {
-                change: (callback: TSCWithChangeParam, receiver?: Receiver): void => {
+                change: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.addOnce(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventChangeParam<typeof Model.prototype.PROPS>) => {
-                                if (param.change) {
-                                    callback.call(this, param);    
-                                }
-                            }, callback), 
-                        receiver);
+                        Collection.filter<Model>({
+                                change: param.events || true
+                            }, param.callback), 
+                        param.receiver); 
                 },
-                add: (callback: TSCWithAddParam, receiver?: Receiver): void => {
+                add: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.addOnce(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventAddParam<typeof Model.prototype.PROPS>) => {
-                                if (param.update && param.update.add) {
-                                    callback.call(this, param);    
+                        Collection.filter<Model>({
+                                update: {
+                                    add: true
                                 }
-                            }, callback), 
-                        receiver);
+                            }, param.callback), 
+                        param.receiver);
                 },
-                remove: (callback: TSCWithRemoveParam, receiver?: Receiver): void => {
+                remove: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.addOnce(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventRemoveParam<typeof Model.prototype.PROPS>) => {
-                                if (param.update && param.update.remove) {
-                                    callback.call(this, param);    
+                        Collection.filter<Model>({
+                                update: {
+                                    remove: true
                                 }
-                            }, callback), 
-                        receiver);
+                            }, param.callback), 
+                        param.receiver);
                 },
-                update: (callback: TSCWithAddParam, receiver?: Receiver): void => {
+                update: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.addOnce(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventUpdateParam<typeof Model.prototype.PROPS>) => {
-                                if (param.update) {
-                                    callback.call(this, param);    
-                                }
-                            }, callback), 
-                        receiver);
+                        Collection.filter<Model>({
+                                update: param.events || true
+                            }, param.callback), 
+                        param.receiver);
                 },
-                sort: (callback: TSCWithParam, receiver?: Receiver): void => {
+                sort: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
                     this.signal.addOnce(
-                        Collection._wrapCallback(
-                            (param: Collection.IEventSortParam<typeof Model.prototype.PROPS>) => {
-                                if (param.sort) {
-                                    callback.call(this, param);    
-                                }
-                            }, callback), 
-                        receiver);
+                        Collection.filter<Model>({
+                                sort: true
+                            }, param.callback), 
+                        param.receiver);
                 },
-                any: (callback: TSCWithParam, receiver?: Receiver): void => {
-                    this.signal.addOnce(callback, receiver);
+                any: (param: Collection.ISignalListenerParam<typeof Model.prototype.PROPS>): void => {
+                    this.signal.addOnce(param.callback, param.receiver);
                 }
             };
         }
@@ -861,12 +718,6 @@ module Headlight {
         
         export type TArrayOrCollection<Schema> = Array<Model.TModelOrSchema<Schema>> | 
             Collection<Model<Schema>>;
-            
-        // export type TCollectionSignalParam<Schema> = ISignalCallbackParam<Schema> | 
-        //     ISignalCallbackChangeModelsParam<Schema> |
-        //     ISignalCallbackAddModelsParam<Schema> |
-        //     ISignalCallbackRemoveModelsParam<Schema> |
-        //     ISignalCallbackChangeParam<Schema>;
         
         export interface IEvents {
             sort?: boolean;
@@ -923,42 +774,22 @@ module Headlight {
             };
             change?: TChangeHash;
         }  
-
-        // export interface ISignalCallbackParam<Schema> {
-        //     events: IEvents;
-        //     collection: Collection<Model<Schema>>;
-        // }
         
-        // export interface ISignalCallbackAddModelsParam<Schema> extends ISignalCallbackParam<Schema> {
-        //     addedModels: Collection<Model<Schema>>;
-        // }
+        export type TSignalCallback<S> = Signal.ISignalCallback<IEventAnyParam<S>>;
         
-        // export interface ISignalCallbackRemoveModelsParam<Schema> extends ISignalCallbackParam<Schema> {
-        //     removedModels: Collection<Model<Schema>>;
-        // }
-        
-        // export interface ISignalCallbackUpdateModelsParam<Schema> extends ISignalCallbackAddModelsParam<Schema>, 
-        //     ISignalCallbackRemoveModelsParam<Schema> {
-            
-        // }
-
-        // export interface ISignalCallbackChangeParam<Schema> extends ISignalCallbackParam<Schema> {
-        //     changedModels: Collection<Model<Schema>>;
-        //     values: IHash<Schema>;
-        //     previous: IHash<Schema>;
-        // }
-       
+        export interface ISignalListenerParam<Schema> {
+            callback: TSignalCallback<Schema>;
+            receiver?: Receiver;
+            events?: IHash<boolean>;
+        }
 
         export interface ISignalListeners<Schema> {
-            change(callback: Signal.ISignalCallback<IEventChangeParam<Schema>>,
-                    receiver?: Receiver): void;
-            update(callback: Signal.ISignalCallback<IEventUpdateParam<Schema>>, 
-                    receiver?: Receiver): void;        
-            add(callback: Signal.ISignalCallback<IEventAddParam<Schema>>, receiver?: Receiver): void;
-            remove(callback: Signal.ISignalCallback<IEventRemoveParam<Schema>>, 
-                    receiver?: Receiver): void;
-            sort(callback: Signal.ISignalCallback<IEventSortParam<Schema>>, receiver?: Receiver): void;
-            any(callback: Signal.ISignalCallback<IEventAnyParam<Schema>>, receiver?: Receiver): void;
+            change(param: ISignalListenerParam<Schema>): void;
+            update(param: ISignalListenerParam<Schema>): void;        
+            add(param: ISignalListenerParam<Schema>): void;
+            remove(param: ISignalListenerParam<Schema>): void;
+            sort(param: ISignalListenerParam<Schema>): void;
+            any(param: ISignalListenerParam<Schema>): void;
         }
 
         export class SimpleCollection<Model extends Headlight.Model<any>> extends Collection<Model> {
@@ -999,7 +830,6 @@ module Headlight {
     }
     
     interface ITransactionArtifact<Schema> {
-        //signal: Signal<Collection.TCollectionSignalParam<Schema>>;
         param: Collection.IEventAnyParam<Schema>;
     }
 }
