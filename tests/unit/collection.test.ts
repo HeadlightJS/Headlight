@@ -99,9 +99,9 @@ describe('Collection.', () => {
         assert.equal('c', family.cid[0]);
         assert.equal(family.length, 2);
 
-        assert.throws(() => {
-            family.push(<any>(new M({})));
-        });
+        // assert.throws(() => {
+        //     family.push(<any>(new M({})));
+        // });
     });
 
     describe('Array methods', () => {
@@ -203,9 +203,9 @@ describe('Collection.', () => {
             });
 
             it('Dispatches `add` signal', () => {
-                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let addObject: Headlight.Collection.IEventAddParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
                     addObject = args;
                 });
 
@@ -213,8 +213,8 @@ describe('Collection.', () => {
 
                 assert.isObject(addObject);
                 assert.equal(addObject.collection, family);
-                assert.instanceOf(addObject.models, Headlight.Collection);
-                assert.deepEqual(addObject.models.toJSON(), [boris, helen]);
+                assert.instanceOf(addObject.update.add, Headlight.Collection);
+                assert.deepEqual(addObject.update.add.toJSON(), [boris, helen]);
             });
         });
 
@@ -235,9 +235,9 @@ describe('Collection.', () => {
             });
 
             it('Dispatches `remove` signal', () => {
-                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
                     removeObject = args;
                 });
 
@@ -245,8 +245,8 @@ describe('Collection.', () => {
 
                 assert.isObject(removeObject);
                 assert.equal(removeObject.collection, family);
-                assert.instanceOf(removeObject.models, Headlight.Collection);
-                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+                assert.instanceOf(removeObject.update.remove, Headlight.Collection);
+                assert.deepEqual(removeObject.update.remove.toJSON(), [oleg]);
             });
         });
 
@@ -278,9 +278,9 @@ describe('Collection.', () => {
             });
 
             it('Dispatches `sort` signal', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.on.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
                     evtObject = args;
                 });
 
@@ -288,6 +288,7 @@ describe('Collection.', () => {
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
+                assert.isTrue(evtObject.sort);
             });
         });
 
@@ -308,9 +309,9 @@ describe('Collection.', () => {
             });
 
             it('Dispatches `remove` signal', () => {
-                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
                     removeObject = args;
                 });
 
@@ -318,8 +319,8 @@ describe('Collection.', () => {
 
                 assert.isObject(removeObject);
                 assert.equal(removeObject.collection, family);
-                assert.instanceOf(removeObject.models, Headlight.Collection);
-                assert.deepEqual(removeObject.models.toJSON(), [anna]);
+                assert.instanceOf(removeObject.update.remove, Headlight.Collection);
+                assert.deepEqual(removeObject.update.remove.toJSON(), [anna]);
             });
         });
 
@@ -354,9 +355,9 @@ describe('Collection.', () => {
             });
 
             it('Dispatches `sort` signal', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.on.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
                     evtObject = args;
                 });
 
@@ -364,6 +365,7 @@ describe('Collection.', () => {
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
+                assert.isTrue(evtObject.sort);
             });
         });
 
@@ -398,14 +400,14 @@ describe('Collection.', () => {
             });
 
             it('Dispatches signals', () => {
-                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>,
-                    removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let addObject: Headlight.Collection.IEventAddParam<IPerson>,
+                    removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
                     addObject = args;
                 });
 
-                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
                     removeObject = args;
                 });
 
@@ -415,12 +417,12 @@ describe('Collection.', () => {
                 assert.isObject(removeObject);
 
                 assert.equal(addObject.collection, family);
-                assert.instanceOf(addObject.models, Headlight.Collection);
-                assert.deepEqual(addObject.models.toJSON(), [boris]);
+                assert.instanceOf(addObject.update.add, Headlight.Collection);
+                assert.deepEqual(addObject.update.add.toJSON(), [boris]);
 
                 assert.equal(removeObject.collection, family);
-                assert.equal(removeObject.models, col);
-                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+                assert.equal(removeObject.update.remove, col);
+                assert.deepEqual(removeObject.update.remove.toJSON(), [oleg]);
             });
         });
 
@@ -447,9 +449,9 @@ describe('Collection.', () => {
             });
 
             it('Dispatches `add` signal', () => {
-                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let addObject: Headlight.Collection.IEventAddParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
                     addObject = args;
                 });
 
@@ -457,8 +459,8 @@ describe('Collection.', () => {
 
                 assert.isObject(addObject);
                 assert.equal(addObject.collection, family);
-                assert.instanceOf(addObject.models, Headlight.Collection);
-                assert.deepEqual(addObject.models.toJSON(), [boris, helen]);
+                assert.instanceOf(addObject.update.add, Headlight.Collection);
+                assert.deepEqual(addObject.update.add.toJSON(), [boris, helen]);
             });
         });
 
@@ -502,37 +504,44 @@ describe('Collection.', () => {
     describe('Dispatches signals', () => {
         describe('change', () => {
             it('on', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
-                count = 0;
+                let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
+                    count = 0;
 
-                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                family.on.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                     evtObject = param;
                     count++;
                 });
 
-                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
-                    return;
-                });
-
                 family[0].name = 'olo';
 
-                let newValues = {};
-                let newPrevious = {};
-
-                newValues[family[0].cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                newPrevious[family[0].cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+                let nameProp = {},
+                    fullnameProp = {};
+                
+                nameProp[family[0].cid] = {
+                    value: 'olo',
+                    previous: 'Anna'
+                };
+                fullnameProp[family[0].cid] = {
+                    value: 'olo Ivanova',
+                    previous: 'Anna Ivanova'
+                };
+                
+                let values = {
+                    name: nameProp,
+                    fullname: fullnameProp
+                };
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
-                assert.instanceOf(evtObject.models, Headlight.Collection);
-                assert.deepEqual(evtObject.values, newValues);
-                assert.deepEqual(evtObject.previous, newPrevious);
+                assert.deepEqual(evtObject.change, values);
 
                 evtObject = undefined;
+                count = 0;
 
                 family[0].name = 'aza';
 
                 assert.isObject(evtObject);
+                assert.equal(count, 1, 'Dispatching change signal should be made only once.');
 
                 evtObject = undefined;
                 count = 0;
@@ -545,48 +554,89 @@ describe('Collection.', () => {
             });
 
             it('once', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>;
+                let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
+                    count = 0;
 
-                family.once.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                family.once.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                     evtObject = param;
-                });
-
-                family.once.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
-                    return;
+                    count++;
                 });
 
                 family[0].name = 'olo';
 
-                let newValues = {};
-                let newPrevious = {};
-
-                newValues[family[0].cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                newPrevious[family[0].cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+                let nameProp = {},
+                    fullnameProp = {};
+                
+                nameProp[family[0].cid] = {
+                    value: 'olo',
+                    previous: 'Anna'
+                };
+                fullnameProp[family[0].cid] = {
+                    value: 'olo Ivanova',
+                    previous: 'Anna Ivanova'
+                };
+                
+                let values = {
+                    name: nameProp,
+                    fullname: fullnameProp
+                };
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
-                assert.instanceOf(evtObject.models, Headlight.Collection);
-                assert.deepEqual(evtObject.values, newValues);
-                assert.deepEqual(evtObject.previous, newPrevious);
+                assert.deepEqual(evtObject.change, values);
 
                 evtObject = undefined;
+                count = 0;
 
-                (<IPerson>family[0]).name = 'aza';
+                family[0].name = 'aza';
 
                 assert.isUndefined(evtObject);
+                
+                // let evtObject: Headlight.Collection.IEventChangeParam<IPerson>;
+
+                // family.once.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                //     evtObject = param;
+                // });
+
+                // family.once.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
+                //     return;
+                // });
+
+                // family[0].name = 'olo';
+
+                // let newValues = {};
+                // let newPrevious = {};
+
+                // newValues[family[0].cid] = {name: 'olo', fullname: 'olo Ivanova'};
+                // newPrevious[family[0].cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
+
+                // assert.isObject(evtObject);
+                // assert.equal(evtObject.collection, family);
+                // assert.instanceOf(evtObject.changedModels, Headlight.Collection);
+                // assert.deepEqual(evtObject.values, newValues);
+                // assert.deepEqual(evtObject.previous, newPrevious);
+
+                // evtObject = undefined;
+
+                // family[0].name = 'aza';
+
+                // assert.isUndefined(evtObject);
             });
 
             it('Stops dispatching after removing from collection.', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
-                    m = <IPerson>family[0];
+                let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
+                    m = family[0],
+                    count = 0;
 
-                family.on.change((param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                family.on.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                     evtObject = param;
+                    count++;
                 });
 
                 m.name = 'olo';
 
                 assert.isObject(evtObject);
+                assert.equal(count, 1);
 
                 evtObject = undefined;
 
@@ -595,42 +645,52 @@ describe('Collection.', () => {
                 m.name = 'aza';
 
                 assert.isUndefined(evtObject);
+                assert.equal(count, 1, 'Dispatching change signal should be made only once.');
             });
             
             it ('Dispatches filtered signals.', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
-                    evtObject2: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
+                    evtObject2: Headlight.Collection.IEventChangeParam<IPerson>,
                     count = 0;
 
-                family.on.change(Headlight.Collection.filter(
-                    'name',
-                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                family.on.change(Headlight.Collection.filter({
+                        change: {
+                            name: true
+                        }
+                    },
+                    (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                         evtObject = param;
                         count++;
                     }
                 ));
                 
-                family.on.change(Headlight.Collection.filter(
-                    ['surname'],
-                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                family.on.change(Headlight.Collection.filter({
+                        change: {
+                            surname: true
+                        }
+                    },
+                    (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                         evtObject2 = param;
                     }
                 ));
+                
+                let prevName = family[0].name;
 
                 family[0].name = 'olo';
                 family[0].surname = 'aaa';
-
-                let newValues = {};
-                let newPrevious = {};
-
-                newValues[family[0].cid] = {name: 'olo'};
-                newPrevious[family[0].cid] = {name: 'Anna'};
+                
+                let nameProp = {};
+                
+                nameProp[family[0].cid] = {
+                    value: family[0].name,
+                    previous: prevName
+                }; 
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
-                assert.instanceOf(evtObject.models, Headlight.Collection);
-                assert.deepEqual(evtObject.values, newValues);
-                assert.deepEqual(evtObject.previous, newPrevious);
+                assert.deepEqual(evtObject.change, {
+                    name: nameProp
+                });
                 assert.equal(count, 1);
                 assert.isObject(evtObject2);
                 
@@ -642,24 +702,21 @@ describe('Collection.', () => {
             });
             
             it ('Dispatches filtered signals once.', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackChangeParam<IPerson>,
+                let evtObject: Headlight.Collection.IEventChangeParam<IPerson>,
                     count = 0;
 
-                family.once.change(Headlight.Collection.filter(
-                    'name',
-                    (param: Headlight.Collection.ISignalCallbackChangeParam<IPerson>) => {
+                family.once.change(Headlight.Collection.filter({
+                        change: {
+                            name: true
+                        }
+                    },
+                    (param: Headlight.Collection.IEventChangeParam<IPerson>) => {
                         evtObject = param;
                         count++;
                     }
                 ));
 
                 family[0].name = 'olo';
-
-                let newValues = {};
-                let newPrevious = {};
-
-                newValues[family[0].cid] = {name: 'olo'};
-                newPrevious[family[0].cid] = {name: 'Anna'};
 
                 assert.isObject(evtObject);
                 assert.equal(count, 1);
@@ -675,9 +732,9 @@ describe('Collection.', () => {
 
         describe('add', () => {
             it('on', () => {
-                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let addObject: Headlight.Collection.IEventAddParam<IPerson>;
 
-                family.on.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
                     addObject = args;
                 });
 
@@ -685,20 +742,20 @@ describe('Collection.', () => {
 
                 assert.isObject(addObject);
                 assert.equal(addObject.collection, family);
-                assert.instanceOf(addObject.models, Headlight.Collection);
-                assert.deepEqual(addObject.models.toJSON(), [boris]);
+                assert.instanceOf(addObject.update.add, Headlight.Collection);
+                assert.deepEqual(addObject.update.add.toJSON(), [boris]);
 
                 addObject = undefined;
 
                 family.push(new Person(helen));
 
-                assert.deepEqual(addObject.models.toJSON(), [helen]);
+                assert.deepEqual(addObject.update.add.toJSON(), [helen]);
             });
 
             it('once', () => {
-                let addObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let addObject: Headlight.Collection.IEventAddParam<IPerson>;
 
-                family.once.add((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.once.add((args: Headlight.Collection.IEventAddParam<IPerson>) => {
                     addObject = args;
                 });
 
@@ -706,8 +763,8 @@ describe('Collection.', () => {
 
                 assert.isObject(addObject);
                 assert.equal(addObject.collection, family);
-                assert.instanceOf(addObject.models, Headlight.Collection);
-                assert.deepEqual(addObject.models.toJSON(), [boris]);
+                assert.instanceOf(addObject.update.add, Headlight.Collection);
+                assert.deepEqual(addObject.update.add.toJSON(), [boris]);
 
                 addObject = undefined;
 
@@ -719,9 +776,9 @@ describe('Collection.', () => {
 
         describe('remove', () => {
             it('on', () => {
-                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.on.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
                     removeObject = args;
                 });
 
@@ -729,20 +786,20 @@ describe('Collection.', () => {
 
                 assert.isObject(removeObject);
                 assert.equal(removeObject.collection, family);
-                assert.instanceOf(removeObject.models, Headlight.Collection);
-                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+                assert.instanceOf(removeObject.update.remove, Headlight.Collection);
+                assert.deepEqual(removeObject.update.remove.toJSON(), [oleg]);
 
                 removeObject = undefined;
 
                 family.pop();
 
-                assert.deepEqual(removeObject.models.toJSON(), [anna]);
+                assert.deepEqual(removeObject.update.remove.toJSON(), [anna]);
             });
 
             it('once', () => {
-                let removeObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let removeObject: Headlight.Collection.IEventRemoveParam<IPerson>;
 
-                family.once.remove((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.once.remove((args: Headlight.Collection.IEventRemoveParam<IPerson>) => {
                     removeObject = args;
                 });
 
@@ -750,8 +807,8 @@ describe('Collection.', () => {
 
                 assert.isObject(removeObject);
                 assert.equal(removeObject.collection, family);
-                assert.instanceOf(removeObject.models, Headlight.Collection);
-                assert.deepEqual(removeObject.models.toJSON(), [oleg]);
+                assert.instanceOf(removeObject.update.remove, Headlight.Collection);
+                assert.deepEqual(removeObject.update.remove.toJSON(), [oleg]);
 
                 removeObject = undefined;
 
@@ -763,9 +820,9 @@ describe('Collection.', () => {
 
         describe('sort', () => {
             it('on', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.on.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.on.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
                     evtObject = args;
                 });
 
@@ -773,6 +830,7 @@ describe('Collection.', () => {
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
+                assert.isTrue(evtObject.sort);
 
                 evtObject = undefined;
 
@@ -782,9 +840,9 @@ describe('Collection.', () => {
             });
 
             it('once', () => {
-                let evtObject: Headlight.Collection.ISignalCallbackModelsParam<IPerson>;
+                let evtObject: Headlight.Collection.IEventSortParam<IPerson>;
 
-                family.once.sort((args: Headlight.Collection.ISignalCallbackModelsParam<IPerson>) => {
+                family.once.sort((args: Headlight.Collection.IEventSortParam<IPerson>) => {
                     evtObject = args;
                 });
 
@@ -792,6 +850,7 @@ describe('Collection.', () => {
 
                 assert.isObject(evtObject);
                 assert.equal(evtObject.collection, family);
+                assert.isTrue(evtObject.sort);
 
                 evtObject = undefined;
 
