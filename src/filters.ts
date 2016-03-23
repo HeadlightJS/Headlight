@@ -135,11 +135,40 @@ module Headlight.filters {
             };
         }
     }
-    
+
     export interface IJSONOptions {
         replacer?: Array<string>|Function;
         space?: number;
         noCatch?: boolean;
+    }
+    
+    export function empty(options?: IEmptyOptions): (data: any) => boolean {
+        if (options && (options.notNull || options.notString || options.notUndefined || options.notNumber)) {
+            return (data: any) => {
+                if (options.notNull && data === null) {
+                    return true;
+                } 
+                if (options.notNumber && data === 0) {
+                    return true;
+                }
+                if (options.notUndefined && data === undefined) {
+                    return true;
+                }
+                if (options.notString && data === '') {
+                    return true;
+                }
+                return !!data;
+            };
+        } else {
+            return (data: any) => !!data;
+        }
+    }
+    
+    export interface IEmptyOptions {
+        notNull?: boolean;
+        notString?: boolean;
+        notUndefined?: boolean;
+        notNumber?: boolean;
     }
 
     export function date(format: string): (date: Date|number) => string {

@@ -4,28 +4,32 @@
 describe('filters.', () => {
     let assert = chai.assert;
     
-    it('not with processor', () => {
-        
-        let filter = Headlight.filters.not((data: any) => {
-            if (data === 2) {
-                return false;
-            }
-            return !!data;
+    describe('not', () => {
+
+        it('with processor', () => {
+
+            let filter = Headlight.filters.not((data: any) => {
+                if (data === 2) {
+                    return false;
+                }
+                return !!data;
+            });
+
+            assert.equal(filter(1), false);
+            assert.equal(filter(2), true);
+            assert.equal(filter(0), true);
+
         });
-        
-        assert.equal(filter(1), false);
-        assert.equal(filter(2), true);
-        assert.equal(filter(0), true);
-        
-    });
-    
-    it('not without processor', () => {
 
-        let filter = Headlight.filters.not();
+        it('without processor', () => {
 
-        assert.equal(filter(1), false);
-        assert.equal(filter(2), false);
-        assert.equal(filter(0), true);
+            let filter = Headlight.filters.not();
+
+            assert.equal(filter(1), false);
+            assert.equal(filter(2), false);
+            assert.equal(filter(0), true);
+
+        });
         
     });
     
@@ -137,6 +141,41 @@ describe('filters.', () => {
         assert.equal(filter(timeStamp), result);
         assert.equal(filter(new Date(timeStamp)), result);
 
+    });
+    
+    describe('empty', () => {
+        
+        it('without options', () => {
+            
+            let filter = Headlight.filters.empty();
+            
+            assert.equal(filter(1), true);
+            assert.equal(filter(0), false);
+            
+        });
+        
+        let forTest = [
+            {key: 'notNull', trueValue: null, falseValue: undefined},
+            {key: 'notString', trueValue: '', falseValue: null},
+            {key: 'notUndefined', trueValue: undefined, falseValue: 0},
+            {key: 'notNumber', trueValue: 0, falseValue: ''}
+        ];
+        
+        forTest.forEach((testData: any) => {
+            
+            it(testData.key, () => {
+                
+                let options = {};
+                options[testData.key] = true;
+                
+                let filter = Headlight.filters.empty(options);
+                assert.equal(filter(testData.trueValue), true);
+                assert.equal(filter(testData.falseValue), false);
+                
+            });
+            
+        });
+        
     });
     
 });
