@@ -106,7 +106,7 @@ module Headlight.filters {
             }
         ],
         parse: (date: Date, format: string): string => {
-            return dateFilterHelper.datePresets.reduce((result: string, item) => {
+            return dateFilterHelper.datePresets.reduce((result: string, item: any) => {
                 return result.indexOf(item.pattern) !== -1 ? item.replace(date, result) : result;
             }, format);
         }
@@ -120,14 +120,26 @@ module Headlight.filters {
         }
     }
 
-    export function json(replacer?: Array<string>|Function, space?: number): (data: any) => string {
-        return (data: any) => {
-            try {
-                return JSON.stringify(data, <any>replacer, space);
-            } catch (e) {
-                return data.toString();
-            }
-        };
+    export function json(options?: IJSONOptions): (data: any) => string {
+        if (options && options.noCatch) {
+            return (data: any) => {
+                return JSON.stringify(data, <any>options.replacer, options.space);
+            };
+        } else {
+            return (data: any) => {
+                try {
+                    return JSON.stringify(data, <any>options.replacer, options.space);
+                } catch (e) {
+                    return data.toString();
+                }
+            };
+        }
+    }
+    
+    export interface IJSONOptions {
+        replacer?: Array<string>|Function;
+        space?: number;
+        noCatch?: boolean;
     }
 
     export function date(format: string): (date: Date|number) => string {

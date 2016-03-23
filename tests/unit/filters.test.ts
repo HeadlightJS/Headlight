@@ -47,13 +47,20 @@ describe('filters.', () => {
         
         JSON.stringify = <any>myStringify;
         
-        let filter = Headlight.filters.json(null, 4);
+        let filter = Headlight.filters.json({
+            replacer: null,
+            space: 4,
+            noCatch: true
+        });
+
         let result = filter({id: 1});
         
         assert.equal(typeof result, 'string');
         assert.equal(replacerOk, true);
         assert.equal(spaceOk, true);
-        
+
+        filter = Headlight.filters.json();
+
         result = filter({
             toJSON: function (): any {
                 throw new Error();
