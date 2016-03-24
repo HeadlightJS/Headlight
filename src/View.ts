@@ -8,7 +8,7 @@ module Headlight {
         protected el: HTMLElement;
         private __listeningEvents: IListeningHash = {};
 
-        constructor(options: View.IOptions) {
+        constructor(options?: View.IOptions) {
             super();
             this.__createElement();
             this.__initEvents();
@@ -23,6 +23,16 @@ module Headlight {
             this.off();
             if (this.el.parentNode) {
                 this.el.parentNode.removeChild(this.el);
+            }
+        }
+
+        public domUpdate(options?: View.IUpdateDomOptions): void {
+            if (options && options.event) {
+                this.__updateDomHandlers(options.event, options.handler);
+            } else {
+                Object.keys(this.__listeningEvents).forEach((eventName: string) => {
+                    this.__updateDomHandlers(eventName, options && options.handler);
+                });
             }
         }
 
@@ -59,23 +69,23 @@ module Headlight {
             if (!this.__listeningEvents[options.event]) {
                 this.__listeningEvents[options.event] = [];
             }
-            
+
             let elements;
             let self = this;
             let originHandler = function (event: Event): any {
                 return options.handler.call(options.context || self, event, this);
             };
-            
+
             if (options.selector) {
                 elements = this.$(options.selector);
             } else {
                 elements = [this.el];
             }
-            
+
             elements.forEach((element: HTMLElement) => {
                 element.addEventListener(options.event, originHandler, false);
             });
-            
+
             this.__listeningEvents[options.event].push({
                 selector: options.selector,
                 context: options.context,
@@ -94,11 +104,11 @@ module Headlight {
                     this.off(event);
                 });
             }
-            
+
             let _events = this.__listeningEvents;
-            
+
             if (_events[eventName]) {
-                
+
                 if (handler) {
                     this.__listeningEvents[eventName] = _events[eventName].filter((listener: IListener) => {
                         if (handler === listener.handler) {
@@ -122,10 +132,43 @@ module Headlight {
                     delete this.__listeningEvents[eventName];
                 }
             }
-            
-            return this;            
+
+            return this;
         }
         
+        private __updateDomHandlers(event: string, handler?: View.IDomHandler): void {
+            
+            if (!this.__listeningEvents[event]) {
+                return null;
+            }
+            
+            this.__listeningEvents[event].forEach((listener: IListener) => {
+
+                if (listener.selector && (!handler || listener.handler === handler)) {
+
+                    let elements = this.$(<string>listener.selector);
+
+                    listener.elements = listener.elements.filter((element: HTMLElement) => {
+                        let index = elements.indexOf(element);
+                        if (index === -1) {
+                            element.removeEventListener(event, listener.originHandler, false);
+                            return false;
+                        } else {
+                            elements.splice(index, 1);
+                            return true;
+                        }
+                    });
+
+                    elements.forEach((element: HTMLElement) => {
+                        element.addEventListener(event, listener.originHandler, false);
+                        listener.elements.push(element);
+                    });
+
+                }
+
+            });
+        }
+
         private __getEventsData(): Array<View.IEventHash> {
             let events = [];
             Object.keys(this.__listeningEvents).forEach((eventName: string) => {
@@ -166,6 +209,11 @@ module Headlight {
         export interface IDomHandler extends Function {
             (event?: MouseEvent|KeyboardEvent|Event|TouchEvent, target?: HTMLElement): void;
         }
+        
+        export interface IUpdateDomOptions {
+            event?: string;
+            handler?: IDomHandler;
+        }
 
         export interface IEventHash {
             event: string;
@@ -188,7 +236,7 @@ module Headlight {
         context: any;
         handler: View.IDomHandler;
         elements: Array<HTMLElement>;
-        originHandler: Function;
+        originHandler: EventListener;
     }
 
 }

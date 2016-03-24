@@ -2,6 +2,7 @@
 /// <reference path="../../typings/tsd.d.ts" />
 ///<reference path="../../dist/headlight.d.ts"/>
 
+import IEventHash = Headlight.View.IEventHash;
 describe('View.', () => {
     let FakeElement: typeof fakeElement.FakeElement = fakeElement.FakeElement;
     let assert = chai.assert;
@@ -208,6 +209,138 @@ describe('View.', () => {
         assert.equal(view.clickedChild, 1);
         assert.equal(view.okChildArgs, true);
         assert.equal(view.rootClicked, 2);
+    });
+
+    describe('update dom', () => {
+
+        let root = new FakeElement('div');
+        let target = new FakeElement('div');
+        let some = new FakeElement('div');
+        some.classList.add('test');
+        root.appendChild(some);
+        let event = <any>{type: 'click'};
+        target.classList.add('test');
+        
+        class MyView extends Headlight.View {
+            
+            public lastEvent: MouseEvent = null;
+            public lastElement: HTMLElement = null;
+            
+            constructor() {
+                super();
+                this.setElement(<any>root);
+            }
+
+            public events(): Array<Headlight.View.IEventHash> {
+                return [
+                    {
+                        event: 'click',
+                        selector: '.test',
+                        handler: this.onClick
+                    },
+                    {
+                        event: 'mousedown',
+                        handler: (): void => {
+                            console.log('mousedown');
+                        }
+                    }
+                ];
+            }
+            
+            public onClick(e: MouseEvent, element: HTMLElement): void {
+                this.lastElement = element;
+                this.lastEvent = e;
+            }
+
+        }
+        
+        it('add handlers', () => {
+            
+            let myView = new MyView();
+            
+            root.appendChild(target);
+            myView.domUpdate();
+            target.dispatchEvent(event);
+            
+            assert.equal(myView.lastEvent.type, event.type);
+            assert.equal(myView.lastElement, target);
+            
+            root.removeChild(target);
+            myView.remove();
+            
+        });
+        
+        it('remove handlers', () => {
+            
+            root.appendChild(target);
+            let myView = new MyView();
+            target.dispatchEvent(event);
+            
+            assert.equal(myView.lastEvent.type, event.type);
+            assert.equal(myView.lastElement, target);
+            
+            myView.lastElement = null;
+            myView.lastEvent = null;
+            
+            root.removeChild(target);
+            
+            myView.domUpdate();
+            
+            target.dispatchEvent(event);
+
+            assert.equal(myView.lastEvent, null);
+            assert.equal(myView.lastElement, null);  
+            root.removeChild(target);
+            myView.remove();
+            
+        });
+
+        it('add handlers with options', () => {
+
+            let myView = new MyView();
+
+            root.appendChild(target);
+            myView.domUpdate({event: 'mousedown'});
+            target.dispatchEvent(event);
+
+            assert.equal(myView.lastEvent, null);
+            assert.equal(myView.lastElement, null);
+
+            myView.domUpdate({event: 'mouse down'});
+            target.dispatchEvent(event);
+
+            assert.equal(myView.lastEvent, null);
+            assert.equal(myView.lastElement, null);
+
+            myView.domUpdate({event: 'click'});
+            target.dispatchEvent(event);
+
+            assert.equal(myView.lastEvent.type, event.type);
+            assert.equal(myView.lastElement, target);
+
+            myView.lastElement = null;
+            myView.lastEvent = null;
+            
+            root.removeChild(target);
+            myView.domUpdate();
+            root.appendChild(target);
+
+            myView.domUpdate({event: 'click', handler: Boolean});
+            target.dispatchEvent(event);
+
+            assert.equal(myView.lastEvent, null);
+            assert.equal(myView.lastElement, null);
+
+            myView.domUpdate({handler: myView.onClick});
+            target.dispatchEvent(event);
+
+            assert.equal(myView.lastEvent.type, event.type);
+            assert.equal(myView.lastElement, target);
+
+            root.removeChild(target);
+
+        });
+
     });
 
     describe('off', () => {

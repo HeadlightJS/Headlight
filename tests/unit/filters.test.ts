@@ -36,11 +36,11 @@ describe('filters.', () => {
     describe('json', () => {
 
         it('with options', () => {
-            
+
             let replacerOk = false;
             let spaceOk = false;
             let originStringify = JSON.stringify;
-            
+
             let myStringify = (value: any, replacer: any, space: any) => {
                 if (replacer === null) {
                     replacerOk = true;
@@ -130,11 +130,21 @@ describe('filters.', () => {
 
     });
 
-    it('equal', () => {
+    describe('equal', () => {
 
-        let filter = Headlight.filters.equal(5);
-        assert.equal(filter(5), true);
-        assert.equal(filter(4), false);
+        it('strict', () => {
+            let filter = Headlight.filters.equal(5, true);
+            assert.equal(filter(5), true);
+            assert.equal(filter(4), false);
+            assert.equal(filter('5'), false);
+        });
+
+        it('no strict', () => {
+            let filter = Headlight.filters.equal(5);
+            assert.equal(filter(5), true);
+            assert.equal(filter(4), false);
+            assert.equal(filter('5'), true);
+        });
 
     });
 

@@ -190,8 +190,14 @@ module Headlight.filters {
         };
     }
     
-    export function equal(some: any): (data: any) => boolean {
-        return (data: any) => data === some;
+    export function equal(some: any, strict?: boolean): (data: any) => boolean {
+        if (strict) {
+            return (data: any) => data === some;
+        } else {
+            /* tslint:disable */
+            return (data: any) => data == some;
+            /* tslint:enable */
+        }
     }
 
 }
