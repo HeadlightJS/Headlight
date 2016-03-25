@@ -112,37 +112,13 @@ module Headlight.filters {
         }
     };
 
-    export function not(processor?: Function): IFilter<boolean> {
-        if (processor) {
-            return (data: any) => !processor(data);
-        } else {
-            return (data: any) => !data;
-        }
-    }
-
-    export function json(options?: IJSONOptions): (data: any) => string {
-        if (options && options.noCatch) {
-            return (data: any) => {
-                return JSON.stringify(data, <any>options.replacer, options.space);
-            };
-        } else {
-            return (data: any) => {
-                try {
-                    return JSON.stringify(data, <any>options.replacer, options.space);
-                } catch (e) {
-                    return data.toString();
-                }
-            };
-        }
-    }
-
     export interface IJSONOptions {
         replacer?: Array<string>|Function;
         space?: number;
         noCatch?: boolean;
     }
     
-    export function empty(options?: IEmptyOptions): IFilter<boolean> {
+    export function notEmpty(options?: IEmptyOptions): IFilter<boolean, any> {
         if (!options) {
             return Boolean;
         }
@@ -180,13 +156,13 @@ module Headlight.filters {
         undefined?: boolean;
     }
 
-    export function date(format: string): (date: Date|number) => string {
+    export function date(format: string): IFilter<string, Date|number> {
         return (date: Date|number) => {
             return dateFilterHelper.parse(date instanceof Date ? date : new Date(date), format);
         };
     }
     
-    export function byObject(data: Object): IFilter<boolean> {
+    export function contains(data: Object): IFilter<boolean, any> {
         let keys = Object.keys(data);
         return (localData: any) => {
             if (localData) {
@@ -199,8 +175,8 @@ module Headlight.filters {
         };
     }
     
-    export function equal(some: any, strict?: boolean): IFilter<boolean> {
-        if (strict) {
+    export function equal(some: any, noStrict?: boolean): IFilter<boolean, any> {
+        if (!noStrict) {
             return (data: any) => data === some;
         } else {
             /* tslint:disable */
@@ -209,8 +185,40 @@ module Headlight.filters {
         }
     }
 
-    export interface IFilter<T> {
-        (data: any): T;
+    export function not(processor?: Function): IFilter<boolean, any> {
+        if (processor) {
+            return (data: any) => !processor(data);
+        } else {
+            return (data: any) => !data;
+        }
+    }
+
+    export function json(options?: IJSONOptions): IFilter<string, any> {
+        if (options && options.noCatch) {
+            return (data: any) => {
+                return JSON.stringify(data, <any>options.replacer, options.space);
+            };
+        } else {
+            return (data: any) => {
+                try {
+                    return JSON.stringify(data, <any>options.replacer, options.space);
+                } catch (e) {
+                    return data.toString();
+                }
+            };
+        }
+    }
+    
+    export function notEqual(some: any, noStrict?: boolean): IFilter<boolean, any> {
+        return not(equal(some, noStrict));
+    }
+    
+    export function notContains(some: Object): IFilter<boolean, any> {
+        return not(contains(some));
+    }
+
+    export interface IFilter<R, T> {
+        (data: T): R;
     }
 
 }

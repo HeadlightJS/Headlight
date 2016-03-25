@@ -86,7 +86,7 @@ describe('filters.', () => {
 
     });
 
-    describe('byObject', () => {
+    describe('contains', () => {
 
         let testArr = [
             {
@@ -111,7 +111,7 @@ describe('filters.', () => {
 
         it('one key', () => {
 
-            let filtered = testArr.filter(Headlight.filters.byObject({checked: true}));
+            let filtered = testArr.filter(Headlight.filters.contains({checked: true}));
 
             assert.equal(filtered.length, 2);
             assert.equal(filtered[0].id, 2);
@@ -121,7 +121,7 @@ describe('filters.', () => {
 
         it('two key', () => {
 
-            let filtered = testArr.filter(Headlight.filters.byObject({checked: false, id: 1}));
+            let filtered = testArr.filter(Headlight.filters.contains({checked: false, id: 1}));
 
             assert.equal(filtered.length, 1);
             assert.equal(filtered[0].id, 1);
@@ -136,14 +136,14 @@ describe('filters.', () => {
             let filter = Headlight.filters.equal(5, true);
             assert.equal(filter(5), true);
             assert.equal(filter(4), false);
-            assert.equal(filter('5'), false);
+            assert.equal(filter('5'), true);
         });
 
         it('no strict', () => {
             let filter = Headlight.filters.equal(5);
             assert.equal(filter(5), true);
             assert.equal(filter(4), false);
-            assert.equal(filter('5'), true);
+            assert.equal(filter('5'), false);
         });
 
     });
@@ -167,16 +167,16 @@ describe('filters.', () => {
 
     });
 
-    describe('empty', () => {
+    describe('notEmpty', () => {
 
         it('without options', () => {
 
-            let filter = Headlight.filters.empty();
+            let filter = Headlight.filters.notEmpty();
 
             assert.equal(filter(1), true);
             assert.equal(filter(0), false);
 
-            let filter2 = Headlight.filters.empty({});
+            let filter2 = Headlight.filters.notEmpty({});
 
             assert.equal(filter2('1'), true);
             assert.equal(filter2(''), false);
@@ -242,7 +242,7 @@ describe('filters.', () => {
                     options[key] = true;
                 });
 
-                let filter = Headlight.filters.empty(options);
+                let filter = Headlight.filters.notEmpty(options);
                 
                 testData.trueValue.push([]);
                 testData.trueValue.push({});
@@ -274,7 +274,42 @@ describe('filters.', () => {
 
     });
 
-    it('not + byObject (example remove listener)', () => {
+    describe('notEqual', () => {
+
+        it('strict', () => {
+
+            let filter = Headlight.filters.notEqual(5);
+
+            assert.equal(filter(5), false);
+            assert.equal(filter('5'), true);
+            assert.equal(filter(1), true);
+
+        });
+
+        it('notStrict', () => {
+
+            let filter = Headlight.filters.notEqual(5, true);
+
+            assert.equal(filter(5), false);
+            assert.equal(filter('5'), false);
+            assert.equal(filter(1), true);
+
+        });
+
+    });
+
+    it('notContains', () => {
+
+        let filter = Headlight.filters.notContains({
+            id: 1
+        });
+
+        assert.equal(filter({id: 1}), false);
+        assert.equal(filter({id: 2}), true);
+
+    });
+
+    it('notContains (example remove listener)', () => {
 
         let handler = () => {
             return 2;
@@ -296,7 +331,7 @@ describe('filters.', () => {
             }
         ];
 
-        let filter = Headlight.filters.not(Headlight.filters.byObject({handler: handler}));
+        let filter = Headlight.filters.notContains({handler: handler});
         let result = listeners.filter(filter);
 
         assert.equal(result.length, 2);
