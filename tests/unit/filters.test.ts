@@ -176,25 +176,97 @@ describe('filters.', () => {
             assert.equal(filter(1), true);
             assert.equal(filter(0), false);
 
+            let filter2 = Headlight.filters.empty({});
+
+            assert.equal(filter2('1'), true);
+            assert.equal(filter2(''), false);
+
         });
 
         let forTest = [
-            {key: 'notNull', trueValue: null, falseValue: undefined},
-            {key: 'notString', trueValue: '', falseValue: null},
-            {key: 'notUndefined', trueValue: undefined, falseValue: 0},
-            {key: 'notNumber', trueValue: 0, falseValue: ''}
+            {
+                key: 'hasValue',
+                trueValue: [0, ''],
+                falseValue: [null, undefined]
+            },
+            {
+                key: 'number',
+                trueValue: [0, NaN],
+                falseValue: [null, '', undefined]
+            },
+            {
+                key: 'string',
+                trueValue: [''],
+                falseValue: [null, undefined, 0]
+            },
+            {
+                key: 'null',
+                trueValue: [null],
+                falseValue: [undefined, 0, '']
+            },
+            {
+                key: 'undefined',
+                trueValue: [undefined],
+                falseValue: [null, 0, '']
+            },
+            {
+                key: 'number|string',
+                trueValue: [0, ''],
+                falseValue: [null, undefined]
+            },
+            {
+                key: 'null|undefined',
+                trueValue: [null, undefined],
+                falseValue: [0, '']
+            },
+            {
+                key: 'null|undefined|string',
+                trueValue: [null, undefined, ''],
+                falseValue: [0]
+            },
+            {
+                key: 'null|undefined|number',
+                trueValue: [null, undefined, 0],
+                falseValue: ['']
+            }
         ];
 
         forTest.forEach((testData: any) => {
 
-            it(testData.key, () => {
+            it(`${testData.key}`, () => {
 
                 let options = {};
-                options[testData.key] = true;
+                let keys = testData.key.split('|');
+                
+                keys.forEach((key: string) => {
+                    options[key] = true;
+                });
 
                 let filter = Headlight.filters.empty(options);
-                assert.equal(filter(testData.trueValue), true);
-                assert.equal(filter(testData.falseValue), false);
+                
+                testData.trueValue.push([]);
+                testData.trueValue.push({});
+                
+                let check = (value: any, target: boolean) => {
+                    assert.equal(filter(value), target);
+                    /* tslint:disable */
+                    if (typeof value === 'string') {
+                        assert.equal(filter(new String(value)), true);
+                    }
+                    if (typeof value === 'number') {
+                        assert.equal(filter(new Number(value)), true);
+                    } 
+                    /* tslint:enable */
+                };
+                
+                testData.trueValue.forEach((value: any) => {
+                    check(value, true);                                        
+                });
+                
+                testData.falseValue.forEach((value: any) => {
+                    check(value, false);
+                });
+                
 
             });
 

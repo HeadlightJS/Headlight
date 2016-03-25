@@ -112,7 +112,7 @@ module Headlight.filters {
         }
     };
 
-    export function not(processor?: Function): (data: any) => boolean {
+    export function not(processor?: Function): IFilter<boolean> {
         if (processor) {
             return (data: any) => !processor(data);
         } else {
@@ -142,33 +142,42 @@ module Headlight.filters {
         noCatch?: boolean;
     }
     
-    export function empty(options?: IEmptyOptions): (data: any) => boolean {
-        if (options && (options.notNull || options.notString || options.notUndefined || options.notNumber)) {
-            return (data: any) => {
-                if (options.notNull && data === null) {
-                    return true;
-                } 
-                if (options.notNumber && data === 0) {
-                    return true;
-                }
-                if (options.notUndefined && data === undefined) {
-                    return true;
-                }
-                if (options.notString && data === '') {
-                    return true;
-                }
-                return !!data;
-            };
-        } else {
-            return (data: any) => !!data;
+    export function empty(options?: IEmptyOptions): IFilter<boolean> {
+        if (!options) {
+            return Boolean;
         }
+        let funcs = [];
+        if (options.hasValue) {
+            funcs.push(Headlight.utils.notEmpty);
+        }
+        if (options.null) {
+            funcs.push(Headlight.utils.isNull);
+        }
+        if (options.string) {
+            funcs.push(Headlight.utils.isString);
+        }
+        if (options.number) {
+            funcs.push(Headlight.utils.isNumber);
+        }
+        if (options.undefined) {
+            funcs.push(Headlight.utils.isUndefined);
+        }
+        if (!funcs.length) {
+            return Boolean;
+        } else {
+            return (data: any) => {
+                return funcs.some((func: (some: any) => boolean) => func(data)) || !!data;
+            };
+        }
+
     }
     
     export interface IEmptyOptions {
-        notNull?: boolean;
-        notString?: boolean;
-        notUndefined?: boolean;
-        notNumber?: boolean;
+        hasValue?: boolean;
+        number?: boolean;
+        string?: boolean;
+        null?: boolean;
+        undefined?: boolean;
     }
 
     export function date(format: string): (date: Date|number) => string {
@@ -177,7 +186,7 @@ module Headlight.filters {
         };
     }
     
-    export function byObject(data: Object): (data: any) => boolean {
+    export function byObject(data: Object): IFilter<boolean> {
         let keys = Object.keys(data);
         return (localData: any) => {
             if (localData) {
@@ -190,7 +199,7 @@ module Headlight.filters {
         };
     }
     
-    export function equal(some: any, strict?: boolean): (data: any) => boolean {
+    export function equal(some: any, strict?: boolean): IFilter<boolean> {
         if (strict) {
             return (data: any) => data === some;
         } else {
@@ -198,6 +207,10 @@ module Headlight.filters {
             return (data: any) => data == some;
             /* tslint:enable */
         }
+    }
+
+    export interface IFilter<T> {
+        (data: any): T;
     }
 
 }
