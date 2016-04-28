@@ -6,42 +6,6 @@ module Headlight {
         let decorateProperty = function (target: any,
                                          key: string,
                                          descriptor?: TypedPropertyDescriptor<any>): any {
-
-            function dispatchSignals(prop: string, newVal: any, prev: any): void {
-                if (newVal !== prev) {
-                    let values = {},
-                        previous = {},
-                        d: string,
-                        prevValue: any,
-                        currValue: any,
-                        self = this;
-
-                    values[prop] = newVal;
-                    previous[prop] = prev;
-
-                    (function iterateThroughDeps(deps:  Array<string>): void {
-                        for (let j = deps.length; j--;) {
-                            d = deps[j];
-                            prevValue = self._properties[d];
-                            currValue = self[d];
-
-                            if (currValue !== prevValue) {
-                                values[d] = currValue;
-                                previous[d] = prevValue;
-
-                                iterateThroughDeps(self._depsMap[d]);
-                            }
-                        }
-                    })(this._depsMap[prop]);
-
-                    Model.dispatch(this, 'change', {
-                        model: this,
-                        values: values,
-                        previous: previous
-                    });
-                }
-            }
-
             target.PROPS = target.PROPS || {};
             target._depsMap = target._depsMap || {};
             target.PROPS[key] = key;
@@ -60,7 +24,7 @@ module Headlight {
                             this._properties[k] = (ConstructorOrDeps && !(ConstructorOrDeps instanceof Model))
                                 ? new ConstructorOrDeps(newVal) : newVal;
 
-                            dispatchSignals.call(this, k, this._properties[k], prev);
+                            Model.dispatchSignals(this, k, this._properties[k], prev);
                         },
                         enumerable: true,
                         configurable: true
@@ -88,7 +52,7 @@ module Headlight {
 
                             originalSet.call(this, newVal);
 
-                            dispatchSignals.call(this, k, this[k], prev);
+                            Model.dispatchSignals(this, k, this[k], prev);
                         };
                     }
 

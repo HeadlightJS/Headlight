@@ -5,6 +5,12 @@
 
 module Headlight {
     'use strict';
+    
+    const EVENTS = {
+        CHANGE: 'change'
+    };
+    
+    const EVENT_NAMES = [EVENTS.CHANGE];
 
     export abstract class Model<Schema> extends Receiver {
         public idAttribute: string;
@@ -14,17 +20,14 @@ module Headlight {
         public off: Model.ISignalListenerStoppers<Schema>;
 
         public PROPS: Schema;
-        public signals: Model.ISignalHash<Schema>;
+        public signal: Signal<Model.IEventParam<Schema>> = new Signal();;
 
         private _depsMap: {
             [key: string]: Array<string>;
         };
         private _properties: Schema = <Schema>{};
         private _state: Model.STATE = Model.STATE.SILENT;
-        private _transactionArtifacts: Array<ITransactionArtifact<Schema>> = [];
-        private _transactionArtifactsMap: {
-            [key: string]: number;
-        } = {};
+        private _transactionArtifact: ITransactionArtifact<Schema>;
 
         constructor(args: Schema) {
             super();
@@ -73,16 +76,11 @@ module Headlight {
             model._state = Model.STATE.IN_TRANSACTION;
 
             callback(model);
+            
+            model.signal.dispatch(model._transactionArtifact.param);
 
-            for (let artifact of model._transactionArtifacts) {
-                if (artifact) {
-                    artifact.signal.dispatch(artifact.attr);
-                }
-            }
-
-            model._clearTransactionArtifacts();
+            model._clearTransactionArtifact();
             model._state = Model.STATE.NORMAL;
-
         }
 
         public static performSilentTransaction<S>(model: Model<S>,
@@ -93,9 +91,48 @@ module Headlight {
 
             model._state = Model.STATE.NORMAL;
         }
+        
+        public static dispatchSignals(model: Model<any>, prop: string, newVal: any, prev: any): void {
+            if (newVal !== prev) {
+                let values = {},
+                    previous = {},
+                    d: string,
+                    prevValue: any,
+                    currValue: any,
+                    props = [prop],
+                    changeObj = <any>{};
+                    
+                changeObj[prop] = {
+                    value: newVal,
+                    previous: prev    
+                }; 
 
-        public static dispatch<S>(model: Model<S>, propName: string, attr: Model.IChangeParam<any>): void {
-            let signal = <Signal<any>>model.signals[propName];
+                (function iterateThroughDeps(deps:  Array<string>): void {
+                    for (let j = deps.length; j--;) {
+                        d = deps[j];
+                        prevValue = model._properties[d];
+                        currValue = model[d];
+
+                        if (currValue !== prevValue) {
+                            changeObj[d] = {
+                                value: currValue,
+                                previous: prevValue
+                            };
+
+                            iterateThroughDeps(model._depsMap[d]);
+                        }
+                    }
+                })(model._depsMap[prop]);
+
+                Model.dispatch(model, {
+                    model: model,
+                    change: changeObj
+                });
+            }
+        }
+
+        public static dispatch<S>(model: Model<S>, attr: Model.IEventParam<S>): void {
+            let signal = model.signal;
 
             switch (model._state) {
                 case Model.STATE.NORMAL:
@@ -103,17 +140,27 @@ module Headlight {
 
                     break;
                 case Model.STATE.IN_TRANSACTION:
-                    let currentIndex = model._transactionArtifactsMap[propName];
-
-                    if (currentIndex !== undefined) {
-                        model._transactionArtifacts[currentIndex] = undefined;
-                    }
-
-                    model._transactionArtifactsMap[propName] = model._transactionArtifacts.length;
-                    model._transactionArtifacts.push({
-                        signal: signal,
-                        attr: attr
-                    });
+                    model._transactionArtifact = model._transactionArtifact || {
+                        param: attr
+                    };
+                    
+                    // TODO: uncomment when adding more events    
+                    //if (attr.change) {
+                        let changedProps = Object.keys(attr.change);
+                        
+                        model._transactionArtifact.param.change = model._transactionArtifact.param.change; // || {};  
+                        
+                        for (let i = changedProps.length; i--;) {
+                            let p = changedProps[i];
+                            
+                            model._transactionArtifact.param.change[p] = model._transactionArtifact.param.change[p] || {
+                                value: undefined,
+                                previous: attr.change[p].previous
+                            };
+                            
+                            model._transactionArtifact.param.change[p].value = attr.change[p].value;
+                        }  
+                    //}
 
                     break;
                 case Model.STATE.SILENT:
@@ -122,38 +169,50 @@ module Headlight {
             }
         }
 
-        public static filter<S>(propName: string | Array<string>,
-                             callback: Signal.ISignalCallback<Model.IChangeParam<S>>):
-            Signal.ISignalCallback<Model.IChangeParam<S>> {
+        public static filter<S>(events: Model.IEvents,
+                             callback: Signal.ISignalCallback<Model.IEventParam<S>>):
+            Signal.ISignalCallback<Model.IEventParam<S>> {
 
-            let names = Array.isArray(propName) ? <Array<string>>propName : [<string>propName],
-                fn = <Signal.ISignalCallback<Model.IChangeParam<S>>>((param: Model.IChangeParam<S>) => {
-                    let values = <S>{},
-                        previous = <S>{},
-                        n: string,
-                        flag = false;
-
+            let fn = <Signal.ISignalCallback<Model.IEventParam<S>>>((param: Model.IEventParam<S>) => {
+                let n: string,
+                    flag = false,
+                    names: Array<string>,
+                    p = <Model.IEventParam<S>>{
+                        model: param.model
+                    };
+                
+                let eventsNames = EVENT_NAMES;
+                
+                for (let i = eventsNames.length; i--;) {
+                    let eventName = eventsNames[i],
+                        eventData = param[eventName]; 
+                       
+                    // TODO: uncomment when adding more events    
+                    // if (!eventData) {
+                    //     continue;
+                    // }
+                        
+                    names = Object.keys(eventData);
+                    
                     for (let i = names.length; i--;) {
                         n = names[i];
-
-                        if (n in param.values) {
-                            values[n] = param.values[n];
-                            previous[n] = param.previous[n];
-
+                        
+                        if (events[eventName] && (events[eventName] === true || events[eventName][n])) {
+                            p[eventName] = p[eventName] || {};
+                            
+                            p[eventName][n] = eventData[n];
+                            
                             flag = true;
                         }
-                    }
+                    }      
+                }
+                
+                if (flag) {
+                    callback(p);
+                }
+            });
 
-                    if (flag) {
-                        callback({
-                            model: param.model,
-                            values: values,
-                            previous: previous
-                        });
-                    }
-                });
-
-            fn.originalCallback = callback;
+            fn.originalCallback = callback.originalCallback || callback;
 
             return fn;
         }
@@ -162,32 +221,33 @@ module Headlight {
             return 'm';
         }
 
-        private _clearTransactionArtifacts(): void {
-            this._transactionArtifacts = [];
-            this._transactionArtifactsMap = {};
+        private _clearTransactionArtifact(): void {
+            this._transactionArtifact = null;
         }
 
         private _createSignals(): void {
-            this.signals = {
-                change: new Signal()
-            };
-
             this.on = {
-                change: (callback: Model.TSignalCallbackOnChange<Schema>,
-                         receiver?: Receiver): void => {
-                    this.signals.change.add(callback, receiver);
+                change: (param: Model.ISignalListenerParam<Schema>): void => {
+                    this.signal.add(
+                        Model.filter<Schema>({
+                                change: param.events || true
+                            }, param.callback), 
+                        param.receiver);         
                 }
             };
             this.once = {
-                change: (callback: Model.TSignalCallbackOnChange<Schema>,
-                         receiver?: Receiver): void => {
-                    this.signals.change.addOnce(callback, receiver);
+                change: (param: Model.ISignalListenerParam<Schema>): void => {
+                    this.signal.addOnce(
+                        Model.filter<Schema>({
+                                change: param.events || true
+                            }, param.callback), 
+                        param.receiver);         
                 }
             };
             this.off = {
-                change: (callbackOrReceiver?: Model.TSignalCallbackOnChange<Schema> | Receiver,
+                change: (callbackOrReceiver?: Model.TSignalCallback<Schema> | Receiver,
                          receiver?: Receiver): void => {
-                    this.signals.change.remove(<Model.TSignalCallbackOnChange<Schema>>callbackOrReceiver, receiver);
+                    this.signal.remove(<Model.TSignalCallback<Schema>>callbackOrReceiver, receiver);
                 }
             };
         }
@@ -207,29 +267,41 @@ module Headlight {
 
     export module Model {
         export type TModelOrSchema<Schema> = Model<Schema> | Schema;
-        export type TSignalOnChange<S> = Signal<Model.IChangeParam<S>>;
-        export type TSignalCallbackOnChange<S> = Signal.ISignalCallback<Model.IChangeParam<S>>;
+        export type TSignal<S> = Signal<IEventParam<S>>;
+        export type TSignalCallback<S> = Signal.ISignalCallback<IEventParam<S>>;
+        export type TParamValues = IHash<{
+                value: any,
+                previous: any;
+            }>;
 
         export interface ISignalListeners<Schema> {
-            change(callback: TSignalCallbackOnChange<Schema>, receiver?: Receiver): void;
+            change(param: ISignalListenerParam<Schema>): void;
         }
 
         export interface ISignalListenerStoppers<Schema> {
             change(): void;
-            change(callback: TSignalCallbackOnChange<Schema>): void;
+            change(callback: TSignalCallback<Schema>): void;
             change(receiver: Receiver): void;
-            change(callback: TSignalCallbackOnChange<Schema>, receiver: Receiver): void;
+            change(callback: TSignalCallback<Schema>, receiver: Receiver): void;
         }
-
+        
+        export interface ISignalListenerParam<Schema> {
+            callback: TSignalCallback<Schema>;
+            receiver?: Receiver;
+            events?: IHash<boolean>;
+        }
 
         export interface ISignalHash<Schema> {
-            change: TSignalOnChange<Schema>;
+            change: TSignal<Schema>;
+        }
+        
+        export interface IEvents {
+            change?: boolean | IHash<boolean>;
         }
 
-        export interface IChangeParam<Schema> {
+        export interface IEventParam<Schema> {
             model: Model<Schema>;
-            values: Schema;
-            previous: Schema;
+            change?: TParamValues;
         }
 
         export const enum STATE {
@@ -240,7 +312,6 @@ module Headlight {
     }
     
     interface ITransactionArtifact<Schema> {
-        signal: Model.TSignalOnChange<Schema>;
-        attr: Model.IChangeParam<Schema>;
+        param: Model.IEventParam<Schema>;
     }
 }
