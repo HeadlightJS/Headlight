@@ -144,10 +144,11 @@ module Headlight {
                         param: attr
                     };
                     
-                    if (attr.change) {
+                    // TODO: uncomment when adding more events    
+                    //if (attr.change) {
                         let changedProps = Object.keys(attr.change);
                         
-                        model._transactionArtifact.param.change = model._transactionArtifact.param.change || {};  
+                        model._transactionArtifact.param.change = model._transactionArtifact.param.change; // || {};  
                         
                         for (let i = changedProps.length; i--;) {
                             let p = changedProps[i];
@@ -158,9 +159,8 @@ module Headlight {
                             };
                             
                             model._transactionArtifact.param.change[p].value = attr.change[p].value;
-                        } 
-                        
-                    }
+                        }  
+                    //}
 
                     break;
                 case Model.STATE.SILENT:
@@ -186,10 +186,11 @@ module Headlight {
                 for (let i = eventsNames.length; i--;) {
                     let eventName = eventsNames[i],
                         eventData = param[eventName]; 
-                        
-                    if (!eventData) {
-                        continue;
-                    }
+                       
+                    // TODO: uncomment when adding more events    
+                    // if (!eventData) {
+                    //     continue;
+                    // }
                         
                     names = Object.keys(eventData);
                     

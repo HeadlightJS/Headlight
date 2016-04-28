@@ -277,6 +277,8 @@ describe('Model.', () => {
                     let prevSurname = person.surname;
 
                     person.surname = PERSON_NAME;
+                    
+                    //person.age = 123;
 
                     assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
                     assert.isObject(arg);

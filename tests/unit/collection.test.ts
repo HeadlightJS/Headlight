@@ -99,9 +99,11 @@ describe('Collection.', () => {
         assert.equal('c', family.cid[0]);
         assert.equal(family.length, 2);
 
-        // assert.throws(() => {
-        //     family.push(<any>(new M({})));
-        // });
+        assert.throws(() => {
+            family.push(<any>(new M({})));
+        });
+        
+        assert.equal(family.length, 2);
     });
 
     describe('Array methods', () => {
@@ -177,6 +179,48 @@ describe('Collection.', () => {
             it('Concatenates with raw object and Array<raw object>', () => {
                 check(family, family.concat(boris, [helen]));
                 checkForInstanceOfModel(family);
+            });
+        });
+        
+        describe('#has()', () => {
+            it('Checks model', () => {
+                assert.isTrue(family.has(family[0]));
+                assert.isTrue(family.has(family[0].cid));
+                
+                assert.isFalse(family.has(new Person(boris)));
+            });
+        });
+        
+        describe('#add()', () => {
+            it('Pushes raw objects', () => {
+                family.add(boris);
+
+                assert.deepEqual(family.toJSON(), [anna, oleg, boris]);
+                checkForInstanceOfModel(family);
+            });
+            
+            it('Pushes array of raw objects', () => {
+                family.add([boris, helen]);
+
+                assert.deepEqual(family.toJSON(), [anna, oleg, boris, helen]);
+                checkForInstanceOfModel(family);
+            });
+            
+            it('Dispatches `add` signal', () => {
+                let addObject: Headlight.Collection.IEventAddParam<IPerson>;
+
+                family.on.add({
+                    callback: (args: Headlight.Collection.IEventAddParam<IPerson>) => {
+                        addObject = args;
+                    }
+                });
+
+                family.add(boris);
+
+                assert.isObject(addObject);
+                assert.equal(addObject.collection, family);
+                assert.instanceOf(addObject.update.add, Headlight.Collection);
+                assert.deepEqual(addObject.update.add.toJSON(), [boris]);
             });
         });
 
@@ -388,6 +432,12 @@ describe('Collection.', () => {
 
                 checkForInstanceOfModel(family);
                 checkForInstanceOfModel(col);
+                
+                family.add([family[0], family[0], family[0]]);
+                
+                family.splice(0, 1);
+                
+                assert.equal(family.length, 3);
             });
 
             it('Adds items', () => {
@@ -611,36 +661,6 @@ describe('Collection.', () => {
                 family[0].name = 'aza';
 
                 assert.isUndefined(evtObject);
-                
-                // let evtObject: Headlight.Collection.IEventChangeParam<IPerson>;
-
-                // family.once.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
-                //     evtObject = param;
-                // });
-
-                // family.once.change((param: Headlight.Collection.IEventChangeParam<IPerson>) => {
-                //     return;
-                // });
-
-                // family[0].name = 'olo';
-
-                // let newValues = {};
-                // let newPrevious = {};
-
-                // newValues[family[0].cid] = {name: 'olo', fullname: 'olo Ivanova'};
-                // newPrevious[family[0].cid] = {name: 'Anna', fullname: 'Anna Ivanova'};
-
-                // assert.isObject(evtObject);
-                // assert.equal(evtObject.collection, family);
-                // assert.instanceOf(evtObject.changedModels, Headlight.Collection);
-                // assert.deepEqual(evtObject.values, newValues);
-                // assert.deepEqual(evtObject.previous, newPrevious);
-
-                // evtObject = undefined;
-
-                // family[0].name = 'aza';
-
-                // assert.isUndefined(evtObject);
             });
 
             it('Stops dispatching after removing from collection.', () => {
@@ -892,18 +912,23 @@ describe('Collection.', () => {
             });
         });
     });
-
-    describe('Acts as Receiver', () => {
-        common.receiverTest(Family);
-    });
     
     describe('Transactions.', () => {
         let mainCallbackCount = 0,
-            evtObj: any;
+            evtObj: any,
+            evtObj2: any,
+            evtObj3: any,
+            evtObj4: any,
+            evtObj5: any;
+            
         
         beforeEach(() => {
             mainCallbackCount = 0;
             evtObj = undefined;
+            evtObj2 = undefined;
+            evtObj3 = undefined;
+            evtObj4 = undefined;
+            evtObj5 = undefined;
         });
         
         it('Performing transaction.', () => {
@@ -911,21 +936,62 @@ describe('Collection.', () => {
                 callback: (arg: any) => {
                     mainCallbackCount++;
                     evtObj = arg;
+                } 
+            });
+            
+            family.on.update({
+                callback: (arg: any) => {
+                    evtObj2 = arg;
                 }
                 
             });
             
-            family.performTransaction((col: any) => {
+            family.once.update({
+                callback: (arg: any) => {
+                    evtObj3 = arg;
+                }
+                
+            });
+            
+            family.on.any({
+                callback: (arg: any) => {
+                    evtObj4 = arg;
+                }
+            });
+            
+            family.once.any({
+                callback: (arg: any) => {
+                    evtObj5 = arg;
+                }
+            });
+            
+            family.performTransaction((col: Family) => {
                 col[0].name = '1121';
+                
+                col.push([boris]);
+                
+                col.pop();
+                
+                col.sort();
                 
                 assert.equal(mainCallbackCount, 0);
             });
             
-            
             assert.isObject(evtObj.change);
             assert.isObject(evtObj.change.name);
             assert.isObject(evtObj.change.fullname);
+            assert.isTrue(evtObj.sort);
             assert.equal(mainCallbackCount, 1);
+            
+            evtObj = undefined;
+            
+            family.performTransaction((col: Family) => {
+                col.push([boris]);
+                
+                col[0].name = 'asdasd';
+            });
+            
+            assert.isObject(evtObj.change);
         });
         
         it('Performing silent transaction.', () => {
@@ -947,6 +1013,8 @@ describe('Collection.', () => {
         });
     });
     
-    
+    describe('Acts as Receiver', () => {
+        common.receiverTest(Family);
+    });
 
 });

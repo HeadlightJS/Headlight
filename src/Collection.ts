@@ -223,7 +223,15 @@ module Headlight {
         
         public add(itemOrItems: Model.TModelOrSchema<typeof Model.prototype.PROPS> |   
                     Array<Model.TModelOrSchema<typeof Model.prototype.PROPS>>): number {
-            return this.push.apply(this, itemOrItems);
+            let arr = <Array<Model.TModelOrSchema<typeof Model.prototype.PROPS>>>[];
+            
+            if (Array.isArray(itemOrItems)) {
+                arr = itemOrItems;
+            } else {
+                arr.push(itemOrItems);
+            }             
+                        
+            return this.push.apply(this, arr);
         }
         
         public get(idOrCid: string | number): Model | void {
@@ -488,6 +496,8 @@ module Headlight {
                     }
                     
                     if (param.update) {
+                        this._transactionArtifact.param.update = this._transactionArtifact.param.update || {};
+                        
                         if (param.update.add) {
                             this._transactionArtifact.param.update.add = 
                                 (this._transactionArtifact.param.update.add || 
@@ -604,7 +614,7 @@ module Headlight {
 
         private _onRemoveModels(models: Array<Model>): void {
             models.forEach(function (model: Model): void {
-                if (this._modelsCountHash[model.cid] >= 1) {
+                //if (this._modelsCountHash[model.cid] >= 1) {
                     this._modelsCountHash[model.cid]--;
                 
                     if (this._modelsCountHash[model.cid] === 0) {
@@ -612,7 +622,7 @@ module Headlight {
                         
                         delete this._modelsIdsHash[model[model.idAttribute]];    
                     }
-                }
+                //}
             }, this);
            
         }
@@ -643,23 +653,6 @@ module Headlight {
         private _enableSignals(): void {
             this._state = Collection.STATE.NORMAL;
         }
-        
-        private static _wrapCallback(fn: Signal.ISignalCallback<Collection.IEventParam<any>>,
-            originalFn?: Signal.ISignalCallback<Collection.IEventParam<any>>):
-            Signal.ISignalCallback<Collection.IEventParam<any>> {
-            
-            let callback = <Signal.ISignalCallback<Collection.IEventParam<any>>>
-                ((f: Signal.ISignalCallback<Collection.IEventParam<any>>) => {
-                    return (param: Collection.IEventParam<any>) => {
-                        f(param);
-                    };
-                })(fn);
-            
-            callback.originalCallback = originalFn ? (originalFn.originalCallback || originalFn) : 
-                fn.originalCallback || fn;
-            
-            return callback;
-        }  
 
         private static _convertToModels(
             collection: Collection<any>,
@@ -673,7 +666,7 @@ module Headlight {
                 models: Array<Headlight.Model<any>> = [];
 
             function add(item: Headlight.Model<any> | any): void {
-                if (!(item instanceof Headlight.Model)) {
+                if (!(item instanceof Model)) {
                     if (item instanceof Headlight.Model) {
                         //todo написать вывод ошибки
                         throw new Error('');
