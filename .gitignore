@@ -3,6 +3,7 @@
 !.vscode/tasks.json
 .history
 dist
+tmp
 node_modules
 coverage
 **/*.js

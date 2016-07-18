@@ -3,17 +3,20 @@
     "noImplicitAny": false,
     "removeComments": true,
     "preserveConstEnums": true,
-    "out": "dist/headlight.js",
     "sourceMap": false,
     "target": "es5",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "declaration": true
+    "declaration": true,
+    "module": "umd",
+    "outDir": "dist"
   },
   "exclude": [
     "dist",
+    "src2",
     "karma.conf.ts",
     "tests",
+    "tests2",
     "node_modules",
     ".history",
     ".vscode"
