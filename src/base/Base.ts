@@ -1,4 +1,4 @@
-import {IBase, ICidMap} from './Base.d';
+import {IBase, ICidMap} from './base.d';
 
 export abstract class Base implements IBase {
     public cid: string;
