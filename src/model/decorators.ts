@@ -11,7 +11,7 @@ interface IArgs {
     deps?: Array<string>;
 }
 
-export let dProperty: IDProperty = function (ConstructorOrFn?: Function | (() => Function)): PropertyDecorator {
+export let dProperty: IDProperty = function (ConstructorOrFn?: (Function) | (() => Function)): PropertyDecorator {
     'use strict';
 
     return function (target: any, key: string, descriptor?: TypedPropertyDescriptor<any>): PropertyDescriptor {
@@ -39,7 +39,7 @@ export let dComputedProperty: IDComputedProperty = function (arrayOrFn: Array<st
             target: target,
             key: key,
             descriptor: descriptor,
-            deps: typeof arrayOrFn === BASE_TYPES.FUNCTION ? (<Function>arrayOrFn).call(target) : arrayOrFn
+            deps: typeof arrayOrFn === BASE_TYPES.FUNCTION ? (<any>arrayOrFn).call(target) : arrayOrFn
         });
 
         return descriptor;
