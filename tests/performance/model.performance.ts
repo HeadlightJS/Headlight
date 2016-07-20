@@ -1,17 +1,12 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
 import {Model} from '../../src/model/Model';
-import {test} from './performance.test';
-
-
+import {test} from './performance';
 
 let dProperty = Model.dProperty,
     dComputedProperty = Model.dComputedProperty;
 
-/* tslint:disable */
-let Backbone = require('backbone');
-    Backbone.Ribs = require('backbone.ribs');
-/* tslint:enable */
+declare let Backbone: any;
 
 interface ISampleModel {
     propString: string;

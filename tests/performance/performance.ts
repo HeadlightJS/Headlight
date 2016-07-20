@@ -1,8 +1,11 @@
+/// <reference path="../../typings/tsd.d.ts" />
+
 declare let process: any;
 declare let Promise: any;
 /* tslint:disable */
 interface Promise<T> {
-    then: (resolve: (data: T) => void) => Promise<T>;
+    then?: (resolve: (data: T) => void, reject?: (err: any) => void) => Promise<T>;
+    catch?: (reject: (err: any) => void) => Promise<T>;
 }
 /* tslint:enable */
 
@@ -12,6 +15,10 @@ export const enum EXIT_CODES {
     OK,
     ERROR
 }
+
+let assert: any = chai.assert;
+
+mocha.setup({ timeout: 500000 });
 
 const C = {
     Reset: '\x1b[0m',
@@ -112,8 +119,8 @@ function getMedian(iterationsCount: number, callback: () => void): Promise<numbe
             j = 0;
 
         function iterate(): void {
-            process.stdout.write(
-                `Testing in progress. Performing iteration ${j + 1} of ${MEADIAN_ITERATIONS_COUNT}...\r`);
+            // process.stdout.write(
+            //     `Testing in progress. Performing iteration ${j + 1} of ${MEADIAN_ITERATIONS_COUNT}...\r`);
 
             if (arr.length === MEADIAN_ITERATIONS_COUNT) {
                 arr.sort();
@@ -141,45 +148,105 @@ function getMedian(iterationsCount: number, callback: () => void): Promise<numbe
     });
 }
 
+// interface IQueueItem {
+//     done: Function;
+//     fn: Function;
+// }
+
+let queue: Array<Function> = [];
+
 export function start(): void {
+    'use strict';
     let index = 0;
 
     function performTest(test: ITest): void {
         let time: number;
 
-        getMedian(test.iterationsCount, test.callback)
-            .then(function (res: number): Promise<number> {
-                time = res;
+        index++;
 
-                return getMedian(test.iterationsCount, <() => void>test.referenceCallbackOrNumber);
-            })
-            .then(function (timeReference: number): void {
-                index++;
+        describe(`{index}`, () => {
+            it(`{test.testName} vs {test.referenceTestName}`, function(done: Function): void {
+                getMedian(test.iterationsCount, test.callback)
+                    .then(function (res: number): Promise<number> {
+                        time = res;
 
-                process.stdout.write('                                                         \r');
+                        return getMedian(test.iterationsCount, <() => void>test.referenceCallbackOrNumber);
+                    })
+                    .then(function (timeReference: number): void {
+                        
 
-                if (time <= timeReference) {
-                    log.ok(index, test.testName, time, test.referenceTestName, timeReference);
-                } else {
-                    log.error(index, test.testName, time, test.referenceTestName, timeReference);
+                        //process.stdout.write('                                                         \r');
 
-                    result = EXIT_CODES.ERROR;
-                }
+                        
+                        if (time <= timeReference) {
+                            //log.ok(index, test.testName, time, test.referenceTestName, timeReference);
+                        } else {
+                            //log.error(index, test.testName, time, test.referenceTestName, timeReference);
 
-                let nextTest: ITest = tests.shift();
+                            result = EXIT_CODES.ERROR;
+                        }
 
-                if (nextTest) {
-                    setTimeout(function (): void {
-                        performTest(nextTest);
-                    }, 10);
-                } else {
-                    process.exit(result);
-                }
+                        let nextTest: ITest = tests.shift();
+
+                        if (nextTest) {
+                            setTimeout(function (): void {
+                                done();
+                            }, 10);
+                        } //else {
+                            //process.exit(result);
+                        //}
+                    });
             });
+
+            
+        });
+
+        
     }
 
-    setTimeout(function (): void {
-        performTest(tests.shift());
-    }, 10);
+    for (let i = 0; i < tests.length; i++) {
+        let test = tests[i];
+
+        it(`${test.testName} vs ${test.referenceTestName}`, (done: Function) => {
+            let time: number;
+
+            return getMedian(test.iterationsCount, test.callback)
+                .then(function (res: number): Promise<number> {
+                    time = res;
+
+                    return getMedian(test.iterationsCount, <() => void>test.referenceCallbackOrNumber);
+                })
+                .then(function (timeReference: number): void {
+                    console.log(`${test.testName} - ${time} vs ${test.referenceTestName} - ${timeReference}`);
+
+                    assert.isAtMost(time , timeReference);
+                    
+                    done();
+                })
+                .catch(function (err: any): void {
+                    done(err);
+                });
+        });
+
+        
+    }
+
+    // setTimeout(function() {
+    //     console.log(queue.length);
+    // }, 1000);
+
+
+    // function perform(fn: Function) {
+    //     fn().then(() => {
+    //         perform(queue.shift());
+    //     });
+    // }
+
+    // perform(queue.shift());
+
+
+    // setTimeout(function (): void {
+    //     performTest(tests.shift());
+    // }, 10);
 };
 
