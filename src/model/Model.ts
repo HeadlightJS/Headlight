@@ -1,10 +1,10 @@
 import {IModel, ISignalListeners, ISignalListenerStoppers, IEventParam, ITransactionArtifact, 
-    IEvents, ISignalListenerParam, TSignalCallback, IDProperty, IDComputedProperty} from './model.d';
+    IEvents, ISignalListenerParam, TSignalCallback, IDObservable, IDComputed} from './model.d';
 import {Signal} from '../signal/Signal';
 import {ISignal, ISignalCallback} from '../signal/signal.d';
 import {Receiver} from '../receiver/Receiver';
 import {IReceiver} from '../receiver/receiver.d';
-import {dProperty, dComputedProperty} from './decorators';
+import {observable, computed} from './decorators';
 
 export const enum STATE {
     SILENT,
@@ -28,8 +28,8 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
     public PROPS: Schema;
     public signal: ISignal<IEventParam<Schema>> = new Signal();
 
-    public static dProperty: IDProperty = dProperty;
-    public static dComputedProperty: IDComputedProperty = dComputedProperty;
+    public static dProperty: IDObservable = observable;
+    public static dComputedProperty: IDComputed = computed;
 
     private _depsMap: {
         [key: string]: Array<string>;

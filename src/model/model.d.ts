@@ -65,13 +65,13 @@ interface ITransactionArtifact<Schema> {
     param: IEventParam<Schema>;
 }
 
-export interface IDProperty {
+export interface IDObservable {
     (): PropertyDecorator;
     (Constructor: Function): PropertyDecorator;
     (fn: () => Function): PropertyDecorator;
 }
 
-export interface IDComputedProperty {
+export interface IDComputed {
     (deps: Array<string>): PropertyDecorator;
     (fn: () => Array<string>): PropertyDecorator;
 }

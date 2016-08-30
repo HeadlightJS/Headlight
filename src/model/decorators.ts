@@ -1,7 +1,7 @@
 import {BASE_TYPES} from '../base/base_types';
 import {Base} from '../base/Base';
 import {Model} from './Model';
-import {IDProperty, IDComputedProperty} from './model.d';
+import {IDObservable, IDComputed} from './model.d';
 
 interface IArgs {
     target: any;
@@ -11,7 +11,7 @@ interface IArgs {
     deps?: Array<string>;
 }
 
-export let dProperty: IDProperty = function (ConstructorOrFn?: (Function) | (() => Function)): PropertyDecorator {
+export let observable: IDObservable = function (ConstructorOrFn?: (Function) | (() => Function)): PropertyDecorator {
     'use strict';
 
     return function (target: any, key: string, descriptor?: TypedPropertyDescriptor<any>): PropertyDescriptor {
@@ -29,7 +29,7 @@ export let dProperty: IDProperty = function (ConstructorOrFn?: (Function) | (() 
     };
 };
 
-export let dComputedProperty: IDComputedProperty = function (arrayOrFn: Array<string> | (() => Array<string>)): any {
+export let computed: IDComputed = function (arrayOrFn: Array<string> | (() => Array<string>)): any {
     'use strict';
 
     return function (target: any, key: string, descriptor?: TypedPropertyDescriptor<any>): PropertyDescriptor {
