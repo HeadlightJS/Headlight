@@ -9,20 +9,27 @@
     "backbone.ribs": "^1.0.1",
     "karma": "^0.13.14",
     "karma-chai-plugins": "^0.6.0",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-commonjs": "^1.0.0",
     "karma-coverage": "^0.5.3",
+    "karma-firefox-launcher": "^1.0.0",
     "karma-mocha": "^0.2.0",
     "karma-phantomjs-launcher": "^0.2.1",
+    "karma-remap-istanbul": "^0.1.1",
     "mocha": "^2.3.3",
     "phantomjs": "^1.9.18",
     "phantomjs-polyfill": "0.0.1",
+    "promise-polyfill": "^5.2.1",
+    "tslib": "^1.0.0",
     "tslint": "^3.4.0",
-    "typescript": "^1.8.2",
+    "typescript": "^2.0.0",
     "uglify-js": "^2.6.1"
   },
   "scripts": {
     "compile": "sh scripts/compile.sh",
     "pretest": "sh scripts/pretest.sh",
     "test": "node_modules/karma/bin/karma start",
+    "posttest": "sh scripts/clean.sh",
     "performance": "sh scripts/performance.sh"
   },
   "repository": {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-tsc -p ./tests/performance/
-echo "Perform.start();" >> tests/performance/performance.test.js
-node tests/performance/performance.test.js
+node_modules/typescript/bin/tsc ./karma.performance.conf.ts || exit 1
+node_modules/typescript/bin/tsc -p ./tests/performance/ || exit 1
+karma start ./karma.performance.conf.js && sh scripts/clean.sh

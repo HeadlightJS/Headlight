@@ -1,46 +1,56 @@
 /// <reference path="../../typings/tsd.d.ts" />
-///<reference path="../../dist/headlight.d.ts"/>
-///<reference path="./common/receiver.methods.test.ts"/>
+
+import {Model} from '../../src/model/Model';
+import {IEventParam, ISignalListenerParam} from '../../src/model/model.d';
+import {Signal} from '../../src/signal/Signal';
+import {Receiver} from '../../src/receiver/Receiver';
+import {receiverTest} from './common/receiver.methods.test';
+
+let dProperty = Model.dProperty,
+    dComputedProperty = Model.dComputedProperty;
 
 describe('Model.', () => {
     let assert = chai.assert;
-
+    
     interface IPerson {
         name: string;
         surname: string;
         age: number;
 
         patronymic?: string;
+        
         son?: IPerson;
+        child?: IPerson;
 
         fullname?: string;
         nameUpperCase?: string;
     }
 
-    type TChangePersonParam = Headlight.Model.IChangeParam<IPerson>;
-    //type TChangePersonPropParam<T> = Headlight.Model.IChangePropParam<IPerson, T>;
+    type TEventsPersonParam = IEventParam<IPerson>;
+    type TChangePersonPropParam = ISignalListenerParam<IPerson>;
 
-    class Person extends Headlight.Model<IPerson> implements IPerson {
-        constructor(args: IPerson) {
-            super(args);
-        }
-
-        @Headlight.dProperty
+    class Person extends Model<IPerson> implements IPerson {
+        @dProperty()
         name: string;
 
-        @Headlight.dProperty
+        @dProperty()
         surname: string;
 
-        @Headlight.dProperty
+        @dProperty()
         age: number;
 
-        @Headlight.dProperty
+        @dProperty()
         patronymic: string;
 
-        @Headlight.dProperty(Person)
+        @dProperty(function(): typeof Person {
+            return Person;
+        }) 
         son: Person;
 
-        @Headlight.dProperty(function (): Array<string> {
+        @dProperty(Person)
+        child: Person;
+
+        @dComputedProperty(function (): Array<string> {
             return [
                 this.PROPS.name,
                 this.PROPS.surname
@@ -57,24 +67,27 @@ describe('Model.', () => {
             this.surname = arr[1];
         }
 
-        @Headlight.dProperty(['name'])
+        @dComputedProperty(['name'])
         get nameUpperCase(): string {
             return this.name.toUpperCase();
         }
 
-        @Headlight.dProperty(['fullname'])
+        @dComputedProperty(['fullname'])
         get fullnameUpperCase(): string {
             return this.fullname.toUpperCase();
         }
 
+        constructor(args: IPerson) {
+            super(args);
+        }
     }
 
-    class M extends Headlight.Model<{}> implements Headlight.Model<{}> {
+    class M extends Model<{}> implements Model<{}> {
         constructor(args: {}) {
             super(args);
         }
-
-        @Headlight.dProperty()
+        
+        @dProperty()
         get CID(): string {
             return this.cid;
         }
@@ -96,6 +109,11 @@ describe('Model.', () => {
                 name: SON_NAME,
                 surname: SON_SURNAME,
                 age: SON_AGE
+            },
+            child: {
+                name: SON_NAME,
+                surname: SON_SURNAME,
+                age: SON_AGE
             }
         };
 
@@ -104,14 +122,13 @@ describe('Model.', () => {
     });
 
     it('Creates properly', () => {
-        assert.instanceOf(person, Headlight.Receiver);
-        assert.instanceOf(person.signals.change, Headlight.Signal);
+        assert.instanceOf(person, Receiver);
+        assert.instanceOf(person.signal, Signal);
         assert.equal('m', person.cid[0]);
     });
 
     describe('Fields and computeds.', () => {
         it('Inits fields with computeds.', () => {
-
             assert.equal(person.name, PERSON_NAME);
             assert.equal(person.surname, PERSON_SURNAME);
             assert.equal(person.age, PERSON_AGE);
@@ -137,11 +154,11 @@ describe('Model.', () => {
 
     describe('Signals.', () => {
         it('Creating.', () => {
-            assert.instanceOf(person.signals.change, Headlight.Signal);
+            assert.instanceOf(person.signal, Signal);
         });
 
         describe('Dispatching.', () => {
-            let changeObj: TChangePersonParam;
+            let changeObj: TEventsPersonParam;
 
             const NEW_NAME = 'Helen';
 
@@ -149,34 +166,61 @@ describe('Model.', () => {
                 changeObj = undefined;
             });
 
-            function checkDispatching(): void {
+            function checkDispatching(flag?: boolean): void {
                 person.name = PERSON_NAME;
 
                 assert.isUndefined(changeObj, 'Setting same value to a field should`t provoke change signal.');
 
                 person.name = NEW_NAME;
-
+                
                 assert.deepEqual(changeObj, {
                     model: person,
-                    values: {
-                        name: person.name,
-                        nameUpperCase: person.name.toUpperCase(),
-                        fullname: person.name + ' ' + PERSON_SURNAME,
-                        fullnameUpperCase: (person.name + ' ' + PERSON_SURNAME).toUpperCase()
-                    },
-                    previous: {
-                        name: PERSON_NAME,
-                        nameUpperCase: PERSON_NAME.toUpperCase(),
-                        fullname: PERSON_NAME + ' ' + PERSON_SURNAME,
-                        fullnameUpperCase: (PERSON_NAME + ' ' + PERSON_SURNAME).toUpperCase()
+                    change: {
+                        name: {
+                            value: person.name,
+                            previous: PERSON_NAME 
+                        },
+                        nameUpperCase: {
+                            value: person.name.toUpperCase(),
+                            previous: PERSON_NAME.toUpperCase() 
+                        },
+                        fullname: {
+                            value: person.name + ' ' + PERSON_SURNAME,
+                            previous: PERSON_NAME + ' ' + PERSON_SURNAME 
+                        },
+                        fullnameUpperCase: {
+                            value: (person.name + ' ' + PERSON_SURNAME).toUpperCase(),
+                            previous: (PERSON_NAME + ' ' + PERSON_SURNAME).toUpperCase() 
+                        }
                     }
                 }, 'Setting new value to a field should provoke change signal.');
+
+                // assert.deepEqual(changeObj, {
+                //     model: person,
+                //     events: {
+                //         change: ['fullnameUpperCase', 'fullname', 'nameUpperCase', 'name'].sort()
+                //     },
+                //     values: {
+                //         name: person.name,
+                //         nameUpperCase: person.name.toUpperCase(),
+                //         fullname: person.name + ' ' + PERSON_SURNAME,
+                //         fullnameUpperCase: (person.name + ' ' + PERSON_SURNAME).toUpperCase()
+                //     },
+                //     previous: {
+                //         name: PERSON_NAME,
+                //         nameUpperCase: PERSON_NAME.toUpperCase(),
+                //         fullname: PERSON_NAME + ' ' + PERSON_SURNAME,
+                //         fullnameUpperCase: (PERSON_NAME + ' ' + PERSON_SURNAME).toUpperCase()
+                //     }
+                // }, 'Setting new value to a field should provoke change signal.');
             }
 
-            describe('Start listeting to signals', () => {
+            describe('Start listeting to signals.', () => {
                 it ('Listen to signals via .on().', () => {
-                    person.on.change((args: TChangePersonParam): void => {
-                        changeObj = args;
+                    person.on.change({
+                        callback: (args: TEventsPersonParam): void => {
+                            changeObj = args;
+                        }
                     });
 
                     checkDispatching();
@@ -189,8 +233,10 @@ describe('Model.', () => {
                 });
 
                 it ('Listen to signals via .once().', () => {
-                    person.once.change((args: TChangePersonParam): void => {
-                        changeObj = args;
+                    person.once.change({
+                        callback: (args: TEventsPersonParam): void => {
+                            changeObj = args;
+                        }
                     });
 
                     checkDispatching();
@@ -204,42 +250,86 @@ describe('Model.', () => {
 
                 it ('Listen to filtered signals.', () => {
                     let arg,
-                        arg2;
-
-                    person.on.change(
-                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                        arg2,
+                        arg3;
+                        
+                    person.on.change({
+                        callback: (args: TEventsPersonParam): void => {
                             changeObj = args;
-                        })
-                    );
-
-                    person.on.change(
-                        Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
+                        },
+                        events: {
+                            name: true
+                        }
+                    });
+                    
+                    person.on.change({
+                        callback: (args: TEventsPersonParam): void => {
                             arg = args;
-                        })
-                    );
-
-                    person.on.change(
-                        Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
-                            (args: TChangePersonParam): void => {
-
-                                arg2 = args;
-                            })
-                    );
+                        },
+                        events: {
+                            fullname: true
+                        }
+                    });
+                    
+                    person.on.change({
+                        callback: (args: TEventsPersonParam): void => {
+                            arg2 = args;
+                        },
+                        events: {
+                            surname: true,
+                            fullname: true
+                        }
+                    });
+                    
+                    person.on.change({
+                        callback: (args: TEventsPersonParam): void => {
+                            arg3 = args;
+                        },
+                        events: {
+                            age: true,
+                            fullname: true
+                        }
+                    });
+                    
+                    let prevFullname = person.fullname;
+                    let prevSurname = person.surname;
 
                     person.surname = PERSON_NAME;
+                    
+                    //person.age = 123;
 
                     assert.isUndefined(changeObj, 'Handler should be called only for change of `name` prop.');
                     assert.isObject(arg);
                     assert.equal(arg.model, person);
-                    assert.deepEqual(arg.values, {
-                        fullname: person.fullname
+                    
+                    assert.deepEqual(arg.change, {
+                        fullname: {
+                            value: person.fullname,
+                            previous: prevFullname
+                        }
                     });
 
                     assert.isObject(arg2);
                     assert.equal(arg2.model, person);
-                    assert.deepEqual(arg2.values, {
-                        surname: person.surname,
-                        fullname: person.fullname
+                    
+                    assert.deepEqual(arg2.change, {
+                        fullname: {
+                            value: person.fullname,
+                            previous: prevFullname
+                        },
+                        surname: {
+                            value: person.surname,
+                            previous: prevSurname
+                        }
+                    });
+                    
+                    assert.isObject(arg3);
+                    assert.equal(arg3.model, person);
+                    assert.deepEqual(arg3.change, {
+                        fullname: {
+                            value: person.fullname,
+                            previous: prevFullname
+                        }
                     });
                 });
 
@@ -247,61 +337,81 @@ describe('Model.', () => {
                     let arg,
                         arg2;
 
-                    person.once.change(
-                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                    person.once.change({
+                        callback: (args: TEventsPersonParam): void => {
                             changeObj = args;
-                        })
-                    );
-
-                    person.once.change(
-                        Headlight.Model.filter<IPerson>(person.PROPS.fullname, (args: TChangePersonParam): void => {
+                        },
+                        events: {
+                            name: true
+                        }
+                    });
+                    
+                    person.once.change({
+                        callback: (args: TEventsPersonParam): void => {
                             arg = args;
-                        })
-                    );
-
-                    person.once.change(
-                        Headlight.Model.filter<IPerson>([person.PROPS.surname, person.PROPS.fullname],
-                            (args: TChangePersonParam): void => {
-
-                                arg2 = args;
-                            })
-                    );
+                        },
+                        events: {
+                            fullname: true
+                        }
+                    });
+                    
+                    person.once.change({
+                        callback: (args: TEventsPersonParam): void => {
+                            arg2 = args;
+                        },
+                        events: {
+                            surname: true,
+                            fullname: true
+                        }
+                    });
+                    
+                    let prevFullname = person.fullname;
+                    let prevSurname = person.surname;
 
                     person.surname = PERSON_NAME;
 
                     assert.isUndefined(changeObj, 'Handler should be called only once for change of `name` prop.');
                     assert.isObject(arg);
                     assert.equal(arg.model, person);
-                    assert.deepEqual(arg.values, {
-                        fullname: person.fullname
+                    assert.deepEqual(arg.change, {
+                        fullname: {
+                            value: person.fullname,
+                            previous: prevFullname
+                        }
                     });
 
                     assert.isObject(arg2);
                     assert.equal(arg2.model, person);
-                    assert.deepEqual(arg2.values, {
-                        surname: person.surname,
-                        fullname: person.fullname
+                    assert.deepEqual(arg2.change, {
+                        fullname: {
+                            value: person.fullname,
+                            previous: prevFullname
+                        },
+                        surname: {
+                            value: person.surname,
+                            previous: prevSurname
+                        }
                     });
                 });
 
                 it ('Listen to signals via Receiver#receive().', () => {
-                    person.receive<TChangePersonParam>(
-                        person.signals.change, (args: TChangePersonParam): void => {
+                    person.receive<TEventsPersonParam>(
+                        person.signal, (args: TEventsPersonParam): void => {
                             changeObj = args;
                         });
 
-                    checkDispatching();
+                    checkDispatching(true);
 
                     person.name = PERSON_NAME;
 
                     changeObj = undefined;
 
-                    checkDispatching();
+                    checkDispatching(true);
                 });
 
                 it ('Listen to signals via Receiver#receiveOnce().', () => {
-                    person.receiveOnce<TChangePersonParam>(
-                        person.signals.change, (args: TChangePersonParam): void => {
+                    person.receiveOnce<TEventsPersonParam>(
+                        person.signal, (args: TEventsPersonParam): void => {
                             changeObj = args;
                         });
 
@@ -316,8 +426,10 @@ describe('Model.', () => {
                 });
 
                 it ('Listen to filtered signals via Receiver#receive().', () => {
-                    person.receive<TChangePersonParam>(person.signals.change,
-                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                    person.receive<TEventsPersonParam>(person.signal,
+                        Model.filter<IPerson>({change: {
+                            name: true
+                        }}, (args: TEventsPersonParam): void => {
                             changeObj = args;
                         })
                     );
@@ -328,8 +440,10 @@ describe('Model.', () => {
                 });
 
                 it ('Listen to filtered signals via Receiver#receiveOnce().', () => {
-                    person.receiveOnce<TChangePersonParam>(person.signals.change,
-                        Headlight.Model.filter<IPerson>(person.PROPS.name, (args: TChangePersonParam): void => {
+                    person.receiveOnce<TEventsPersonParam>(person.signal,
+                        Model.filter<IPerson>({change: {
+                            name: true
+                        }}, (args: TEventsPersonParam): void => {
                             changeObj = args;
                         })
                     );
@@ -341,19 +455,19 @@ describe('Model.', () => {
             });
 
             describe('Stop listeting to signals', () => {
-                let changeObj2: TChangePersonParam,
-                    changeObj3: TChangePersonParam,
-                    changeObj4: TChangePersonParam,
-                    handler1 = (args: TChangePersonParam): void => {
+                let changeObj2: TEventsPersonParam,
+                    changeObj3: TEventsPersonParam,
+                    changeObj4: TEventsPersonParam,
+                    handler1 = (args: TEventsPersonParam): void => {
                         changeObj = args;
                     },
-                    handler2 = (args: TChangePersonParam): void => {
+                    handler2 = (args: TEventsPersonParam): void => {
                         changeObj2 = args;
                     },
-                    handler3 = (args: TChangePersonParam): void => {
+                    handler3 = (args: TEventsPersonParam): void => {
                         changeObj3 = args;
                     },
-                    handler4 = (args: TChangePersonParam): void => {
+                    handler4 = (args: TEventsPersonParam): void => {
                         changeObj4 = args;
                     };
 
@@ -365,8 +479,12 @@ describe('Model.', () => {
                 });
 
                 it('All handlers', () => {
-                    person.on.change(handler1);
-                    person.on.change(handler2);
+                    person.on.change({
+                        callback: handler1
+                    });
+                    person.on.change({
+                        callback: handler2
+                    });
 
                     person.name = NEW_NAME;
 
@@ -385,8 +503,12 @@ describe('Model.', () => {
                 });
 
                 it('The very handler', () => {
-                    person.on.change(handler1);
-                    person.on.change(handler2);
+                    person.on.change({
+                        callback: handler1
+                    });
+                    person.on.change({
+                        callback: handler2
+                    });
 
                     person.name = NEW_NAME;
 
@@ -406,11 +528,25 @@ describe('Model.', () => {
 
                 it('Handlers of the very receiver', () => {
                     let person2 = new Person(MAIN_PERSON);
-
-                    person.on.change(handler1, person);
-                    person.on.change(handler2, person2);
-                    person.on.change(handler3, person2);
-                    person.on.change(handler4);
+                    
+                    person.on.change({
+                        callback: handler1,
+                        receiver: person
+                    });
+                    
+                    person.on.change({
+                        callback: handler2,
+                        receiver: person2
+                    });
+                    
+                    person.on.change({
+                        callback: handler3,
+                        receiver: person2
+                    });
+                    
+                    person.on.change({
+                        callback: handler4
+                    });
 
                     person.name = NEW_NAME;
 
@@ -437,10 +573,24 @@ describe('Model.', () => {
                 it('Very Handler of the very receiver', () => {
                     let person2 = new Person(MAIN_PERSON);
 
-                    person.on.change(handler1, person);
-                    person.on.change(handler2, person2);
-                    person.on.change(handler3, person2);
-                    person.on.change(handler4);
+                    person.on.change({
+                        callback: handler1,
+                        receiver: person
+                    });
+                    
+                    person.on.change({
+                        callback: handler2,
+                        receiver: person2
+                    });
+                    
+                    person.on.change({
+                        callback: handler3,
+                        receiver: person2
+                    });
+                    
+                    person.on.change({
+                        callback: handler4
+                    });
 
                     person.name = NEW_NAME;
 
@@ -471,13 +621,60 @@ describe('Model.', () => {
                         newHandler = () => {
                             count++;
                         };
+                        
+                    person.on.change({
+                        callback: handler1,
+                        receiver: person
+                    });
+                    
+                    person.on.change({
+                        callback: handler2,
+                        receiver: person2
+                    });
+                    
+                    person.on.change({
+                        callback: handler3,
+                        receiver: person2
+                    });
+                    
+                    person.on.change({
+                        callback: handler4
+                    });    
 
-                    person.on.change(Headlight.Model.filter<IPerson>(person.PROPS.name, newHandler), person);
-                    person.on.change(Headlight.Model.filter<IPerson>(person.PROPS.name, newHandler), person2);
-                    person.on.change(handler2, person2);
-                    person.on.change(handler3, person2);
-                    person.on.change(newHandler);
-                    person.on.change(Headlight.Model.filter<IPerson>(person.PROPS.name, handler1));
+                    person.on.change({
+                        callback: Model.filter<IPerson>({change: {
+                            name: true
+                        }}, newHandler),
+                        receiver: person
+                    });
+                    //person.on.change(Model.filter<IPerson>(person.PROPS.name, newHandler), person);
+                    person.on.change({
+                        callback: Model.filter<IPerson>({change: {
+                            name: true
+                        }}, newHandler),
+                        receiver: person2
+                    });
+                    //person.on.change(Model.filter<IPerson>(person.PROPS.name, newHandler), person2);
+                    person.on.change({
+                        callback: handler2,
+                        receiver: person2
+                    });
+                    //person.on.change(handler2, person2);
+                    person.on.change({
+                        callback: handler3,
+                        receiver: person2
+                    });
+                    //person.on.change(handler3, person2);
+                    person.on.change({
+                        callback: newHandler
+                    });
+                    //person.on.change(newHandler);
+                    person.on.change({
+                        callback: Model.filter<IPerson>({change: {
+                            name: true
+                        }}, handler1)
+                    });
+                    //person.on.change(Model.filter<IPerson>(person.PROPS.name, handler1));
 
                     person.name = NEW_NAME;
 
@@ -506,8 +703,8 @@ describe('Model.', () => {
     });
 
     describe('Transactions.', () => {
-        let changeObj: TChangePersonParam,
-            tChangeObj: TChangePersonParam,
+        let changeObj: TEventsPersonParam,
+            tChangeObj: TEventsPersonParam,
             computedCallbackCount = 0,
             mainCallbackCount = 0;
 
@@ -522,9 +719,11 @@ describe('Model.', () => {
         });
 
         it('Performing transaction.', () => {
-            person.on.change((args: TChangePersonParam): void => {
-                changeObj = args;
-                mainCallbackCount++;
+            person.on.change({
+                callback: (args: TEventsPersonParam): void => {
+                    changeObj = args;
+                    mainCallbackCount++;
+                }
             });
 
             person.performTransaction((pers: Person) => {
@@ -540,9 +739,11 @@ describe('Model.', () => {
         });
 
         it('Performing silent transaction.', () => {
-            person.on.change((args: TChangePersonParam): void => {
-                changeObj = args;
-                mainCallbackCount++;
+            person.on.change({
+                callback: (args: TEventsPersonParam): void => {
+                    changeObj = args;
+                    mainCallbackCount++;
+                }
             });
 
             person.performSilentTransaction((pers: Person) => {
@@ -558,6 +759,17 @@ describe('Model.', () => {
     });
 
     it('Get JSON.', () => {
+        let child = {
+            name: SON_NAME,
+            surname: SON_SURNAME,
+            age: SON_AGE,
+            patronymic: undefined,
+            fullname: SON_NAME + ' ' + SON_SURNAME,
+            nameUpperCase: SON_NAME.toUpperCase(),
+            fullnameUpperCase: (SON_NAME + ' ' + SON_SURNAME).toUpperCase(),
+            son: undefined
+        }; 
+
         assert.deepEqual(person.toJSON(), {
             name: PERSON_NAME,
             surname: PERSON_SURNAME,
@@ -574,17 +786,30 @@ describe('Model.', () => {
                 fullname: SON_NAME + ' ' + SON_SURNAME,
                 nameUpperCase: SON_NAME.toUpperCase(),
                 fullnameUpperCase: (SON_NAME + ' ' + SON_SURNAME).toUpperCase(),
-                son: undefined
+                son: undefined,
+                child: undefined
+            },
+            child: {
+                name: SON_NAME,
+                surname: SON_SURNAME,
+                age: SON_AGE,
+                patronymic: undefined,
+                fullname: SON_NAME + ' ' + SON_SURNAME,
+                nameUpperCase: SON_NAME.toUpperCase(),
+                fullnameUpperCase: (SON_NAME + ' ' + SON_SURNAME).toUpperCase(),
+                son: undefined,
+                child: undefined
             }
         });
     });
 
     it('#keys()', () => {
         assert.deepEqual(person.keys(),
-            ['name', 'surname', 'age', 'patronymic', 'son', 'fullname', 'nameUpperCase', 'fullnameUpperCase']);
+            ['name', 'surname', 'age', 'patronymic', 'son', 'child','fullname', 'nameUpperCase', 'fullnameUpperCase']);
     });
 
     describe('Acts as Receiver', () => {
-        common.receiverTest(Person);
+        receiverTest(Person);
     });
 });
+

@@ -1,9 +1,10 @@
 /// <reference path="../../typings/tsd.d.ts" />
-///<reference path="../../dist/headlight.d.ts"/>
-///<reference path="./common/receiver.methods.test.ts"/>
+
+import {Receiver} from '../../src/receiver/Receiver';
+import {receiverTest} from './common/receiver.methods.test';
 
 describe('Receiver.', () => {
-    class SimpleReceiver extends Headlight.Receiver {
+    class SimpleReceiver extends Receiver {
 
     }
 
@@ -14,5 +15,5 @@ describe('Receiver.', () => {
         assert.equal('r', receiver.cid[0]);
     });
 
-    common.receiverTest(SimpleReceiver);
+    receiverTest(SimpleReceiver);
 });

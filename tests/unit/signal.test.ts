@@ -1,9 +1,12 @@
 /// <reference path="../../typings/tsd.d.ts" />
-///<reference path="../../dist/headlight.d.ts"/>
+
+import {ISignal, ISignalCallback} from '../../src/signal/signal.d';
+import {Signal} from '../../src/signal/Signal';
+import {Receiver} from '../../src/receiver/Receiver';
 
 describe('Signal.', () => {
     let assert = chai.assert;
-    let signal: Headlight.Signal<string>;
+    let signal: ISignal<string>;
 
     class Handler {
         public count: number = 0;
@@ -14,8 +17,8 @@ describe('Signal.', () => {
             this.name = name;
         }
 
-        public static gc(callback: Headlight.Signal.ISignalCallback<any>, ctx: any):
-            Headlight.Signal.ISignalCallback<any> {
+        public static gc(callback: ISignalCallback<any>, ctx: any):
+            ISignalCallback<any> {
 
             return function (param?: string): void {
                 callback.call(ctx, param);
@@ -24,7 +27,7 @@ describe('Signal.', () => {
     }
 
     beforeEach(() => {
-        signal = new Headlight.Signal<any>();
+        signal = new Signal<any>();
     });
 
     it('Creates properly', () => {
@@ -83,7 +86,7 @@ describe('Signal.', () => {
         let h = new Handler(),
             h2 = new Handler(),
             h3 = new Handler(),
-            r = new Headlight.Receiver();
+            r = new Receiver();
 
         signal.add(Handler.gc(h.callback, h), r);
         signal.add(Handler.gc(h2.callback, h2), r);
@@ -114,8 +117,8 @@ describe('Signal.', () => {
             callback2 = Handler.gc(h2.callback, h2),
             callback3 = Handler.gc(h3.callback, h3),
             callback4 = Handler.gc(h4.callback, h4),
-            r = new Headlight.Receiver(),
-            r2 = new Headlight.Receiver();
+            r = new Receiver(),
+            r2 = new Receiver();
 
         signal.add(callback2, r);
         signal.add(callback, r);
@@ -148,7 +151,7 @@ describe('Signal.', () => {
     it('Remove all callback functions.', () => {
         let h = new Handler(),
             h2 = new Handler(),
-            r = new Headlight.Receiver();
+            r = new Receiver();
 
         signal.add(Handler.gc(h.callback, h), r);
         signal.dispatch();
@@ -168,7 +171,7 @@ describe('Signal.', () => {
     it('Removing anything which hasn`t been added doesn`t throw Error.', () => {
         let h = new Handler();
         let callback = Handler.gc(h.callback, h);
-        let r = new Headlight.Receiver();
+        let r = new Receiver();
 
 
         assert.doesNotThrow(() => {
