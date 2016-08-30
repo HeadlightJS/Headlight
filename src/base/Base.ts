@@ -10,16 +10,17 @@ export abstract class Base implements IBase {
      */
     public cid: string;
 
+    protected abstract cidPrefix: string;
+
     /**
-     * Maps of used cids. 
+     * Maps of used cids.
      */
     private static _cidMap: ICidMap = {};
 
-    constructor() {
-        this.cid = Base.generateCid(this.cidPrefix());
-    }
 
-    protected abstract cidPrefix(): string;
+    constructor() {
+        this.cid = Base.generateCid(this.cidPrefix);
+    }
 
     /**
      * Generates next unused cid.

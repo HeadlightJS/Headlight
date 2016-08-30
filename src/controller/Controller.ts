@@ -7,7 +7,10 @@ extends Base implements IController {
     protected view: IViewFunc<ViewData>;
     protected options: Options;
     protected el: Element;
-    protected abstract children: ChildrenHash;
+    protected children: ChildrenHash;
+    protected get cidPrefix(): string {
+        return 'ctrl';
+    };
 
 
     constructor(options: Options) {
@@ -28,10 +31,6 @@ extends Base implements IController {
         if (this.el && this.el.parentNode) {
             this.el.parentNode.removeChild(this.el);
         }
-    }
-
-    protected cidPrefix(): string {
-        return 'c';
     }
 
     protected abstract getViewData(): ViewData;

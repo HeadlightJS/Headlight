@@ -19,6 +19,7 @@ export const EVENTS = {
 const EVENT_NAMES = [EVENTS.CHANGE];
 
 export class Model<Schema> extends Receiver implements IModel<Schema> {
+
     public idAttribute: string;
     
     public on: ISignalListeners<Schema>;
@@ -31,12 +32,17 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
     public static dProperty: IDObservable = observable;
     public static dComputedProperty: IDComputed = computed;
 
+    protected get cidPrefix(): string {
+        return 'm';
+    }
+
     private _depsMap: {
         [key: string]: Array<string>;
     };
     private _properties: Schema = <Schema>{};
     private _state: STATE = STATE.SILENT;
     private _transactionArtifact: ITransactionArtifact<Schema>;
+
 
     constructor(args: Schema) {
         super();
@@ -230,10 +236,6 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
         fn.originalCallback = callback.originalCallback || callback;
 
         return fn;
-    }
-
-    protected cidPrefix(): string {
-        return 'm';
     }
 
     private _clearTransactionArtifact(): void {

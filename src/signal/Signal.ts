@@ -7,6 +7,11 @@ import {EventGroup} from '../eventGroup/EventGroup';
 const GENERAL_STORAGE_ID = 'common';
 
 export class Signal<CallbackParam> extends Base implements ISignal<CallbackParam> {
+
+    protected get cidPrefix(): string {
+        return 's';
+    }
+
     private _eventStorage: IEventStorage<CallbackParam>;
 
     constructor() {
@@ -99,10 +104,6 @@ export class Signal<CallbackParam> extends Base implements ISignal<CallbackParam
         }
 
         return receivers;
-    }
-
-    protected cidPrefix(): string {
-        return 's';
     }
 
     private _resetEventStorage(): Signal<CallbackParam> {

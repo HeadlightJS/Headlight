@@ -4,7 +4,12 @@ import {ISignal, ISignalCallback, ISignalCache} from '../signal/signal.d';
 import {IReceiver} from './receiver.d'; 
 
 export class Receiver extends Base implements IReceiver {
+
     private _signals: ISignalCache = {};
+
+    protected get cidPrefix(): string {
+        return 'r';
+    }
 
     public receive<CallbackParam>(signal: ISignal<CallbackParam>, callback: ISignalCallback<CallbackParam>): void {
         signal.add(callback, this);
@@ -79,9 +84,5 @@ export class Receiver extends Base implements IReceiver {
         }
 
         this._signals = {};
-    }
-
-    protected cidPrefix(): string {
-        return 'r';
     }
 }

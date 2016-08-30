@@ -31,10 +31,15 @@ const EVENTS = {
 const EVENT_NAMES = [EVENTS.CHANGE, EVENTS.UPDATE, EVENTS.SORT];
 
 export class Collection<M extends Model<any>> extends Array<M> implements ICollection<IModel<any>> {
+
     public cid: string;
     public on: ISignalListeners<TTypeOfProps>;
     public once: ISignalListeners<TTypeOfProps>;
     public signal: ISignal<TTypeOfProps> = new Signal();
+
+    protected get cidPrefix(): string {
+        return 'c';
+    }
     
     private _signals: ISignalCache = {};
     private _state: STATE = STATE.SILENT;
@@ -45,10 +50,11 @@ export class Collection<M extends Model<any>> extends Array<M> implements IColle
     private _modelsCountHash: IHash<number> = {};
     private _transactionArtifact: ICollectionTransactionArtifact<TTypeOfProps>;
 
+
     constructor(items?: Array<TModelOrSchema<TTypeOfProps>>) {
         super();
 
-        this.cid = Base.generateCid(this.cidPrefix());
+        this.cid = Base.generateCid(this.cidPrefix);
 
         this._createSignals();
         this._initItems(items);
@@ -374,10 +380,6 @@ export class Collection<M extends Model<any>> extends Array<M> implements IColle
         callback(collection);
 
         collection._state = STATE.NORMAL;
-    }
-
-    protected cidPrefix(): string {
-        return 'c';
     }
 
     protected model(): typeof Model {
