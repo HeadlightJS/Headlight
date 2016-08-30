@@ -154,15 +154,23 @@ describe('filters.', () => {
 
         //23.03.2016 10:57:59
         let timeStamp = 1458719879416;
+        let date = new Date();
+        let offset = Math.abs(date.getHours() - date.getUTCHours());
+        let toLen = (data: number): number|string => {
+            if (data.toString().length < 2) {
+                return '0' + data;
+            }
+            return data;
+        };
 
         let filter = filters.date('YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s');
-        let result = '2016, 16, 03, 3, 23, 23, 10, 10, 57, 57, 59, 59';
+        let result = `2016, 16, 03, 3, 23, 23, ${toLen(7 + offset)}, ${7 + offset}, 57, 57, 59, 59`;
 
         assert.equal(filter(timeStamp), result);
         assert.equal(filter(new Date(timeStamp)), result);
 
         filter = filters.date('DD.MM.YYYY HH:mm:ss');
-        result = '23.03.2016 10:57:59';
+        result = `23.03.2016 ${toLen(7 + offset)}:57:59`;
 
         assert.equal(filter(timeStamp), result);
         assert.equal(filter(new Date(timeStamp)), result);
