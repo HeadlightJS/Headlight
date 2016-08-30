@@ -51,7 +51,7 @@ module.exports = function(config: any): void {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['PhantomJS'],
+    browsers: ['PhantomJS', 'chrome'],
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
@@ -64,7 +64,7 @@ module.exports = function(config: any): void {
     coverageReporter: {
       reporters: [{
         type: 'json',
-        subdir: '.', 
+        subdir: '.',
         file: 'coverage.json'
       }],
       check: {
@@ -84,6 +84,13 @@ module.exports = function(config: any): void {
       },
       timeoutNotCreated: 1000,
       timeoutNoMoreFiles: 1000
+    },
+
+    client: {
+      mocha: {
+        reporter: 'html', // change Karma's debug.html to the mocha web reporter
+        ui: 'bdd'
+      }
     }
   });
 };

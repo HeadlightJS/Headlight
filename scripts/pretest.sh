@@ -10,7 +10,7 @@ node_modules/typescript/bin/tsc -p ./tests/unit || exit 1
 
 #echo 'Process Distributive for tests'
 #cp dist/headlight.js dist/headlight.processed.js
-#grep -rl 'this && this.__extends' tmp/src | xargs sed -i 's/this && this.__extends/this && \/* istanbul ignore next *\/this.__extends/g' 
+#grep -rl 'this && this.__extends' tmp/src | xargs sed -i 's/this && this.__extends/this && \/* istanbul ignore next *\/this.__extends/g'
 #sed -i -e 's/Headlight || (Headlight = {})/Headlight || \/* istanbul ignore next *\/ (Headlight = {})/g' dist/headlight.processed.js
 #sed -i -e 's/(Model = Headlight.Model || (Headlight.Model = {}))/(Model = Headlight.Model || \/* istanbul ignore next *\/ (Headlight.Model = {}))/g' dist/headlight.processed.js
 #sed -i -e 's/(Collection = Headlight.Collection || (Headlight.Collection = {}))/(Collection = Headlight.Collection || \/* istanbul ignore next *\/ (Headlight.Collection = {}))/g' dist/headlight.processed.js

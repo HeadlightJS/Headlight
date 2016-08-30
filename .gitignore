@@ -9,3 +9,4 @@ coverage
 **/*.js
 **/*.js.map
 typings
+npm-debug.log
