@@ -6,8 +6,8 @@ import {ICollection,
     IEventAddParam, IEventRemoveParam, IEventSortParam, IEventChangeParam} from '../../src/collection/collection.d';
 import {receiverTest} from './common/receiver.methods.test';
 
-let dProperty = Model.dProperty,
-    dComputedProperty = Model.dComputedProperty;
+let observable = Model.decorators.observable,
+    computed = Model.decorators.computed;
 
 describe('Collection.', () => {
     let assert = chai.assert;
@@ -24,16 +24,16 @@ describe('Collection.', () => {
     class Person extends Model<IPerson> implements IPerson {
         public idAttribute: string = 'name';
 
-        @dProperty()
+        @observable()
         name: string;
 
-        @dProperty()
+        @observable()
         surname: string;
 
-        @dProperty()
+        @observable()
         age: number;
 
-        @dComputedProperty(function (): Array<string> {
+        @computed(function (): Array<string> {
             return [
                 this.PROPS.name,
                 this.PROPS.surname

@@ -4,7 +4,7 @@ import {Signal} from '../signal/Signal';
 import {ISignal, ISignalCallback} from '../signal/signal.d';
 import {Receiver} from '../receiver/Receiver';
 import {IReceiver} from '../receiver/receiver.d';
-import {observable, computed} from './decorators';
+import {init as initDecorators, IModelDecorators} from './decorators';
 
 export const enum STATE {
     SILENT,
@@ -16,7 +16,7 @@ export const EVENTS = {
     CHANGE: 'change'
 };
     
-const EVENT_NAMES = [EVENTS.CHANGE];
+const EVENT_NAMES = [EVENTS.CHANGE]; 
 
 export class Model<Schema> extends Receiver implements IModel<Schema> {
     public idAttribute: string;
@@ -28,8 +28,7 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
     public PROPS: Schema;
     public signal: ISignal<IEventParam<Schema>> = new Signal();
 
-    public static dProperty: IDObservable = observable;
-    public static dComputedProperty: IDComputed = computed;
+    public static decorators: IModelDecorators = initDecorators(Model);
 
     private _depsMap: {
         [key: string]: Array<string>;
