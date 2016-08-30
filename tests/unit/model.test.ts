@@ -6,8 +6,8 @@ import {Signal} from '../../src/signal/Signal';
 import {Receiver} from '../../src/receiver/Receiver';
 import {receiverTest} from './common/receiver.methods.test';
 
-let dProperty = Model.dProperty,
-    dComputedProperty = Model.dComputedProperty;
+let dProperty = Model.decorators.observable,
+    dComputedProperty = Model.decorators.computed;
 
 describe('Model.', () => {
     let assert = chai.assert;

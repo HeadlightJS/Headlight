@@ -1,5 +1,6 @@
-import {IHash, IBase} from '../base/base.d';
+import {IHash} from '../base/base.d';
 import {Base} from '../base/Base';
+import {IController, IViewFunc} from './controller.d';
 
 export abstract class Controller<Options, ViewData, ChildrenHash extends IHash<IController>>
 extends Base implements IController {
@@ -36,12 +37,4 @@ extends Base implements IController {
 
     protected abstract getViewData(): ViewData;
 
-}
-
-export interface IController extends IBase {
-    remove(): void;
-}
-
-export interface IViewFunc<ViewData> {
-    (data: ViewData): Element;
 }

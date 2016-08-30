@@ -1,6 +1,7 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
-import {Controller, IViewFunc} from '../../src/controller/Controller';
+import {Controller} from '../../src/controller/Controller';
+import {IViewFunc} from '../../src/controller/controller.d';
 
 describe('Controller', () => {
     let assert = chai.assert;
