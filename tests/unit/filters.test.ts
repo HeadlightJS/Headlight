@@ -1,5 +1,7 @@
 /// <reference path="../../typings/tsd.d.ts" />
-///<reference path="../../dist/headlight.d.ts"/>
+
+import {filters} from '../../src/filters';
+
 
 describe('filters.', () => {
     let assert = chai.assert;
@@ -8,7 +10,7 @@ describe('filters.', () => {
 
         it('with processor', () => {
 
-            let filter = Headlight.filters.not((data: any) => {
+            let filter = filters.not((data: any) => {
                 if (data === 2) {
                     return false;
                 }
@@ -23,7 +25,7 @@ describe('filters.', () => {
 
         it('without processor', () => {
 
-            let filter = Headlight.filters.not();
+            let filter = filters.not();
 
             assert.equal(filter(1), false);
             assert.equal(filter(2), false);
@@ -52,7 +54,7 @@ describe('filters.', () => {
             };
             JSON.stringify = <any>myStringify;
 
-            let filter = Headlight.filters.json({
+            let filter = filters.json({
                 replacer: null,
                 space: 4,
                 noCatch: true
@@ -69,7 +71,7 @@ describe('filters.', () => {
 
         it('without options', () => {
 
-            let filter = Headlight.filters.json();
+            let filter = filters.json();
 
             let result = filter({
                 toJSON: function (): any {
@@ -111,7 +113,7 @@ describe('filters.', () => {
 
         it('one key', () => {
 
-            let filtered = testArr.filter(Headlight.filters.contains({checked: true}));
+            let filtered = testArr.filter(filters.contains({checked: true}));
 
             assert.equal(filtered.length, 2);
             assert.equal(filtered[0].id, 2);
@@ -121,7 +123,7 @@ describe('filters.', () => {
 
         it('two key', () => {
 
-            let filtered = testArr.filter(Headlight.filters.contains({checked: false, id: 1}));
+            let filtered = testArr.filter(filters.contains({checked: false, id: 1}));
 
             assert.equal(filtered.length, 1);
             assert.equal(filtered[0].id, 1);
@@ -133,14 +135,14 @@ describe('filters.', () => {
     describe('equal', () => {
 
         it('strict', () => {
-            let filter = Headlight.filters.equal(5, true);
+            let filter = filters.equal(5, true);
             assert.equal(filter(5), true);
             assert.equal(filter(4), false);
             assert.equal(filter('5'), true);
         });
 
         it('no strict', () => {
-            let filter = Headlight.filters.equal(5);
+            let filter = filters.equal(5);
             assert.equal(filter(5), true);
             assert.equal(filter(4), false);
             assert.equal(filter('5'), false);
@@ -153,13 +155,13 @@ describe('filters.', () => {
         //23.03.2016 10:57:59
         let timeStamp = 1458719879416;
 
-        let filter = Headlight.filters.date('YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s');
+        let filter = filters.date('YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s');
         let result = '2016, 16, 03, 3, 23, 23, 10, 10, 57, 57, 59, 59';
 
         assert.equal(filter(timeStamp), result);
         assert.equal(filter(new Date(timeStamp)), result);
 
-        filter = Headlight.filters.date('DD.MM.YYYY HH:mm:ss');
+        filter = filters.date('DD.MM.YYYY HH:mm:ss');
         result = '23.03.2016 10:57:59';
 
         assert.equal(filter(timeStamp), result);
@@ -171,12 +173,12 @@ describe('filters.', () => {
 
         it('without options', () => {
 
-            let filter = Headlight.filters.notEmpty();
+            let filter = filters.notEmpty();
 
             assert.equal(filter(1), true);
             assert.equal(filter(0), false);
 
-            let filter2 = Headlight.filters.notEmpty({});
+            let filter2 = filters.notEmpty({});
 
             assert.equal(filter2('1'), true);
             assert.equal(filter2(''), false);
@@ -242,7 +244,7 @@ describe('filters.', () => {
                     options[key] = true;
                 });
 
-                let filter = Headlight.filters.notEmpty(options);
+                let filter = filters.notEmpty(options);
                 
                 testData.trueValue.push([]);
                 testData.trueValue.push({});
@@ -278,7 +280,7 @@ describe('filters.', () => {
 
         it('strict', () => {
 
-            let filter = Headlight.filters.notEqual(5);
+            let filter = filters.notEqual(5);
 
             assert.equal(filter(5), false);
             assert.equal(filter('5'), true);
@@ -288,7 +290,7 @@ describe('filters.', () => {
 
         it('notStrict', () => {
 
-            let filter = Headlight.filters.notEqual(5, true);
+            let filter = filters.notEqual(5, true);
 
             assert.equal(filter(5), false);
             assert.equal(filter('5'), false);
@@ -300,7 +302,7 @@ describe('filters.', () => {
 
     it('notContains', () => {
 
-        let filter = Headlight.filters.notContains({
+        let filter = filters.notContains({
             id: 1
         });
 
@@ -331,7 +333,7 @@ describe('filters.', () => {
             }
         ];
 
-        let filter = Headlight.filters.notContains({handler: handler});
+        let filter = filters.notContains({handler: handler});
         let result = listeners.filter(filter);
 
         assert.equal(result.length, 2);

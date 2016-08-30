@@ -1,4 +1,6 @@
-module Headlight.filters {
+import {utils} from './utils';
+
+export namespace filters {
     'use strict';
 
 
@@ -42,7 +44,7 @@ module Headlight.filters {
             {
                 pattern: 'MM',
                 replace: function (date: Date, dateStr: string): string {
-                    return dateStr.replace(this.pattern, 
+                    return dateStr.replace(this.pattern,
                         String(dateFilterHelper.len(dateFilterHelper.dateFunctions.month(date))));
                 }
             },
@@ -55,7 +57,7 @@ module Headlight.filters {
             {
                 pattern: 'DD',
                 replace: function (date: Date, dateStr: string): string {
-                    return dateStr.replace(this.pattern, 
+                    return dateStr.replace(this.pattern,
                         String(dateFilterHelper.len(dateFilterHelper.dateFunctions.day(date))));
                 }
             },
@@ -68,7 +70,7 @@ module Headlight.filters {
             {
                 pattern: 'HH',
                 replace: function (date: Date, dateStr: string): string {
-                    return dateStr.replace(this.pattern, 
+                    return dateStr.replace(this.pattern,
                         String(dateFilterHelper.len(dateFilterHelper.dateFunctions.hour(date))));
                 }
             },
@@ -81,7 +83,7 @@ module Headlight.filters {
             {
                 pattern: 'mm',
                 replace: function (date: Date, dateStr: string): string {
-                    return dateStr.replace(this.pattern, 
+                    return dateStr.replace(this.pattern,
                         String(dateFilterHelper.len(dateFilterHelper.dateFunctions.minute(date))));
                 }
             },
@@ -94,7 +96,7 @@ module Headlight.filters {
             {
                 pattern: 'ss',
                 replace: function (date: Date, dateStr: string): string {
-                    return dateStr.replace(this.pattern, 
+                    return dateStr.replace(this.pattern,
                         String(dateFilterHelper.len(dateFilterHelper.dateFunctions.seconds(date))));
                 }
             },
@@ -117,26 +119,28 @@ module Headlight.filters {
         space?: number;
         noCatch?: boolean;
     }
-    
+
     export function notEmpty(options?: IEmptyOptions): IFilter<boolean, any> {
+        'use strict';
+
         if (!options) {
             return Boolean;
         }
         let funcs = [];
         if (options.hasValue) {
-            funcs.push(Headlight.utils.notEmpty);
+            funcs.push(utils.notEmpty);
         }
         if (options.null) {
-            funcs.push(Headlight.utils.isNull);
+            funcs.push(utils.isNull);
         }
         if (options.string) {
-            funcs.push(Headlight.utils.isString);
+            funcs.push(utils.isString);
         }
         if (options.number) {
-            funcs.push(Headlight.utils.isNumber);
+            funcs.push(utils.isNumber);
         }
         if (options.undefined) {
-            funcs.push(Headlight.utils.isUndefined);
+            funcs.push(utils.isUndefined);
         }
         if (!funcs.length) {
             return Boolean;
@@ -147,7 +151,7 @@ module Headlight.filters {
         }
 
     }
-    
+
     export interface IEmptyOptions {
         hasValue?: boolean;
         number?: boolean;
@@ -157,25 +161,31 @@ module Headlight.filters {
     }
 
     export function date(format: string): IFilter<string, Date|number> {
+        'use strict';
+
         return (date: Date|number) => {
             return dateFilterHelper.parse(date instanceof Date ? date : new Date(date), format);
         };
     }
-    
+
     export function contains(data: Object): IFilter<boolean, any> {
+        'use strict';
+
         let keys = Object.keys(data);
         return (localData: any) => {
             if (localData) {
                 return keys.every((key: string) => {
-                    return localData[key] === data[key];  
+                    return localData[key] === data[key];
                 });
             } else {
                 return false;
             }
         };
     }
-    
+
     export function equal(some: any, noStrict?: boolean): IFilter<boolean, any> {
+        'use strict';
+
         if (!noStrict) {
             return (data: any) => data === some;
         } else {
@@ -186,6 +196,8 @@ module Headlight.filters {
     }
 
     export function not(processor?: Function): IFilter<boolean, any> {
+        'use strict';
+
         if (processor) {
             return (data: any) => !processor(data);
         } else {
@@ -194,6 +206,8 @@ module Headlight.filters {
     }
 
     export function json(options?: IJSONOptions): IFilter<string, any> {
+        'use strict';
+
         if (options && options.noCatch) {
             return (data: any) => {
                 return JSON.stringify(data, <any>options.replacer, options.space);
@@ -208,12 +222,16 @@ module Headlight.filters {
             };
         }
     }
-    
+
     export function notEqual(some: any, noStrict?: boolean): IFilter<boolean, any> {
+        'use strict';
+
         return not(equal(some, noStrict));
     }
-    
+
     export function notContains(some: Object): IFilter<boolean, any> {
+        'use strict';
+
         return not(contains(some));
     }
 
