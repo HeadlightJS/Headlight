@@ -66,7 +66,7 @@ export function init(M: typeof Model): IModelDecorators {
     function isModelOrCollection(arg: any): boolean {
         'use strict';
 
-        return arg instanceof Model;
+        return arg instanceof M;
     }
 
     function mutateDescriptor(args: IArgs): void {
@@ -83,7 +83,7 @@ export function init(M: typeof Model): IModelDecorators {
 
                     this._properties[args.key] = (C && !isModelOrCollection(C)) ? new C(newVal) : newVal;
 
-                    Model.dispatchSignals(this, args.key, this._properties[args.key], prev);
+                    M.dispatchSignals(this, args.key, this._properties[args.key], prev);
                 },
                 enumerable: true,
                 configurable: true
@@ -108,7 +108,7 @@ export function init(M: typeof Model): IModelDecorators {
 
                     originalSet.call(this, newVal);
 
-                    Model.dispatchSignals(this, args.key, this[args.key], prev);
+                    M.dispatchSignals(this, args.key, this[args.key], prev);
                 };
             }
 
