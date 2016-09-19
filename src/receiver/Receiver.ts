@@ -1,7 +1,7 @@
 import {BASE_TYPES} from '../base/base_types';
 import {Base} from '../base/Base';
 import {ISignal, ISignalCallback, ISignalCache} from '../signal/signal.d';
-import {IReceiver} from './receiver.d';
+import {IReceiver, IFunc, IHandler, IListenData} from './receiver.d';
 import {IModel} from '../model/model.d';
 
 export class Receiver extends Base implements IReceiver {
@@ -211,18 +211,4 @@ export class Receiver extends Base implements IReceiver {
             return result;
         };
     }
-}
-
-
-export interface IListenData<S> {
-    model: IModel<S>;
-    fields: Array<string>;
-}
-
-export interface IFunc<T> {
-    (data: IModel<T>): T;
-}
-
-export interface IHandler<T> {
-    (data: T): void;
 }

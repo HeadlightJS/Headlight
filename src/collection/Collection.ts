@@ -2,6 +2,7 @@ import {Base} from '../base/Base';
 import {IHash} from '../base/base.d';
 import {Signal} from '../signal/Signal';
 import {Receiver} from '../receiver/Receiver';
+import {IFunc, IHandler} from '../receiver/receiver.d';
 import {ISignal, ISignalCache, ISignalCallback} from '../signal/signal.d';
 import {ICollectionTransactionArtifact} from '../transaction/transaction.d';
 import {Model} from '../model/Model';
@@ -257,6 +258,10 @@ export class Collection<M extends Model<any>> extends Array<M> implements IColle
     public receive<CallbackParam>(signal: Signal<CallbackParam>, callback: ISignalCallback<CallbackParam>): void {
         return Receiver.prototype.receive.call(this, signal, callback);                                
     };
+
+    public listen<S, R>(callback: (fn: IFunc<S>) => R, handler: IHandler<R>): void {
+        return Receiver.prototype.listen.call(this, callback, handler);
+    }
 
     public receiveOnce<CallbackParam>(signal: Signal<CallbackParam>, callback: ISignalCallback<CallbackParam>): void {
         return Receiver.prototype.receiveOnce.call(this, signal, callback);                                
