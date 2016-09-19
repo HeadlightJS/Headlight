@@ -12,7 +12,7 @@ export interface IModel<Schema> extends IReceiver {
 
     PROPS: Schema;
     signal: ISignal<IEventParam<Schema>>;
-    signals: IHash<ISignal<any>>;
+    signals: ISignalsHash<Schema>;
 
     toJSON(): Schema;
     toJSON<T>(): T;
@@ -20,6 +20,22 @@ export interface IModel<Schema> extends IReceiver {
     performTransaction(callback: (model: IModel<Schema>) => void): void;
     performSilentTransaction(callback: (model: IModel<Schema>) => void): void;
 }
+
+export interface ISignalsHash<S> {
+    all: ISignal<IModel<S>>;
+    fetch: {
+        start: ISignal<Promise<any>>;
+        end: ISignal<Promise<any>>;
+        all: ISignal<Promise<any>>;
+    };
+    change: ISignalsChange<IModel<S>>;
+}
+
+export interface ISignalsChange<S> {
+    all: ISignal<S>;
+    [key: string]: ISignal<any>;
+}
+
 
 export type TModelOrSchema<Schema> = IModel<Schema> | Schema;
 
