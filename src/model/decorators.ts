@@ -85,9 +85,9 @@ export function init(M: typeof Model): IModelDecorators {
 
                     M.dispatchSignals(this, args.key, this._properties[args.key], prev);
 
-                    if (this._realSignals[args.key]) {
-                        this._realSignals[args.key].dispatch(this._properties[args.key]);
-                    }
+                    // if (this._realSignals[args.key]) {
+                    //     this._realSignals[args.key].dispatch(this._properties[args.key]);
+                    // }
                 },
                 enumerable: true,
                 configurable: true

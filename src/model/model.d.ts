@@ -6,12 +6,12 @@ import {IReceiver} from '../receiver/receiver.d';
 export interface IModel<Schema> extends IReceiver {
     idAttribute: string;
 
-    on: ISignalListeners<Schema>;
-    once: ISignalListeners<Schema>;
-    off: ISignalListenerStoppers<Schema>;
+    // on: ISignalListeners<Schema>;
+    // once: ISignalListeners<Schema>;
+    // off: ISignalListenerStoppers<Schema>;
 
     PROPS: Schema;
-    signal: ISignal<IEventParam<Schema>>;
+    //signal: ISignal<IEventParam<Schema>>;
     signals: ISignalsHash<Schema>;
 
     toJSON(): Schema;

@@ -24,12 +24,12 @@ const EVENT_NAMES = [EVENTS.CHANGE];
 export class Model<Schema> extends Receiver implements IModel<Schema> {
     public idAttribute: string;
     
-    public on: ISignalListeners<Schema>;
-    public once: ISignalListeners<Schema>;
-    public off: ISignalListenerStoppers<Schema>;
+    // public on: ISignalListeners<Schema>;
+    // public once: ISignalListeners<Schema>;
+    // public off: ISignalListenerStoppers<Schema>;
 
     public PROPS: Schema;
-    public signal: ISignal<IEventParam<Schema>> = new Signal();
+    //public signal: ISignal<IEventParam<Schema>> = new Signal();
     public signals: ISignalsHash<Schema> = <any>{};
 
     public static decorators: IModelDecorators = initDecorators(Model);
@@ -47,9 +47,9 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
         super();
 
         this._initSignalDecorators();
-        this._createSignals();
+        //this._createSignals();
         this._initProperties(args);
-        this._enableSignals();
+        //this._enableSignals();
         
         this.idAttribute = this.idAttribute || 'id';
     }
@@ -91,8 +91,14 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
         model._state = STATE.IN_TRANSACTION;
 
         callback(model);
-        
-        model.signal.dispatch(model._transactionArtifact.param);
+
+        let changeObj = model._transactionArtifact.param.change;
+
+        for (let key of Object.keys(changeObj)) {
+            if (model._realSignals[key]) {
+                model._realSignals[key].dispatch(changeObj[key]);
+            }
+        }
 
         model._clearTransactionArtifact();
         model._state = STATE.NORMAL;
@@ -117,15 +123,10 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
                 props = [prop],
                 changeObj = <any>{};
                 
-            changeObj[prop] = {
+            changeObj['change_' + prop] = {
                 value: newVal,
                 previous: prev    
             }; 
-
-            // if (prop === 'name') {
-            //     console.log(model._depsMap[prop]);
-            // } 
-            
 
             (function iterateThroughDeps(deps:  Array<string>): void {
                 for (let j = deps.length; j--;) {
@@ -134,7 +135,7 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
                     currValue = model[d];
 
                     if (currValue !== prevValue) {
-                        changeObj[d] = {
+                        changeObj['change_' + d] = {
                             value: currValue,
                             previous: prevValue
                         };
@@ -144,99 +145,137 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
                 }
             })(model._depsMap[prop]);
 
-            
-
-            Model.dispatch(model, {
-                model: model,
-                change: changeObj
-            });
-        }
-    }
-
-    public static dispatch<S>(model: Model<S>, attr: IEventParam<S>): void {
-        let signal = model.signal;
-
-        switch (model._state) {
-            case STATE.NORMAL:
-                signal.dispatch(attr);
-
-                break;
-            case STATE.IN_TRANSACTION:
-                model._transactionArtifact = model._transactionArtifact || {
-                    param: attr
-                };
-                
-                // TODO: uncomment when adding more events    
-                //if (attr.change) {
-                    let changedProps = Object.keys(attr.change);
-                    
-                    model._transactionArtifact.param.change = model._transactionArtifact.param.change; // || {};  
-                    
-                    for (let i = changedProps.length; i--;) {
-                        let p = changedProps[i];
-                        
-                        model._transactionArtifact.param.change[p] = model._transactionArtifact.param.change[p] || {
-                            value: undefined,
-                            previous: attr.change[p].previous
-                        };
-                        
-                        model._transactionArtifact.param.change[p].value = attr.change[p].value;
-                    }  
-                //}
-
-                break;
-            case STATE.SILENT:
-
-                break;
-        }
-    }
-
-    public static filter<S>(events: IEvents, 
-                            callback: ISignalCallback<IEventParam<S>>): ISignalCallback<IEventParam<S>> {
-
-        let fn = <ISignalCallback<IEventParam<S>>>((param: IEventParam<S>) => {
-            let n: string,
-                flag = false,
-                names: Array<string>,
-                p = <IEventParam<S>>{
-                    model: param.model
-                };
-            
-            let eventsNames = EVENT_NAMES;
-            
-            for (let i = eventsNames.length; i--;) {
-                let eventName = eventsNames[i],
-                    eventData = param[eventName]; 
-                    
-                // TODO: uncomment when adding more events    
-                // if (!eventData) {
-                //     continue;
-                // }
-                    
-                names = Object.keys(eventData);
-                
-                for (let i = names.length; i--;) {
-                    n = names[i];
-                    
-                    if (events[eventName] && (events[eventName] === true || events[eventName][n])) {
-                        p[eventName] = p[eventName] || {};
-                        
-                        p[eventName][n] = eventData[n];
-                        
-                        flag = true;
+            switch (model._state) {
+                case STATE.NORMAL:
+                    for (let key of Object.keys(changeObj)) {
+                        if (model._realSignals[key]) {
+                            model._realSignals[key].dispatch(changeObj[key]);
+                        }
                     }
-                }      
-            }
-            
-            if (flag) {
-                callback(p);
-            }
-        });
 
-        fn.originalCallback = callback.originalCallback || callback;
+                    break;
+                case STATE.IN_TRANSACTION:
+                    model._transactionArtifact = model._transactionArtifact || {
+                        param: {
+                            change: changeObj,
+                            model: model
+                        }
+                    };
+                    
+                    if (changeObj) {
+                        let changedProps = Object.keys(changeObj);
+                        
+                        model._transactionArtifact.param.change = model._transactionArtifact.param.change; // || {};  
+                        
+                        for (let i = changedProps.length; i--;) {
+                            let p = changedProps[i];
+                            
+                            model._transactionArtifact.param.change[p] = model._transactionArtifact.param.change[p] || {
+                                value: undefined,
+                                previous: changeObj[p].previous
+                            };
+                            
+                            model._transactionArtifact.param.change[p].value = changeObj[p].value;
+                        }  
+                    }
 
-        return fn;
+                    break;
+                case STATE.SILENT:
+
+                    break;
+            }
+
+            // Model.dispatch(model, {
+            //     model: model,
+            //     change: changeObj
+            // });
+        }
     }
+
+    // public static dispatch<S>(model: Model<S>, attr: IEventParam<S>): void {
+    //     let signal = model.signals[attr.change];
+
+    //     switch (model._state) {
+    //         case STATE.NORMAL:
+    //             signal.dispatch(attr);
+
+    //             break;
+    //         case STATE.IN_TRANSACTION:
+    //             model._transactionArtifact = model._transactionArtifact || {
+    //                 param: attr
+    //             };
+                
+    //             // TODO: uncomment when adding more events    
+    //             //if (attr.change) {
+    //                 let changedProps = Object.keys(attr.change);
+                    
+    //                 model._transactionArtifact.param.change = model._transactionArtifact.param.change; // || {};  
+                    
+    //                 for (let i = changedProps.length; i--;) {
+    //                     let p = changedProps[i];
+                        
+    //                     model._transactionArtifact.param.change[p] = model._transactionArtifact.param.change[p] || {
+    //                         value: undefined,
+    //                         previous: attr.change[p].previous
+    //                     };
+                        
+    //                     model._transactionArtifact.param.change[p].value = attr.change[p].value;
+    //                 }  
+    //             //}
+
+    //             break;
+    //         case STATE.SILENT:
+
+    //             break;
+    //     }
+    // }
+
+    // public static filter<S>(events: IEvents, 
+    //                         callback: ISignalCallback<IEventParam<S>>): ISignalCallback<IEventParam<S>> {
+
+    //     let fn = <ISignalCallback<IEventParam<S>>>((param: IEventParam<S>) => {
+    //         let n: string,
+    //             flag = false,
+    //             names: Array<string>,
+    //             p = <IEventParam<S>>{
+    //                 model: param.model
+    //             };
+            
+    //         let eventsNames = EVENT_NAMES;
+            
+    //         for (let i = eventsNames.length; i--;) {
+    //             let eventName = eventsNames[i],
+    //                 eventData = param[eventName]; 
+                    
+    //             // TODO: uncomment when adding more events    
+    //             // if (!eventData) {
+    //             //     continue;
+    //             // }
+                    
+    //             names = Object.keys(eventData);
+                
+    //             for (let i = names.length; i--;) {
+    //                 n = names[i];
+                    
+    //                 if (events[eventName] && (events[eventName] === true || events[eventName][n])) {
+    //                     p[eventName] = p[eventName] || {};
+                        
+    //                     p[eventName][n] = eventData[n];
+                        
+    //                     flag = true;
+    //                 }
+    //             }      
+    //         }
+            
+    //         if (flag) {
+    //             callback(p);
+    //         }
+    //     });
+
+    //     fn.originalCallback = callback.originalCallback || callback;
+
+    //     return fn;
+    // }
 
     protected cidPrefix(): string {
         return 'm';
@@ -246,32 +285,32 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
         this._transactionArtifact = null;
     }
 
-    private _createSignals(): void {
-        this.on = {
-            change: (param: ISignalListenerParam<Schema>): void => {
-                this.signal.add(
-                    Model.filter<Schema>({
-                            change: param.events || true
-                        }, param.callback), 
-                    param.receiver);         
-            }
-        };
-        this.once = {
-            change: (param: ISignalListenerParam<Schema>): void => {
-                this.signal.addOnce(
-                    Model.filter<Schema>({
-                            change: param.events || true
-                        }, param.callback), 
-                    param.receiver);         
-            }
-        };
-        this.off = {
-            change: (callbackOrReceiver?: TSignalCallback<Schema> | IReceiver,
-                        receiver?: IReceiver): void => {
-                this.signal.remove(<TSignalCallback<Schema>>callbackOrReceiver, receiver);
-            }
-        };
-    }
+    // private _createSignals(): void {
+    //     this.on = {
+    //         change: (param: ISignalListenerParam<Schema>): void => {
+    //             this.signal.add(
+    //                 Model.filter<Schema>({
+    //                         change: param.events || true
+    //                     }, param.callback), 
+    //                 param.receiver);         
+    //         }
+    //     };
+    //     this.once = {
+    //         change: (param: ISignalListenerParam<Schema>): void => {
+    //             this.signal.addOnce(
+    //                 Model.filter<Schema>({
+    //                         change: param.events || true
+    //                     }, param.callback), 
+    //                 param.receiver);         
+    //         }
+    //     };
+    //     this.off = {
+    //         change: (callbackOrReceiver?: TSignalCallback<Schema> | IReceiver,
+    //                     receiver?: IReceiver): void => {
+    //             this.signal.remove(<TSignalCallback<Schema>>callbackOrReceiver, receiver);
+    //         }
+    //     };
+    // }
 
     private _initSignalDecorators(): void {
 
@@ -311,7 +350,7 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
         }
     }
 
-    private _enableSignals(): void {
-        this._state = STATE.NORMAL;
-    }
+    // private _enableSignals(): void {
+    //     this._state = STATE.NORMAL;
+    // }
 }
