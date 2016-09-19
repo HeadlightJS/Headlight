@@ -1,7 +1,8 @@
 /// <reference path="../../../typings/tsd.d.ts" />
 
-import {Receiver} from '../../../src/receiver/Receiver';
+import {Receiver, IFunc} from '../../../src/receiver/Receiver';
 import {Signal} from '../../../src/signal/Signal';
+import {Person, MAIN_PERSON, IPerson} from '../Person';
 
 let assert = chai.assert;
 let receiver: Receiver,
@@ -16,6 +17,21 @@ export function receiverTest(Receiver: any): void {
     beforeEach(() => {
         receiver = new (<typeof Receiver>Receiver)();
         count = 0;
+    });
+
+    it('Receive listen to model.', () => {
+
+        let person = new Person(MAIN_PERSON);
+        let cnt = 0;
+        receiver.listen((p: IFunc<IPerson>) => p(person).name, (name: string) => {
+            assert.equal(typeof name, 'string');
+            cnt++;
+        });
+
+        person.name = 'Vasia';
+
+        assert.equal(cnt, 1);
+
     });
 
     it('Receive signal.', () => {

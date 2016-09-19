@@ -1,6 +1,8 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
 import {Model} from '../../src/model/Model';
+import {Person, IPerson, PERSON_NAME, PERSON_SURNAME, PERSON_AGE, SON_NAME, SON_SURNAME, SON_AGE,
+    MAIN_PERSON} from './Person';
 import {IEventParam, ISignalListenerParam} from '../../src/model/model.d';
 import {Signal} from '../../src/signal/Signal';
 import {Receiver} from '../../src/receiver/Receiver';
@@ -11,76 +13,9 @@ let dProperty = Model.decorators.observable,
 
 describe('Model.', () => {
     let assert = chai.assert;
-    
-    interface IPerson {
-        name: string;
-        surname: string;
-        age: number;
-
-        patronymic?: string;
-        
-        son?: IPerson;
-        child?: IPerson;
-
-        fullname?: string;
-        nameUpperCase?: string;
-    }
 
     type TEventsPersonParam = IEventParam<IPerson>;
     type TChangePersonPropParam = ISignalListenerParam<IPerson>;
-
-    class Person extends Model<IPerson> implements IPerson {
-        @dProperty()
-        name: string;
-
-        @dProperty()
-        surname: string;
-
-        @dProperty()
-        age: number;
-
-        @dProperty()
-        patronymic: string;
-
-        @dProperty(function(): typeof Person {
-            return Person;
-        }) 
-        son: Person;
-
-        @dProperty(Person)
-        child: Person;
-
-        @dComputedProperty(function (): Array<string> {
-            return [
-                this.PROPS.name,
-                this.PROPS.surname
-            ];
-        })
-        get fullname(): string {
-            return this.name + ' ' + this.surname;
-        }
-
-        set fullname(fullname: string) {
-            let arr = fullname.split(' ');
-
-            this.name = arr[0];
-            this.surname = arr[1];
-        }
-
-        @dComputedProperty(['name'])
-        get nameUpperCase(): string {
-            return this.name.toUpperCase();
-        }
-
-        @dComputedProperty(['fullname'])
-        get fullnameUpperCase(): string {
-            return this.fullname.toUpperCase();
-        }
-
-        constructor(args: IPerson) {
-            super(args);
-        }
-    }
 
     class M extends Model<{}> implements Model<{}> {
         constructor(args: {}) {
@@ -95,27 +30,7 @@ describe('Model.', () => {
 
     let person: Person;
 
-    const PERSON_NAME = 'Anna',
-        PERSON_SURNAME = 'Ivanova',
-        PERSON_AGE = 38,
-        SON_NAME = 'Boris',
-        SON_SURNAME = 'Ivanov',
-        SON_AGE = 13,
-        MAIN_PERSON = {
-            name: PERSON_NAME,
-            surname: PERSON_SURNAME,
-            age: PERSON_AGE,
-            son: {
-                name: SON_NAME,
-                surname: SON_SURNAME,
-                age: SON_AGE
-            },
-            child: {
-                name: SON_NAME,
-                surname: SON_SURNAME,
-                age: SON_AGE
-            }
-        };
+
 
     beforeEach(() => {
         person = new Person(MAIN_PERSON);

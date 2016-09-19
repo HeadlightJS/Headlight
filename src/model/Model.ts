@@ -5,6 +5,7 @@ import {ISignal, ISignalCallback} from '../signal/signal.d';
 import {Receiver} from '../receiver/Receiver';
 import {IReceiver} from '../receiver/receiver.d';
 import {init as initDecorators, IModelDecorators} from './decorators';
+import {IHash} from '../base/base.d';
 
 export const enum STATE {
     SILENT,
@@ -27,6 +28,7 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
 
     public PROPS: Schema;
     public signal: ISignal<IEventParam<Schema>> = new Signal();
+    public signals: IHash<Signal<any>> = {};
 
     public static decorators: IModelDecorators = initDecorators(Model);
 
@@ -37,9 +39,12 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
     private _state: STATE = STATE.SILENT;
     private _transactionArtifact: ITransactionArtifact<Schema>;
 
+    private _realSignals: IHash<Signal<any>> = {};
+
     constructor(args: Schema) {
         super();
 
+        this._initSignalDecorators();
         this._createSignals();
         this._initProperties(args);
         this._enableSignals();
@@ -264,6 +269,22 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
                 this.signal.remove(<TSignalCallback<Schema>>callbackOrReceiver, receiver);
             }
         };
+    }
+
+    private _initSignalDecorators(): void {
+
+        this.keys().forEach((key: string) => {
+
+            Object.defineProperty(this.signals, key, {
+                get: () => {
+                    if (!this._realSignals[key]) {
+                        this._realSignals[key] = new Signal();
+                    }
+                    return this._realSignals[key];
+                }
+            });
+
+        });
     }
 
     private _initProperties(args: Schema): void {

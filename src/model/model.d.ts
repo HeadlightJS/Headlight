@@ -5,13 +5,14 @@ import {IReceiver} from '../receiver/receiver.d';
 
 export interface IModel<Schema> extends IReceiver {
     idAttribute: string;
-        
+
     on: ISignalListeners<Schema>;
     once: ISignalListeners<Schema>;
     off: ISignalListenerStoppers<Schema>;
 
     PROPS: Schema;
     signal: ISignal<IEventParam<Schema>>;
+    signals: IHash<ISignal<any>>;
 
     toJSON(): Schema;
     toJSON<T>(): T;
