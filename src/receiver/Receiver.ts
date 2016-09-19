@@ -18,8 +18,17 @@ export class Receiver extends Base implements IReceiver {
         };
 
         forListen.forEach((dep) => {
+            let listen = false;
+            let modelHandler = () => {
+                if (!listen) {
+                    dep.model.signals.change.all.addOnce(() => {
+                        proxyHandler();
+                    });
+                    listen = true;
+                }
+            };
             dep.fields.forEach((key: string) => {
-                dep.model.signals[key].add(proxyHandler);
+                dep.model.signals.change[key].add(modelHandler);
             });
         });
     }

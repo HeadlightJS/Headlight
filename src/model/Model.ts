@@ -1,5 +1,7 @@
-import {IModel, ISignalListeners, ISignalListenerStoppers, IEventParam, ITransactionArtifact, 
-    IEvents, ISignalListenerParam, TSignalCallback, IDObservable, IDComputed} from './model.d';
+import {
+    IModel, ISignalListeners, ISignalListenerStoppers, IEventParam, ITransactionArtifact,
+    IEvents, ISignalListenerParam, TSignalCallback, IDObservable, IDComputed, ISignalsHash
+} from './model.d';
 import {Signal} from '../signal/Signal';
 import {ISignal, ISignalCallback} from '../signal/signal.d';
 import {Receiver} from '../receiver/Receiver';
@@ -28,7 +30,7 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
 
     public PROPS: Schema;
     public signal: ISignal<IEventParam<Schema>> = new Signal();
-    public signals: IHash<Signal<any>> = {};
+    public signals: ISignalsHash<Schema> = <any>{};
 
     public static decorators: IModelDecorators = initDecorators(Model);
 
@@ -273,18 +275,32 @@ export class Model<Schema> extends Receiver implements IModel<Schema> {
 
     private _initSignalDecorators(): void {
 
-        this.keys().forEach((key: string) => {
+        this.signals.change = <any>{};
+        this.signals.fetch = <any>{};
 
-            Object.defineProperty(this.signals, key, {
-                get: () => {
-                    if (!this._realSignals[key]) {
-                        this._realSignals[key] = new Signal();
+        let getDecorateIterator = (object: any, prefix) => {
+            return (key: string) => {
+
+                Object.defineProperty(object, key, {
+                    get: () => {
+                        if (!this._realSignals[`${prefix}${key}`]) {
+                            this._realSignals[`${prefix}${key}`] = new Signal();
+                        }
+                        return this._realSignals[`${prefix}${key}`];
                     }
-                    return this._realSignals[key];
-                }
-            });
+                });
 
-        });
+            };
+        };
+
+        let signals = this.keys();
+        signals.push('all');
+
+        signals.forEach(getDecorateIterator(this.signals.change, 'change_'));
+        ['start', 'end', 'all'].forEach(getDecorateIterator(this.signals.fetch, 'fetch_'));
+
+        getDecorateIterator(this.signals, '')('all');
+
     }
 
     private _initProperties(args: Schema): void {
